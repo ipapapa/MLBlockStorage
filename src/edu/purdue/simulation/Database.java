@@ -14,6 +14,13 @@ public class Database {
 
 			return CurrentConnection;
 
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// try {
 		CurrentConnection = DriverManager
 				.getConnection("jdbc:mysql://localhost/BlockStorageSimulator?"

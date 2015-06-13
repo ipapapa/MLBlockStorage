@@ -41,7 +41,9 @@ public class BlockStorageSimulator {
 			//
 			// experiment.GenerateBackEnd();
 			//
-			Scheduler scheduler = new StatisticalGroupping(experiment, workload);
+			Scheduler scheduler = new edu.purdue.simulation.blockstorage.StatisticalGroupping(experiment, workload);
+			
+			Scheduler scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(experiment, workload);
 			//
 			scheduler.Schedule();
 
