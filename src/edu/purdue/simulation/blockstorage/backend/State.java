@@ -1,27 +1,47 @@
 package edu.purdue.simulation.blockstorage.backend;
 
+import java.util.Iterator;
+
+import edu.purdue.simulation.blockstorage.Volume;
+
 public class State {
-	
-	
-	public State(int capacity) {
+
+	public State(Backend backend) {
 		super();
-		
-		Capacity = capacity;
+
+		this.backend = backend;
 	}
 
-	protected int UsedSpace;
-	
-	protected int Capacity;
-	
+	private Backend backend;
+
 	public int getAvailableCapacity() {
-		return this.Capacity - this.UsedSpace;
+		return this.backend.getSpecifications().getCapacity()
+				- this.getUsedCapacity();
 	}
 
-	public int getCapacity() {
-		return Capacity;
+	public int getUsedCapacity() {
+
+		int usedSpace = 0;
+
+		for (Iterator<Volume> i = this.backend.getVolumeList().iterator(); i
+				.hasNext();) {
+
+			usedSpace += i.next().getSpecifications().getCapacity();
+
+		}
+
+		return usedSpace;
 	}
 
-	public int getUsedSpace(){
-		return this.UsedSpace;
-	}
+//	public int getUsedIOPS() {
+//
+//		//
+//
+//		return 0;
+//	}
+//
+//	public int getAvailableIOPS() {
+//		return this.backend.getSpecifications().getIOPS() - this.getUsedIOPS();
+//
+//	}
 }

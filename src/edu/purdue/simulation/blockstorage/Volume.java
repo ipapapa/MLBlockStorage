@@ -8,27 +8,66 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import edu.purdue.simulation.Database;
+import edu.purdue.simulation.PersistentObject;
 import edu.purdue.simulation.blockstorage.backend.*;
 
-public class Volume {
+public class Volume extends PersistentObject {
 
-	public Volume(BackEnd backEnd, ScheduleResponse scheduleResponse,
+	public Volume(Backend backend, ScheduleResponse scheduleResponse,
 			VolumeSpecifications specifications) {
-		this.BackEnd = backEnd;
 
-		this.Specifications = specifications;
+		this.backend = backend;
+
+		this.specifications = specifications;
 
 		this.ScheduleResponse = scheduleResponse;
-		
+
 	}
 
-	private VolumeSpecifications Specifications;
+	private VolumeSpecifications specifications;
 
-	private BackEnd BackEnd;
+	private Backend backend;
 
-	public ScheduleResponse ScheduleResponse;
+	private ScheduleResponse ScheduleResponse;
 
-	public BigDecimal ID;
+	public Backend getBackend() {
+		return backend;
+	}
+
+	public ScheduleResponse getScheduleResponse() {
+		return ScheduleResponse;
+	}
+
+	public VolumeSpecifications getSpecifications() {
+
+		return this.specifications;
+	}
+
+	public int getCurrentIOPS() {
+		int backEndVolumesTotalRequestedIOPS = 0;
+
+		int numberOfVolumes = this.backend.getVolumeList().size();
+
+		for (int i = 0; i < numberOfVolumes; i++) {
+
+			Volume volume = this.backend.getVolumeList().get(i);
+
+			backEndVolumesTotalRequestedIOPS += volume.specifications.getIOPS();
+		}
+
+		int backendCurrentAvailableIOPS = this.backend.getSpecifications()
+				.getIOPS();
+
+		if (backEndVolumesTotalRequestedIOPS > backendCurrentAvailableIOPS) {
+
+			return Math.round(backendCurrentAvailableIOPS / numberOfVolumes);
+
+		} else {
+			// volume SLA IOPS + (available IOPS of the backend)
+			return this.specifications.getIOPS()
+					+ (backendCurrentAvailableIOPS - backEndVolumesTotalRequestedIOPS);
+		}
+	}
 
 	public BigDecimal Save() throws SQLException {
 
@@ -41,15 +80,16 @@ public class Volume {
 								+ "		values" + "	(?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
-		statement.setBigDecimal(1, this.BackEnd.ID);
+		statement.setBigDecimal(1, this.backend.getID());
 
-		statement.setBigDecimal(2, this.ScheduleResponse.ID);
+		statement.setBigDecimal(2, this.ScheduleResponse == null ? null
+				: this.ScheduleResponse.ID);
 
-		statement.setInt(3, this.Specifications.getCapacity());
+		statement.setInt(3, this.specifications.getCapacity());
 
-		statement.setInt(4, this.Specifications.getIOPS());
+		statement.setInt(4, this.specifications.getIOPS());
 
-		statement.setBoolean(5, this.Specifications.IsDeleted);
+		statement.setBoolean(5, this.specifications.IsDeleted);
 
 		statement.executeUpdate();
 
@@ -57,16 +97,12 @@ public class Volume {
 
 		if (rs.next()) {
 
-			this.ID = rs.getBigDecimal(1);
+			this.setID(rs.getBigDecimal(1));
 
-			return this.ID;
+			return this.getID();
 		}
 
 		return BigDecimal.valueOf(-1);
 	}
 
-	public VolumeSpecifications getSpecifications() {
-		// TODO Auto-generated method stub
-		return this.Specifications;
-	}
 }

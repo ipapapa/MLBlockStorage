@@ -12,9 +12,18 @@ public class BackEndSpecifications extends Specifications {
 
 	}
 
-	public BackEndSpecifications(int capacity, int IOPS, int latency,
+	public BackEndSpecifications(int capacity, int maxCapacity,
+			int minCapacity, int IOPS, int maxIOPS, int minIOPS, int latency,
 			boolean isOnline) {
 		super(capacity, IOPS, latency);
+
+		this.setMaxIOPS(maxIOPS);
+		this.setMinIOPS(minIOPS);
+
+		this.setMaxCapacity(maxCapacity);
+		this.setMinCapacity(minCapacity);
+
+		this.setLatency(latency);
 
 		this.Initialize();
 	}
@@ -23,13 +32,53 @@ public class BackEndSpecifications extends Specifications {
 
 	}
 
-	// I have this here to calculate available space of backends from this class
-	// not sure if its a good idea
-	protected void setBackEnd(BackEnd backEnd) {
-		this.BackEnd = backEnd;
+	public boolean IsOnline;
+
+	private int maxIOPS;
+
+	private int minIOPS;
+
+	private int maxCapacity;
+
+	private int minCapacity;
+
+	public boolean isIsOnline() {
+		return IsOnline;
 	}
 
-	private BackEnd BackEnd;
+	public void setIsOnline(boolean isOnline) {
+		IsOnline = isOnline;
+	}
 
-	public boolean IsOnline;
+	public int getMaxIOPS() {
+		return maxIOPS;
+	}
+
+	public void setMaxIOPS(int maxIOPS) {
+		this.maxIOPS = maxIOPS;
+	}
+
+	public int getMinIOPS() {
+		return minIOPS;
+	}
+
+	public void setMinIOPS(int minIOPS) {
+		this.minIOPS = minIOPS;
+	}
+
+	public int getMaxCapacity() {
+		return maxCapacity;
+	}
+
+	public void setMaxCapacity(int maxCapacity) {
+		this.maxCapacity = maxCapacity;
+	}
+
+	public int getMinCapacity() {
+		return minCapacity;
+	}
+
+	public void setMinCapacity(int minCapacity) {
+		this.minCapacity = minCapacity;
+	}
 }

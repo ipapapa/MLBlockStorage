@@ -4,13 +4,14 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import edu.purdue.simulation.blockstorage.backend.BackEnd;
+import edu.purdue.simulation.VolumeRequest;
+import edu.purdue.simulation.blockstorage.backend.Backend;
+import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 
 public class StatisticalGroupping extends Scheduler {
 	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment,
 			edu.purdue.simulation.Workload workload) {
 		super(experiment, workload);
-		// TODO Auto-generated constructor stub
 	}
 
 	private double PredictedSTD = 53; // 52.5468;
@@ -19,7 +20,8 @@ public class StatisticalGroupping extends Scheduler {
 
 	private double predicatedAVG = 41; // 41.4823;
 
-	private static final int BinSize = 1200; // GB
+	BackEndSpecifications backendSpecifications = new BackEndSpecifications(
+			1200, 2000, 800, 500, 800, 200, 0, true);
 
 	private void RankRequest(VolumeRequest request) {
 
@@ -65,30 +67,40 @@ public class StatisticalGroupping extends Scheduler {
 
 	private void addNewBackends() throws SQLException {
 		// 1200 is an assumption
+		@SuppressWarnings("unused")
 		int OptimalBinNumbers = (int) (this.PredictedTotalCapacity / 1200);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Small);
+		super.getExperiment()
+				.AddBackEnd(backendSpecifications, GroupSize.Small);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Small);
+		super.getExperiment()
+				.AddBackEnd(backendSpecifications, GroupSize.Small);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Medium);
+		super.getExperiment().AddBackEnd(backendSpecifications,
+				GroupSize.Medium);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Medium);
+		super.getExperiment().AddBackEnd(backendSpecifications,
+				GroupSize.Medium);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Large);
+		super.getExperiment()
+				.AddBackEnd(backendSpecifications, GroupSize.Large);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.Large);
+		super.getExperiment()
+				.AddBackEnd(backendSpecifications, GroupSize.Large);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.XLarge);
+		super.getExperiment().AddBackEnd(backendSpecifications,
+				GroupSize.XLarge);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.XXLarge);
+		super.getExperiment().AddBackEnd(backendSpecifications,
+				GroupSize.XXLarge);
 
-		super.getExperiment().AddBackEnd(BinSize, GroupSize.XXXLarge);
+		super.getExperiment().AddBackEnd(backendSpecifications,
+				GroupSize.XXXLarge);
 	}
 
 	private static int start;
 
-	private BackEnd GetBestBackEndForRequest(VolumeRequest request)
+	private Backend GetBestBackEndForRequest(VolumeRequest request)
 			throws SQLException {
 		int MaxGroupSize = 6;
 
@@ -96,7 +108,8 @@ public class StatisticalGroupping extends Scheduler {
 
 		for (int i = 1; i <= MaxGroupSize; i++) {
 
-			List<BackEnd> candidateList = this.getExperiment().BackEndList
+			this.getExperiment();
+			List<Backend> candidateList = edu.purdue.simulation.Experiment.BackEndList
 					.stream()
 					.filter(b -> (b.getGroupSize().order == start)
 							&& (b.getState().getAvailableCapacity() > request
@@ -117,76 +130,53 @@ public class StatisticalGroupping extends Scheduler {
 
 		this.addNewBackends();
 
-		// .sorted((a, b) -> Integer.compare(b.getState()
-		// .getAvailableCapacity(), a.getState()
-		// .getAvailableCapacity()));
-
 		return this.GetBestBackEndForRequest(request);
 	}
 
-	public void Schedule() throws SQLException {
+	public void schedule() throws SQLException {
 
-		while (!this.getRequestQueue().isEmpty()) {
+		VolumeRequest request = super.getRequestQueue().peek();
 
-			// Collections.sort(this.getExperiment().BackEndList,
-			// new Comparator<BackEnd>() {
-			// @Override
-			// public int compare(BackEnd backEnd1, BackEnd backEnd2) {
-			// return Integer.compare(backEnd2.getState()
-			// .getAvailableCapacity(), backEnd1
-			// .getState().getAvailableCapacity());
-			// }
-			// });
-			//
-			// BackEnd maxAvailableCapacityBackEnd =
-			// this.getExperiment().BackEndList
-			// .get(0);
+		this.RankRequest(request);
 
-			VolumeRequest request = super.getRequestQueue().peek();
+		ScheduleResponse schedulerResponse = new ScheduleResponse( //
+				this.getExperiment(), //
+				request);
 
-			this.RankRequest(request);
+		Backend bestFit = this.GetBestBackEndForRequest(request);
 
-			ScheduleResponse schedulerResponse = new ScheduleResponse( //
-					this.getExperiment(), //
-					request);
+		Volume volume = bestFit.createVolumeThenSave(request.ToVolumeSpecifications(),
+				schedulerResponse);
 
-			BackEnd bestFit = this.GetBestBackEndForRequest(request);
+		BackEndSpecifications backendSpecifications = new BackEndSpecifications(
+				1200, 2000, 800, 500, 800, 200, 0, true);
 
-			Volume volume = bestFit.CreateVolume(
-					request.ToVolumeSpecifications(), schedulerResponse);
+		// here volume will never be null
+		if (volume == null) {
 
-			// here volume will never be null
-			if (volume == null) {
+			schedulerResponse.isSuccessful = false;
 
-				schedulerResponse.IsSuccessful = false;
+			schedulerResponse.backEndScheduled = null;
 
-				schedulerResponse.BackEndScheduled = null;
+			schedulerResponse.backEndCreated = super.getExperiment()
+					.AddBackEnd(backendSpecifications); // no backend created
 
-				schedulerResponse.BackEndCreated = super.getExperiment()
-						.AddBackEnd(1200); // no backend created
+			// no backend turned on
+			schedulerResponse.backEndTurnedOn = null;
 
-				// no backend turned on
-				schedulerResponse.BackEndTurnedOn = null;
+			System.out.println("Failed to schedule ->" + request.toString());
+		} else {
 
-				System.out
-						.println("Failed to schedule ->" + request.toString());
-			} else {
+			schedulerResponse.isSuccessful = true;
 
-				schedulerResponse.IsSuccessful = true;
+			schedulerResponse.backEndScheduled = bestFit;
 
-				schedulerResponse.BackEndScheduled = bestFit;
+			System.out
+					.println("Successfully scheduled ->" + request.toString());
 
-				System.out.println("Successfully scheduled ->"
-						+ request.toString());
-
-				super.getRequestQueue().remove();
-			}
-
-			schedulerResponse.Save();
-
-			if (volume != null)
-
-				volume.Save();
+			super.getRequestQueue().remove();
 		}
+
+		schedulerResponse.Save();
 	}
 }

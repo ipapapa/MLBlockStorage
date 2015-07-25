@@ -5,7 +5,6 @@ public class VolumeSpecifications extends Specifications {
 	public VolumeSpecifications() {
 
 		super();
-
 	}
 
 	public VolumeSpecifications(int capacity, int IOPS, int latency,

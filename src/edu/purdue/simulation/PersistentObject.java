@@ -1,6 +1,7 @@
 package edu.purdue.simulation;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -11,7 +12,7 @@ public abstract class PersistentObject {
 	}
 
 	public PersistentObject(BigDecimal id) throws SQLException {
-		this.Retrieve(id);
+		this.retrieve(id);
 	}
 
 	private BigDecimal ID;
@@ -34,15 +35,20 @@ public abstract class PersistentObject {
 		CreateTime = createTime;
 	}
 
-	protected boolean Retrieve(BigDecimal ID) throws SQLException {
-		return false;
-	}
-	
-	protected boolean RetrieveProperties(ResultSet resulSet) throws SQLException {
-		return false;
+	public BigDecimal save() throws SQLException {
+		throw new UnsupportedOperationException("The method is not implimented");
 	}
 
-	protected void RetrievePersistentProperties(ResultSet resulSet,
+	protected boolean retrieve(BigDecimal ID) throws SQLException {
+		throw new UnsupportedOperationException("The method is not implimented");
+	}
+
+	protected boolean retrieveProperties(ResultSet resulSet)
+			throws SQLException {
+		throw new UnsupportedOperationException("The method is not implimented");
+	}
+
+	protected void retrievePersistentProperties(ResultSet resulSet,
 			int createTimeIndex) throws SQLException {
 
 		this.setID(resulSet.getBigDecimal(1));

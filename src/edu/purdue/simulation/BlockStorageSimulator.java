@@ -19,47 +19,66 @@ public class BlockStorageSimulator {
 
 		try {
 
-			System.out.println("start");
+			// for (int i = 0; i < 600; i++) {
+			// System.out.println(i + "\t" + getPoissonRandom(1000));
+			// }
 
-			// Workload workload = new Workload(1 // generate method
-			// , "workload with time gap");
-			//
-			// workload.GenerateWorkload2();
+			if (args != null) {
 
-			Workload workload = new Workload(BigDecimal.valueOf(37));
+				System.out.println("start");
 
-			workload.RetrieveVolumeRequests();
+				// Workload workload = new Workload(1 // generate method
+				// , "workload with time gap");
+				//
+				// workload.GenerateWorkload2();
 
-			// Experiment experiment = new Experiment(
-			// "MostAvailableCapacity Run 1", "MostAvailableCapacity");
+				Workload workload = new Workload(BigDecimal.valueOf(37));
 
-			Experiment experiment = new Experiment(
-					"StatisticalGroupping Run 1", "StatisticalGroupping");
+				workload.RetrieveVolumeRequests();
 
-			//
-			experiment.Save();
-			//
-			// experiment.GenerateBackEnd();
-			//
-			Scheduler scheduler = new edu.purdue.simulation.blockstorage.StatisticalGroupping(experiment, workload);
-			
-			//Scheduler scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(experiment, workload);
-			//
-			scheduler.Schedule();
+				// Experiment experiment = new Experiment(
+				// "MostAvailableCapacity Run 1", "MostAvailableCapacity");
 
-			// System.out.println("\n\nend - Experiment ID: "
-			// + experiment.ID.toString() + " Workload ID: "
-			// + workload.ID.toString());
+				Experiment experiment = new Experiment(
+						"StatisticalGroupping Run 1", "StatisticalGroupping");
+
+				//
+				experiment.Save();
+				//
+				// experiment.GenerateBackEnd();
+				//
+				// Scheduler scheduler = new
+				// edu.purdue.simulation.blockstorage.StatisticalGroupping(
+				// experiment, workload);
+
+				Scheduler scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(
+						experiment, workload);
+
+				try {
+					scheduler.run();
+				} catch (Exception ex) {
+					System.out.println("ERROR" + ex.getMessage());
+				} finally {
+					System.out.println("simulation done, experiment ID ="
+							+ experiment.getID());
+				}
+			}
+
+			// System.out.println("\n\nend - Experiment ID: "+
+			// experiment.ID.toString() + " Workload ;ID: +
+			// workload.ID.toString());
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 
 		}
+
 	}
 
 	private static int getPoissonRandom(double mean) {
 		Random r = new Random();
+
 		double L = Math.exp(-mean);
 		int k = 0;
 		double p = 1.0;

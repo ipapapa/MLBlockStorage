@@ -2,7 +2,7 @@ package edu.purdue.simulation.blockstorage;
 
 import java.util.*;
 
-import edu.purdue.simulation.blockstorage.backend.BackEnd;
+import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 
 public class PerformanceCalculator {
@@ -27,7 +27,7 @@ public class PerformanceCalculator {
 		
 	}
 	
-	public BackEndSpecifications CalculateBackEndSpecifications(BackEnd backEnd){
+	public BackEndSpecifications CalculateBackEndSpecifications(Backend backEnd){
 		return null;
 	}
 	

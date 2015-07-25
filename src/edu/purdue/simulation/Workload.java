@@ -9,8 +9,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Random;
 
-import edu.purdue.simulation.blockstorage.*;
-
 public class Workload extends PersistentObject {
 
 	public Workload(int generateMethod, String comment) {
@@ -137,7 +135,7 @@ public class Workload extends PersistentObject {
 
 				Thread.sleep(sleepSeconds * 1000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			}
 
@@ -173,7 +171,7 @@ public class Workload extends PersistentObject {
 	}
 
 	@Override
-	public boolean Retrieve(BigDecimal ID) throws SQLException {
+	public boolean retrieve(BigDecimal ID) throws SQLException {
 
 		Connection connection = Database.getConnection();
 
@@ -191,7 +189,7 @@ public class Workload extends PersistentObject {
 
 			this.setComment(rs.getString(2));
 
-			super.RetrievePersistentProperties(rs, 4);
+			super.retrievePersistentProperties(rs, 4);
 		}
 
 		return true;
@@ -203,7 +201,8 @@ public class Workload extends PersistentObject {
 
 		PreparedStatement statement = connection
 				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, create_time"
-						+ " From	volume_request	Where	workload_ID		= ?;");
+						+ " From	volume_request	Where	workload_ID		= ?"
+						+ " Limit	30;");
 
 		statement.setBigDecimal(1, this.getID());
 
@@ -213,7 +212,7 @@ public class Workload extends PersistentObject {
 
 			VolumeRequest request = new VolumeRequest(this);
 
-			request.RetrieveProperties(rs);
+			request.retrieveProperties(rs);
 
 			this.VolumeRequestList.add(request);
 		}

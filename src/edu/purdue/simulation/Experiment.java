@@ -5,49 +5,50 @@ import java.sql.*;
 import java.util.ArrayList;
 
 import edu.purdue.simulation.blockstorage.GroupSize;
-import edu.purdue.simulation.blockstorage.backend.BackEnd;
+import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 import edu.purdue.simulation.blockstorage.backend.LVM;
 
-public class Experiment {
+public class Experiment extends PersistentObject {
 
 	public Experiment(String comment, String schedulerAlgorithm) {
 		super();
 		Comment = comment;
 		SchedulerAlgorithm = schedulerAlgorithm;
 
-		this.BackEndList = new ArrayList<>();
-	}
+		Experiment.BackEndList = new ArrayList<>();
 
-	public BigDecimal ID;
+		Experiment.clock = new BigDecimal(1);
+	}
 
 	public String Comment;
 
 	public String SchedulerAlgorithm;
 
-	public ArrayList<BackEnd> BackEndList;
+	public static ArrayList<Backend> BackEndList;
 
-	public ArrayList<BackEnd> GenerateBackEnd() throws SQLException {
+	public static BigDecimal clock;
 
-		if (this.ID == null || !(this.ID.compareTo(BigDecimal.ZERO) > 0))
+	public ArrayList<Backend> GenerateBackEnd() throws SQLException {
+
+		if (this.getID() == null
+				|| !(this.getID().compareTo(BigDecimal.ZERO) > 0))
 
 			this.Save();
 
-		BackEndList = new ArrayList<BackEnd>();
+		BackEndList = new ArrayList<Backend>();
 
-		BackEndSpecifications[] specifications = {
-				new BackEndSpecifications(200, 1000, 20, true),
-				new BackEndSpecifications(400, 1000, 20, true),
-				new BackEndSpecifications(1000, 1000, 20, true),
-				new BackEndSpecifications(1200, 1000, 20, true),
-				new BackEndSpecifications(1000, 1000, 20, true),
-				new BackEndSpecifications(1000, 1000, 20, true),
-				new BackEndSpecifications(1000, 1000, 20, true), };
+		BackEndSpecifications specification = new BackEndSpecifications(1200,
+				2000, 800, 500, 800, 200, 0, true);
+
+		BackEndSpecifications[] specifications = { specification,
+				specification, specification, specification, specification,
+				specification, specification, };
 
 		for (int i = 0; i < specifications.length; i++) {
-			BackEnd backEnd = new LVM(this, specifications[i]);
+			Backend backEnd = new LVM(this, specifications[i]);
 
-			backEnd.Save();
+			backEnd.save();
 
 			BackEndList.add(backEnd);
 		}
@@ -56,21 +57,21 @@ public class Experiment {
 
 	}
 
-	public BackEnd AddBackEnd(int size, GroupSize groupSize)
-			throws SQLException {
-		BackEnd backEnd = this.AddBackEnd(size);
+	public Backend AddBackEnd(BackEndSpecifications backEndSpecifications,
+			GroupSize groupSize) throws SQLException {
+		Backend backEnd = this.AddBackEnd(backEndSpecifications);
 
 		backEnd.setGroupSize(groupSize);
 
 		return backEnd;
 	}
 
-	public BackEnd AddBackEnd(int size) throws SQLException {
+	public Backend AddBackEnd(BackEndSpecifications backEndSpecifications)
+			throws SQLException {
 
-		BackEnd backEnd = new LVM(this, new BackEndSpecifications(size, //
-				1000, 20, true));
+		Backend backEnd = new LVM(this, backEndSpecifications);
 
-		backEnd.Save();
+		backEnd.save();
 
 		BackEndList.add(backEnd);
 
@@ -96,9 +97,9 @@ public class Experiment {
 
 		if (rs.next()) {
 
-			this.ID = rs.getBigDecimal(1);
+			this.setID(rs.getBigDecimal(1));
 
-			return this.ID;
+			return this.getID();
 		}
 
 		return BigDecimal.valueOf(-1);
@@ -107,6 +108,6 @@ public class Experiment {
 	@Override
 	public String toString() {
 		return String.format("ID: %d - comment: %d - SchedulerAlgorithm: %d",
-				this.ID.toString(), this.Comment, this.SchedulerAlgorithm);
+				this.getID().toString(), this.Comment, this.SchedulerAlgorithm);
 	}
 }

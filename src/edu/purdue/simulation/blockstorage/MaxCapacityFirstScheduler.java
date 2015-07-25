@@ -4,7 +4,9 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Comparator;
 
-import edu.purdue.simulation.blockstorage.backend.BackEnd;
+import edu.purdue.simulation.VolumeRequest;
+import edu.purdue.simulation.blockstorage.backend.Backend;
+import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 
 public class MaxCapacityFirstScheduler extends Scheduler {
 
@@ -15,71 +17,81 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void Schedule() throws SQLException {
+	BackEndSpecifications specifications = new BackEndSpecifications( //
+			1200, 2000, 800, 500, 700, 400, 0, true);
 
-		for (int i = 0; i < 100; i++)
-			// 119800 / 1200 = 100 optimum number of requests
+	protected void preRun() throws SQLException {
 
-			super.getExperiment().AddBackEnd(1200);
+		super.getExperiment().AddBackEnd(this.specifications);
 
-		while (!this.getRequestQueue().isEmpty()) {
+		// super.getExperiment().AddBackEnd(this.specifications);
+		//
+		// super.getExperiment().AddBackEnd(this.specifications);
+		//
+		// super.getExperiment().AddBackEnd(this.specifications);
+		//
+		// super.getExperiment().AddBackEnd(this.specifications);
+		//
+		// super.getExperiment().AddBackEnd(this.specifications);
 
-			Collections.sort(this.getExperiment().BackEndList,
-					new Comparator<BackEnd>() {
-						@Override
-						public int compare(BackEnd backEnd1, BackEnd backEnd2) {
-							return Integer.compare(backEnd2.getState()
-									.getAvailableCapacity(), backEnd1
-									.getState().getAvailableCapacity());
-						}
-					});
+	}
 
-			BackEnd maxAvailableCapacityBackEnd = this.getExperiment().BackEndList
-					.get(0);
+	public void schedule() throws SQLException {
 
-			VolumeRequest request = super.getRequestQueue().peek();
+		Collections.sort(edu.purdue.simulation.Experiment.BackEndList,
+				new Comparator<Backend>() {
+					@Override
+					public int compare(Backend backEnd1, Backend backEnd2) {
+						return Integer.compare(backEnd2.getState()
+								.getAvailableCapacity(), backEnd1.getState()
+								.getAvailableCapacity());
+					}
+				});
 
-			ScheduleResponse schedulerResponse = new ScheduleResponse( //
-					this.getExperiment(), //
-					request);
+		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.BackEndList
+				.get(0);
 
-			Volume volume = maxAvailableCapacityBackEnd.CreateVolume(
-					request.ToVolumeSpecifications(), schedulerResponse);
+		VolumeRequest request = super.getRequestQueue().peek();
 
-			// there is no volume available. either reject or create new volume
-			// in case of reject a SchedulerResponse record will be saved
-			if (volume == null) {
+		ScheduleResponse schedulerResponse = new ScheduleResponse( //
+				this.getExperiment(), //
+				request);
 
-				schedulerResponse.IsSuccessful = false;
+		Volume volume = maxAvailableCapacityBackEnd.createVolumeThenSave(
+				request.ToVolumeSpecifications(), schedulerResponse);
 
-				schedulerResponse.BackEndScheduled = null;
+		// there is no volume available. either reject or create new volume
+		// in case of reject a SchedulerResponse record will be saved
+		if (volume == null) {
 
-				schedulerResponse.BackEndCreated = super.getExperiment()
-						.AddBackEnd(1200); // no backend created
+			schedulerResponse.isSuccessful = false;
 
-				schedulerResponse.BackEndTurnedOn = null; // no backend turned
-															// on
+			schedulerResponse.backEndScheduled = null;
 
-				System.out
-						.println("Failed to schedule ->" + request.toString());
-			} else {
+			// I only want to have 1 backend
+			// schedulerResponse.backEndCreated = super.getExperiment()
+			// .AddBackEnd(this.specifications); // no backend created
 
-				schedulerResponse.IsSuccessful = true;
+			// if cant schedule, drop it
+			super.getRequestQueue().remove();
 
-				schedulerResponse.BackEndScheduled = maxAvailableCapacityBackEnd;
+			schedulerResponse.backEndTurnedOn = null; // no backend turned on
 
-				System.out.println("Successfully scheduled ->"
-						+ request.toString());
+			System.out.println("[Failed to schedule] ->" + request.toString());
+		} else {
 
-				super.getRequestQueue().remove();
-			}
+			schedulerResponse.isSuccessful = true;
 
-			schedulerResponse.Save();
+			schedulerResponse.backEndScheduled = maxAvailableCapacityBackEnd;
 
-			if (volume != null)
+			System.out.println("[Successfully scheduled] ->"
+					+ request.toString() + " backendID= "
+					+ schedulerResponse.backEndScheduled.getID());
 
-				volume.Save();
+			super.getRequestQueue().remove();
 		}
+
+		schedulerResponse.Save();
 	}
 
 }

@@ -8,31 +8,31 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import edu.purdue.simulation.*;
-import edu.purdue.simulation.blockstorage.backend.BackEnd;
+import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class ScheduleResponse {
 
 	public ScheduleResponse(Experiment experiment, VolumeRequest volumeRequest) {
 		super();
 
-		this.VolumeRequest = volumeRequest;
+		this.volumeRequest = volumeRequest;
 
-		this.Experiment = experiment;
+		this.experiment = experiment;
 	}
 
-	public VolumeRequest VolumeRequest;
+	public VolumeRequest volumeRequest;
 
 	public BigDecimal ID;
 
-	public Experiment Experiment;
+	public Experiment experiment;
 
-	public BackEnd BackEndCreated;
+	public Backend backEndCreated;
 
-	public BackEnd BackEndTurnedOn;
+	public Backend backEndTurnedOn;
 
-	public BackEnd BackEndScheduled;
+	public Backend backEndScheduled;
 
-	public boolean IsSuccessful;
+	public boolean isSuccessful;
 
 	public BigDecimal Save() throws SQLException {
 
@@ -41,24 +41,26 @@ public class ScheduleResponse {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert	Into	BlockStorageSimulator.schedule_response"
-								+ "		(experiment_id, volume_request_ID, backend_turned_on, backend_create, backend_scheduled, is_successful)"
-								+ "			values" + "		(?, ?, ?, ?, ?, ?)",
+								+ "		(experiment_id, volume_request_ID, backend_turned_on, backend_create, backend_scheduled, is_successful, clock)"
+								+ "			values" + "		(?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 
-		statement.setBigDecimal(1, this.Experiment.ID);
+		statement.setBigDecimal(1, this.experiment.getID());
 
-		statement.setBigDecimal(2, this.VolumeRequest.getID());
+		statement.setBigDecimal(2, this.volumeRequest.getID());
 
-		statement.setBigDecimal(3, this.BackEndTurnedOn == null ? null
-				: this.BackEndTurnedOn.ID);
+		statement.setBigDecimal(3, this.backEndTurnedOn == null ? null
+				: this.backEndTurnedOn.getID());
 
-		statement.setBigDecimal(4, this.BackEndCreated == null ? null
-				: this.BackEndCreated.ID);
+		statement.setBigDecimal(4, this.backEndCreated == null ? null
+				: this.backEndCreated.getID());
 
-		statement.setBigDecimal(5, this.BackEndScheduled == null ? null
-				: this.BackEndScheduled.ID);
+		statement.setBigDecimal(5, this.backEndScheduled == null ? null
+				: this.backEndScheduled.getID());
 
-		statement.setBoolean(6, this.IsSuccessful);
+		statement.setBoolean(6, this.isSuccessful);
+
+		statement.setBigDecimal(7, Experiment.clock);
 
 		statement.executeUpdate();
 

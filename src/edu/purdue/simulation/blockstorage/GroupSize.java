@@ -2,7 +2,8 @@ package edu.purdue.simulation.blockstorage;
 
 public enum GroupSize {
 
-	None(0, 0, 0, 0, 0), Small(-1.0, 0, 0, 1.0, 1), //
+	None(0, 0, 0, 0, 0), 
+	Small(-1.0, 0, 0, 1.0, 1), //
 	Medium(-1.8, -1.0, 1.0, 1.8, 2), //
 	Large(-2.6, -1.8, 1.8, 2.6, 3), //
 	XLarge(-3.4, -2.6, 2.6, 3.4, 4), //
