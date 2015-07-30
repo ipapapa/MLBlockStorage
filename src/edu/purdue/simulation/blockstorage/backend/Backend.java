@@ -13,6 +13,10 @@ import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
 import edu.purdue.simulation.blockstorage.*;
 
+/**
+ * @author ravandi
+ *
+ */
 public abstract class Backend extends PersistentObject {
 
 	public Backend(Experiment experiment, BackEndSpecifications specifications) {
@@ -25,7 +29,6 @@ public abstract class Backend extends PersistentObject {
 		this.Experiment = experiment;
 	}
 
-	private GroupSize GroupSize;
 
 	private Experiment Experiment;
 
@@ -43,13 +46,17 @@ public abstract class Backend extends PersistentObject {
 		return specifications;
 	}
 
-	public GroupSize getGroupSize() {
-		return GroupSize;
-	}
-
-	public void setGroupSize(GroupSize groupSize) {
-		GroupSize = groupSize;
-	}
+	// I cant understand why VolumeRequestCategories is needed here ??!! 
+	
+	// private VolumeRequestCategories GroupSize;
+	
+	// public VolumeRequestCategories getGroupSize() {
+	// return GroupSize;
+	// }
+	//
+	// public void setGroupSize(VolumeRequestCategories groupSize2) {
+	// GroupSize = groupSize2;
+	// }
 
 	public List<Volume> getVolumeList() {
 		return VolumeList;
@@ -105,11 +112,16 @@ public abstract class Backend extends PersistentObject {
 
 		if (rs.next()) {
 
-			if (isUpdate == false)
-				// Don't screw current IF
+			// Don't screw current IF
+			if (isUpdate) {
+
+				return rs.getBigDecimal(1);
+
+			} else {
 				this.setID(rs.getBigDecimal(1));
 
-			return this.getID();
+				return this.getID();
+			}
 		}
 
 		return BigDecimal.valueOf(-1);
@@ -120,6 +132,13 @@ public abstract class Backend extends PersistentObject {
 		return this.doSave(false, 1); // 1 is create
 	}
 
+	/**
+	 * @return creates a record in the backend table and will put null into
+	 *         MaxCapacity, MinCapacity, MaxIOPS and MinIOPS columns. Then
+	 *         returns that record number. NOTE this function will not change
+	 *         this object ID.
+	 * @throws SQLException
+	 */
 	public BigDecimal saveCurrentState() throws SQLException {
 
 		return this.doSave(true, 2); // 2 save current state

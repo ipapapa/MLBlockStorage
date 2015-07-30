@@ -23,9 +23,10 @@ public abstract class StochasticEvent {
 
 	public abstract void fire(Backend backend) throws SQLException;
 
-	public String toString() {
-		return "[StochasticEvent] --> type = " + this.getEventType()
-				+ " clock = " + Experiment.clock;
+	public String toString(boolean isApplied) {
+		return "[StochasticEvent]"
+				+ (isApplied ? "[APPLIED]" : "[NOT APPLIED]") + " --> type = "
+				+ this.getEventType() + " clock = " + Experiment.clock;
 	}
 
 	protected static void apply(StochasticEvent event, Backend backend,
@@ -78,29 +79,29 @@ public abstract class StochasticEvent {
 
 		if (isEventApplied) {
 
-			event.save(backend.saveCurrentState(), sumBy, null);
+			backend.saveCurrentState();
 
-			System.out.println("[APPLIED]" + event.toString() + " intVal1 = "
-					+ sumBy + " StringVal1 = NULL ");
+			event.save(backend.getID(), sumBy, null, isEventApplied);
 
 		} else {
 
-			event.save(backend.getID(), sumBy, null);
+			event.save(backend.getID(), sumBy, null, isEventApplied);
 
-			System.out.println("[NOT APPLIED]" + event.toString()
-					+ " intVal1 = " + sumBy + " StringVal1 = NULL ");
 		}
+
+		System.out.println(event.toString(isEventApplied) + " intVal1 = "
+				+ sumBy + " StringVal1 = NULL ");
 	}
 
 	protected BigDecimal save(BigDecimal backendID, Integer intVal1,
-			String stringVal1) throws SQLException {
+			String stringVal1, boolean isApplied) throws SQLException {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert into stochastic_event "
-								+ "	(stochastic_event_type_ID, backend_ID, clock, int_val1, string_val1)"
-								+ "		Values" + "	(?, ?, ? , ?, ?)",
+								+ "	(stochastic_event_type_ID, backend_ID, clock, int_val1, string_val1, is_applied)"
+								+ "		Values" + "	(?, ?, ? , ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setInt(1, this.getEventType());
@@ -112,6 +113,8 @@ public abstract class StochasticEvent {
 		statement.setInt(4, intVal1);
 
 		statement.setString(5, stringVal1);
+
+		statement.setBoolean(6, isApplied);
 
 		statement.executeUpdate();
 

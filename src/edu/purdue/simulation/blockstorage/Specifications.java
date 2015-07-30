@@ -11,6 +11,10 @@ public abstract class Specifications extends PersistentObject {
 	// read_iops_sec: random read limitation
 	// write_iops_sec: random write limitation
 
+	public Specifications() {
+
+	}
+
 	public Specifications(int capacity, int IOPS, int latency) {
 
 		super();
@@ -21,10 +25,6 @@ public abstract class Specifications extends PersistentObject {
 
 		this.Latency = latency;
 
-	}
-
-	public Specifications() {
-		super();
 	}
 
 	private int Capacity;

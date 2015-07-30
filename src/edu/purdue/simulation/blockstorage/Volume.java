@@ -58,7 +58,7 @@ public class Volume extends PersistentObject {
 		int backendCurrentAvailableIOPS = this.backend.getSpecifications()
 				.getIOPS();
 
-		if (backEndVolumesTotalRequestedIOPS > backendCurrentAvailableIOPS) {
+		if (backEndVolumesTotalRequestedIOPS >= backendCurrentAvailableIOPS) {
 
 			return Math.round(backendCurrentAvailableIOPS / numberOfVolumes);
 

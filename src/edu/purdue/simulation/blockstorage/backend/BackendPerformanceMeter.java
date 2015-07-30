@@ -27,8 +27,9 @@ public class BackendPerformanceMeter extends PersistentObject {
 	public int availableCapacity;
 
 	public String toString() {
-		return "[PING VOLUME] clock = " + Experiment.clock + " ID = "
-				+ this.getID() + " backendID = " + this.backend.getID();
+		return "[BackendPerformanceMeter] clock = " + Experiment.clock
+				+ " ID = " + this.getID() + " backendID = "
+				+ this.backend.getID();
 	}
 
 	public BigDecimal Save(Volume pingVolume) throws SQLException {
@@ -38,8 +39,8 @@ public class BackendPerformanceMeter extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"Insert Into BlockStorageSimulator.backend_performance_meter"
-								+ "	(backend_ID, volume_ID, clock, available_IOPS, available_capacity)"
-								+ "		values" + "	(?, ?, ?, ?, ?);",
+								+ "	(backend_ID, volume_ID, clock, available_IOPS, available_capacity, volumes_count)"
+								+ "		values" + "	(?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.backend.getID());
@@ -55,6 +56,8 @@ public class BackendPerformanceMeter extends PersistentObject {
 		int availableCapacity = backend.getState().getAvailableCapacity();
 
 		statement.setInt(5, availableCapacity);
+
+		statement.setInt(6, this.backend.getVolumeList().size());
 
 		statement.executeUpdate();
 

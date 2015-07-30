@@ -6,9 +6,14 @@ import java.util.*;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.Workload;
+import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
+import edu.purdue.simulation.blockstorage.backend.Backend;
+import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
+
 import java.math.BigDecimal;
+
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public abstract class Scheduler {
@@ -58,6 +63,55 @@ public abstract class Scheduler {
 		throw new NotImplementedException();
 	}
 
+	protected BackEndSpecifications currentExpectedSpecifications_Regression(
+			Backend backend) {
+
+		// TODO call the database and do regression on current clock
+		BackEndSpecifications result = new BackEndSpecifications();
+
+		result.setIOPS(700);
+
+		return result;
+	}
+
+	protected BackendCategories getBackendCategory(Backend backend) {
+
+		// TODO STD AVG
+
+		return BackendCategories.Unstable;
+	}
+
+	protected int getExpectedIOPSBasedOnBackendStability(Backend backend) {
+
+		BackEndSpecifications specifications = this
+				.currentExpectedSpecifications_Regression(backend);
+
+		// Remmeber you have to automate category by looking at mean and std of
+		// backend
+		switch (this.getBackendCategory(backend)) {
+		case VeryStable:
+
+			return (int) (specifications.getIOPS() * 0.1);
+
+		case Stable:
+
+			return (int) (specifications.getIOPS() * 0.2);
+
+		case Unstable:
+
+			return (int) (specifications.getIOPS() * 0.4);
+
+		case VeryUnstable:
+
+			return (int) (specifications.getIOPS() * 0.5);
+
+		default:
+			break;
+		}
+
+		return 0;
+	}
+
 	public void run() throws SQLException {
 
 		this.preRun();
@@ -78,7 +132,15 @@ public abstract class Scheduler {
 
 		BigDecimal numOne = new BigDecimal(1);
 
+		int i = 0;
+
 		while (true) {
+
+			if (i == 50)
+
+				break;
+
+			i++;
 
 			eventGenerator.run();
 
@@ -86,11 +148,12 @@ public abstract class Scheduler {
 
 			if (this.getRequestQueue().isEmpty()) {
 
-				break;
+				// break;
 			} else {
 
 				this.schedule();
 			}
+
 			// System.out.println("Scheduler");
 
 			edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock

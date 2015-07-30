@@ -202,7 +202,7 @@ public class Workload extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, create_time"
 						+ " From	volume_request	Where	workload_ID		= ?"
-						+ " Limit	30;");
+						+ " Limit	40;");
 
 		statement.setBigDecimal(1, this.getID());
 

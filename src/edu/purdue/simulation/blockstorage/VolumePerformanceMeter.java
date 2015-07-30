@@ -22,21 +22,23 @@ public class VolumePerformanceMeter extends PersistentObject {
 
 	private Volume volume;
 
-	public String toString() {
-		return "[VOLUME PERFORMANCE] clock = " + Experiment.clock + " ID = "
-				+ this.getID() + " volume_ID = " + this.volume.getID()
-				+ " backendID = " + this.volume.getBackend().getID();
+	public String toString(boolean SLAViolation) {
+		return "[VOLUME PERFORMANCE] clock = " + Experiment.clock
+				+ " SLAViolation = " + SLAViolation + " ID = " + this.getID()
+				+ " volume_ID = " + this.volume.getID() + " backendID = "
+				+ this.volume.getBackend().getID();
 	}
 
 	public BigDecimal Save() throws SQLException {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection.prepareStatement(
-				"Insert Into BlockStorageSimulator.volume_performance_meter"
-						+ "	(experiment_ID, volume_ID, clock, available_IOPS)"
-						+ "		values" + "	(?, ?, ?, ?);",
-				Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(
+						"Insert Into BlockStorageSimulator.volume_performance_meter"
+								+ "	(experiment_ID, volume_ID, clock, available_IOPS, SLA_violation)"
+								+ "		values" + "	(?, ?, ?, ?, ?);",
+						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.volume.getBackend().getExperiment()
 				.getID());
@@ -49,6 +51,11 @@ public class VolumePerformanceMeter extends PersistentObject {
 
 		statement.setInt(4, currentIOPS);
 
+		boolean SLAViolation = currentIOPS < this.volume.getSpecifications()
+				.getIOPS();
+
+		statement.setBoolean(5, SLAViolation);
+
 		statement.executeUpdate();
 
 		ResultSet rs = statement.getGeneratedKeys();
@@ -57,7 +64,7 @@ public class VolumePerformanceMeter extends PersistentObject {
 
 			this.setID(rs.getBigDecimal(1));
 
-			System.out.println(this.toString() + " currentIOPS = "
+			System.out.println(this.toString(SLAViolation) + " currentIOPS = "
 					+ currentIOPS);
 
 			return this.getID();

@@ -8,8 +8,6 @@ public class BackEndSpecifications extends Specifications {
 
 		super();
 
-		this.Initialize();
-
 	}
 
 	public BackEndSpecifications(int capacity, int maxCapacity,
@@ -24,11 +22,6 @@ public class BackEndSpecifications extends Specifications {
 		this.setMinCapacity(minCapacity);
 
 		this.setLatency(latency);
-
-		this.Initialize();
-	}
-
-	private void Initialize() {
 
 	}
 

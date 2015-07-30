@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import edu.purdue.simulation.blockstorage.GroupSize;
+import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
 import edu.purdue.simulation.blockstorage.Specifications;
 import edu.purdue.simulation.blockstorage.VolumeSpecifications;
 
@@ -33,17 +33,17 @@ public class VolumeRequest extends Specifications {
 		this.setType(type);
 	}
 
-	private GroupSize GroupSize;
+	private VolumeRequestCategories GroupSize;
 
 	private int Type;
 
 	private Workload Workload;
 
-	public GroupSize getGroupSize() {
+	public VolumeRequestCategories getGroupSize() {
 		return GroupSize;
 	}
 
-	public void setGroupSize(GroupSize groupSize) {
+	public void setGroupSize(VolumeRequestCategories groupSize) {
 		GroupSize = groupSize;
 	}
 

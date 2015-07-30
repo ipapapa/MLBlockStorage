@@ -4,9 +4,10 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 
-import edu.purdue.simulation.blockstorage.GroupSize;
+import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
+import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.backend.LVM;
 
 public class Experiment extends PersistentObject {
@@ -58,10 +59,12 @@ public class Experiment extends PersistentObject {
 	}
 
 	public Backend AddBackEnd(BackEndSpecifications backEndSpecifications,
-			GroupSize groupSize) throws SQLException {
+			VolumeRequestCategories groupSize) throws SQLException {
 		Backend backEnd = this.AddBackEnd(backEndSpecifications);
 
-		backEnd.setGroupSize(groupSize);
+		// I cant understand why is needed in BackEndSpecifications for
+		// statisticalGroupping method
+		// backEnd.setGroupSize(groupSize);
 
 		return backEnd;
 	}

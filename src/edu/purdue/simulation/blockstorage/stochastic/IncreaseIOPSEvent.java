@@ -15,10 +15,10 @@ public class IncreaseIOPSEvent extends
 	int[] sizes = new int[4];
 
 	public IncreaseIOPSEvent() {
-		sizes[0] = -10;
-		sizes[1] = -20;
-		sizes[2] = -30;
-		sizes[3] = -40;
+		sizes[0] = 100;
+		sizes[1] = 150;
+		sizes[2] = 200;
+		sizes[3] = 250;
 	}
 	
 	@Override

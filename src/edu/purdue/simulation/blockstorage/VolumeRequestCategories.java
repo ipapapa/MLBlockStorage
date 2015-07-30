@@ -1,6 +1,6 @@
 package edu.purdue.simulation.blockstorage;
 
-public enum GroupSize {
+public enum VolumeRequestCategories {
 
 	None(0, 0, 0, 0, 0), 
 	Small(-1.0, 0, 0, 1.0, 1), //
@@ -20,7 +20,7 @@ public enum GroupSize {
 
 	public final int order;
 
-	GroupSize(double lowerBound1, double upperBound1, double lowerBound2,
+	VolumeRequestCategories(double lowerBound1, double upperBound1, double lowerBound2,
 			double upperBound2, int order) {
 		this.lowerBound1 = lowerBound1;
 
@@ -33,7 +33,7 @@ public enum GroupSize {
 		this.order = order;
 	}
 
-	public static GroupSize get(int order) {
+	public static VolumeRequestCategories get(int order) {
 		switch (order) {
 		case 1:
 

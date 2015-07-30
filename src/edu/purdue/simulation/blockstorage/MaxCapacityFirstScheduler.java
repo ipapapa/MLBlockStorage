@@ -7,6 +7,7 @@ import java.util.Comparator;
 import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
+import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 
 public class MaxCapacityFirstScheduler extends Scheduler {
 
@@ -14,11 +15,11 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			edu.purdue.simulation.Experiment experiment,
 			edu.purdue.simulation.Workload workload) {
 		super(experiment, workload);
-		// TODO Auto-generated constructor stub
+
 	}
 
-	BackEndSpecifications specifications = new BackEndSpecifications( //
-			1200, 2000, 800, 500, 700, 400, 0, true);
+	BackEndSpecifications specifications = new BackEndSpecifications(1200,
+			2500, 500, 600, 1200, 250, 0, true);
 
 	protected void preRun() throws SQLException {
 
@@ -56,6 +57,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		ScheduleResponse schedulerResponse = new ScheduleResponse( //
 				this.getExperiment(), //
 				request);
+
+		// TODO check the available IOPS, print injecetion reason\
 
 		Volume volume = maxAvailableCapacityBackEnd.createVolumeThenSave(
 				request.ToVolumeSpecifications(), schedulerResponse);
