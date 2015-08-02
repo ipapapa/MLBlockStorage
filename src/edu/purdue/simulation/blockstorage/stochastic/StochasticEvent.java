@@ -31,7 +31,7 @@ public abstract class StochasticEvent {
 
 	protected static void apply(StochasticEvent event, Backend backend,
 			boolean applyToCapacity) throws SQLException {
-		int backendSize = Experiment.BackEndList.size();
+		int backendSize = Experiment.backEndList.size();
 
 		if (backendSize == 0)
 

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import edu.purdue.simulation.Database;
+import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
 import edu.purdue.simulation.blockstorage.backend.*;
 
@@ -76,8 +77,8 @@ public class Volume extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"Insert Into BlockStorageSimulator.volume"
-								+ "	(backend_ID, schedule_response_ID, capacity, IOPS, is_deleted)"
-								+ "		values" + "	(?, ?, ?, ?, ?);",
+								+ "	(backend_ID, schedule_response_ID, capacity, IOPS, is_deleted, Delete_Probability)"
+								+ "		values" + "	(?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.backend.getID());
@@ -91,6 +92,8 @@ public class Volume extends PersistentObject {
 
 		statement.setBoolean(5, this.specifications.IsDeleted);
 
+		statement.setDouble(6, this.specifications.deleteProbability);
+
 		statement.executeUpdate();
 
 		ResultSet rs = statement.getGeneratedKeys();
@@ -103,6 +106,30 @@ public class Volume extends PersistentObject {
 		}
 
 		return BigDecimal.valueOf(-1);
+	}
+
+	public void delete() throws SQLException {
+		this.getSpecifications().IsDeleted = true;
+
+		Connection connection = Database.getConnection();
+
+		PreparedStatement statement = connection
+				.prepareStatement(
+						"Update	volume	set	is_deleted	= 1, delete_clock = ?	Where	ID	= ?",
+						Statement.RETURN_GENERATED_KEYS);
+
+		statement.setBigDecimal(1, Experiment.clock);
+		statement.setBigDecimal(2, this.getID());
+
+		statement.executeUpdate();
+	}
+
+	public String toString() {
+		return this.toString(-10);
+	}
+
+	public String toString(double randomNumber) {
+		return "[VOLUME] ID: " + this.getID() + " random: " + randomNumber;
 	}
 
 }

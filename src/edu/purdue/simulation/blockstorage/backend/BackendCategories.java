@@ -4,9 +4,9 @@ public enum BackendCategories {
 
 	None(0, 0, 0), //
 	VeryStable(0.0, 0.1, 1), //
-	Stable(0.0, 0.1, 2), //
-	Unstable(0.0, 0.1, 3), //
-	VeryUnstable(0.0, 0.1, 4); //
+	Stable(0.1, 0.2, 2), //
+	Unstable(0.2, 0.4, 3), //
+	VeryUnstable(0.4, 1.0, 4); //
 
 	public final double std;
 

@@ -154,6 +154,8 @@ public abstract class Scheduler {
 				this.schedule();
 			}
 
+			this.deleteExpiredVolumes();
+
 			// System.out.println("Scheduler");
 
 			edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock
@@ -170,6 +172,37 @@ public abstract class Scheduler {
 		// ResourceMonitorThread.interrupt();
 		//
 		// System.out.println("DONE - with threads");
+	}
+
+	private Random random = new Random();
+
+	public static double sum = 0;
+
+	public static double randGeneratedNumbers = 0;
+
+	private void deleteExpiredVolumes() throws SQLException {
+
+		for (int i = 0; i < edu.purdue.simulation.Experiment.backEndList.size(); i++) {
+			Backend backend = edu.purdue.simulation.Experiment.backEndList
+					.get(i);
+
+			for (int j = 0; j < backend.getVolumeList().size(); j++) {
+				Volume volume = backend.getVolumeList().get(j);
+
+				randGeneratedNumbers++;
+
+				double randomValue = this.random.nextDouble();
+
+				sum += randomValue;
+
+				if (randomValue < volume.getSpecifications().deleteProbability) {
+					volume.delete();
+
+					System.out.println("[DELETED VOLUME] "
+							+ volume.toString(randomValue));
+				}
+			}
+		}
 	}
 
 	public abstract void schedule() throws SQLException;

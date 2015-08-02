@@ -71,31 +71,33 @@ public class StatisticalGroupping extends Scheduler {
 		@SuppressWarnings("unused")
 		int OptimalBinNumbers = (int) (this.PredictedTotalCapacity / 1200);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		String description = "StatisticalGroupping NO DESCC";
+
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Small);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Small);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Medium);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Medium);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Large);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Large);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XLarge);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XXLarge);
 
-		super.getExperiment().AddBackEnd(backendSpecifications,
+		super.getExperiment().AddBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XXXLarge);
 	}
 
@@ -110,7 +112,7 @@ public class StatisticalGroupping extends Scheduler {
 		for (int i = 1; i <= MaxGroupSize; i++) {
 
 			this.getExperiment();
-			List<Backend> candidateList = edu.purdue.simulation.Experiment.BackEndList
+			List<Backend> candidateList = edu.purdue.simulation.Experiment.backEndList
 					.stream()
 					// I CANT UNDERSTAND WHY getGroupSize is needed
 					// .filter(b -> (b.getGroupSize().order == start)
@@ -161,7 +163,8 @@ public class StatisticalGroupping extends Scheduler {
 			schedulerResponse.backEndScheduled = null;
 
 			schedulerResponse.backEndCreated = super.getExperiment()
-					.AddBackEnd(backendSpecifications); // no backend created
+					.AddBackEnd("StatisticalGroupping NO DES",
+							backendSpecifications); // no backend created
 
 			// no backend turned on
 			schedulerResponse.backEndTurnedOn = null;

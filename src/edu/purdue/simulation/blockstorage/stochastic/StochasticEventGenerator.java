@@ -75,7 +75,7 @@ public class StochasticEventGenerator implements Runnable {
 
 		Random random = new Random();
 
-		int backendSize = Experiment.BackEndList.size();
+		int backendSize = Experiment.backEndList.size();
 
 		if (backendSize == 0)
 
@@ -83,6 +83,6 @@ public class StochasticEventGenerator implements Runnable {
 
 		int randomNumber = random.nextInt(backendSize - 0) + 0;
 
-		return Experiment.BackEndList.get(randomNumber);
+		return Experiment.backEndList.get(randomNumber);
 	}
 }

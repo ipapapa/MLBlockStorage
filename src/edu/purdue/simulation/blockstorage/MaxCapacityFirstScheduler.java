@@ -18,12 +18,21 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 	}
 
-	BackEndSpecifications specifications = new BackEndSpecifications(1200,
-			2500, 500, 600, 1200, 250, 0, true);
-
 	protected void preRun() throws SQLException {
 
-		super.getExperiment().AddBackEnd(this.specifications);
+		BackEndSpecifications stableSpecifications = new BackEndSpecifications(
+				400, 500, 350, 600, 800, 400, 0, true);
+
+		BackEndSpecifications unstableSpecifications = new BackEndSpecifications(
+				400, 500, 350, 600, 1200, 250, 0, true);
+
+		super.getExperiment().AddBackEnd("", stableSpecifications);
+
+		super.getExperiment().AddBackEnd("", stableSpecifications);
+
+		super.getExperiment().AddBackEnd("", unstableSpecifications);
+
+		super.getExperiment().AddBackEnd("", unstableSpecifications);
 
 		// super.getExperiment().AddBackEnd(this.specifications);
 		//
@@ -39,7 +48,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 	public void schedule() throws SQLException {
 
-		Collections.sort(edu.purdue.simulation.Experiment.BackEndList,
+		Collections.sort(edu.purdue.simulation.Experiment.backEndList,
 				new Comparator<Backend>() {
 					@Override
 					public int compare(Backend backEnd1, Backend backEnd2) {
@@ -49,7 +58,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 					}
 				});
 
-		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.BackEndList
+		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.backEndList
 				.get(0);
 
 		VolumeRequest request = super.getRequestQueue().peek();

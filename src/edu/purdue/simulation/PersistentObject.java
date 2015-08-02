@@ -53,6 +53,6 @@ public abstract class PersistentObject {
 
 		this.setID(resulSet.getBigDecimal(1));
 
-		this.setCreateTime(resulSet.getTimestamp(createTimeIndex));
+		//this.setCreateTime(resulSet.getTimestamp(createTimeIndex));
 	}
 }

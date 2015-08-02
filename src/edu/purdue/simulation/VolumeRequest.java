@@ -39,6 +39,16 @@ public class VolumeRequest extends Specifications {
 
 	private Workload Workload;
 
+	private double deleteProbability;
+
+	public double getDeleteProbability() {
+		return deleteProbability;
+	}
+
+	public void setDeleteProbability(double deleteProbability) {
+		this.deleteProbability = deleteProbability;
+	}
+
 	public VolumeRequestCategories getGroupSize() {
 		return GroupSize;
 	}
@@ -65,7 +75,11 @@ public class VolumeRequest extends Specifications {
 
 	public VolumeSpecifications ToVolumeSpecifications() {
 		VolumeSpecifications result = new VolumeSpecifications(
-				this.getCapacity(), this.getIOPS(), this.getLatency(), false);
+				this.getCapacity(), //
+				this.getIOPS(), //
+				this.getLatency(), //
+				false, //
+				this.getDeleteProbability());
 
 		return result;
 	}
@@ -116,7 +130,9 @@ public class VolumeRequest extends Specifications {
 
 		super.setIOPS(resulSet.getInt(5));
 
-		super.retrievePersistentProperties(resulSet, 6);
+		this.setDeleteProbability(resulSet.getDouble(6));
+
+		super.retrievePersistentProperties(resulSet, 7);
 
 		return true;
 	}

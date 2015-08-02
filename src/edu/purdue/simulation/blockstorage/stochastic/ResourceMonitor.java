@@ -34,9 +34,9 @@ public class ResourceMonitor implements Runnable {
 
 			this.clock = 1; // reset clock
 
-			for (int i = 0; i < Experiment.BackEndList.size(); i++) {
+			for (int i = 0; i < Experiment.backEndList.size(); i++) {
 
-				Backend backend = Experiment.BackEndList.get(i);
+				Backend backend = Experiment.backEndList.get(i);
 
 				BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(
 						backend);

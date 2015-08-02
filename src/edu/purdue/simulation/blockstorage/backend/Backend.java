@@ -19,7 +19,8 @@ import edu.purdue.simulation.blockstorage.*;
  */
 public abstract class Backend extends PersistentObject {
 
-	public Backend(Experiment experiment, BackEndSpecifications specifications) {
+	public Backend(Experiment experiment, String desciption,
+			BackEndSpecifications specifications) {
 		this.VolumeList = new ArrayList<Volume>();
 
 		this.specifications = specifications;
@@ -27,8 +28,11 @@ public abstract class Backend extends PersistentObject {
 		this.state = new State(this);
 
 		this.Experiment = experiment;
+
+		this.setDescription(desciption);
 	}
 
+	private String description;
 
 	private Experiment Experiment;
 
@@ -46,10 +50,10 @@ public abstract class Backend extends PersistentObject {
 		return specifications;
 	}
 
-	// I cant understand why VolumeRequestCategories is needed here ??!! 
-	
+	// I cant understand why VolumeRequestCategories is needed here ??!!
+
 	// private VolumeRequestCategories GroupSize;
-	
+
 	// public VolumeRequestCategories getGroupSize() {
 	// return GroupSize;
 	// }
@@ -57,6 +61,14 @@ public abstract class Backend extends PersistentObject {
 	// public void setGroupSize(VolumeRequestCategories groupSize2) {
 	// GroupSize = groupSize2;
 	// }
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
 
 	public List<Volume> getVolumeList() {
 		return VolumeList;
@@ -69,9 +81,9 @@ public abstract class Backend extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert into backend"
-								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID)"
+								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description)"
 								+ "		Values"
-								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.Experiment.getID());
@@ -105,6 +117,8 @@ public abstract class Backend extends PersistentObject {
 		}
 
 		statement.setInt(10, operationID);
+
+		statement.setString(11, this.description);
 
 		statement.executeUpdate();
 
@@ -165,7 +179,7 @@ public abstract class Backend extends PersistentObject {
 
 			// TODO actually implement delete volume which update the field
 			// is_deleted
-			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true);
+			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1);
 
 			scheduleRequest = null;
 

@@ -15,13 +15,30 @@ public class BlockStorageSimulator {
 		// randomly generate requests
 	}
 
+	public static void retrieveExperiment(BigDecimal experimentID)
+			throws SQLException {
+
+		Experiment experiment = Experiment.resumeExperiment(experimentID);
+
+	}
+
 	public static void main(String[] args) {
 
 		try {
 
+			// Random r = new Random();
+			//
+			// for (int i = 0; i < 100; i++) {
+			// System.out.println(r.nextDouble());
+			// }
+
+			// retrieveExperiment(BigDecimal.valueOf(331));
+
 			// for (int i = 0; i < 600; i++) {
 			// System.out.println(i + "\t" + getPoissonRandom(1000));
 			// }
+
+			// args = null;
 
 			if (args != null) {
 
@@ -39,7 +56,7 @@ public class BlockStorageSimulator {
 				// Experiment experiment = new Experiment(
 				// "MostAvailableCapacity Run 1", "MostAvailableCapacity");
 
-				Experiment experiment = new Experiment(
+				Experiment experiment = new Experiment(workload,
 						"StatisticalGroupping Run 1", "StatisticalGroupping");
 
 				//
@@ -61,6 +78,18 @@ public class BlockStorageSimulator {
 				} finally {
 					System.out.println("simulation done, experiment ID ="
 							+ experiment.getID());
+
+					for (int i = 0; i < scheduler.getExperiment().backEndList
+							.size(); i++) {
+						System.out.println("Backend ID = "
+								+ scheduler.getExperiment().backEndList.get(i)
+										.getID());
+					}
+
+					System.out.println("sum: " + Scheduler.sum
+							+ " randGeneratedNumbers "
+							+ Scheduler.randGeneratedNumbers + " mean: "
+							+ (Scheduler.sum / Scheduler.randGeneratedNumbers));
 				}
 			}
 

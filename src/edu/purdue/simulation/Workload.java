@@ -197,14 +197,23 @@ public class Workload extends PersistentObject {
 
 	public boolean RetrieveVolumeRequests() throws SQLException {
 
+		return this.RetrieveVolumeRequests(BigDecimal.valueOf(0));
+	}
+
+	public boolean RetrieveVolumeRequests(BigDecimal IDBiggerThan)
+			throws SQLException {
+
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
-				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, create_time"
-						+ " From	volume_request	Where	workload_ID		= ?"
+				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability" // no need for create_time
+						+ " From	volume_request	Where	workload_ID		= ?" //
+						+ " And	ID	> ?" //
 						+ " Limit	40;");
 
 		statement.setBigDecimal(1, this.getID());
+
+		statement.setBigDecimal(2, IDBiggerThan);
 
 		ResultSet rs = statement.executeQuery();
 
