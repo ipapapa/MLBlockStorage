@@ -128,7 +128,9 @@ public class VolumeRequest extends Specifications {
 
 		this.setType(resulSet.getInt(4));
 
-		super.setIOPS(resulSet.getInt(5));
+		double requestedIOPS = resulSet.getInt(5) / 2;
+
+		super.setIOPS((int) requestedIOPS); // lower the IOPS
 
 		this.setDeleteProbability(resulSet.getDouble(6));
 

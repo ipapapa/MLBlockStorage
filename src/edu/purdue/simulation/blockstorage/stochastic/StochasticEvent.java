@@ -10,6 +10,7 @@ import java.util.Random;
 
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
+import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.State;
 
@@ -37,12 +38,26 @@ public abstract class StochasticEvent {
 
 			return;
 
-		int randomNumber = event.getRandom().nextInt(
-				event.getSizes().length - 0) + 0;
+		// No need for all this
+
+		// int randomNumber = event.getRandom().nextInt(
+		// event.getSizes().length - 0) + 0;
+
+		// int sumBy = event.getSizes()[randomNumber];
 
 		State backEndState = backend.getState();
 
-		int sumBy = event.getSizes()[randomNumber];
+		double possessionMean = backend.getSpecifications()
+				.getStabilityPossessionMean();
+
+		// TODO organize this part
+		int possessionGeneratedNumber = Scheduler
+				.getPoissonRandom(possessionMean);
+
+		int sumBy = possessionGeneratedNumber * event.getSizes()[0]; // multiply
+																		// by
+																		// 1 or
+																		// -1
 
 		boolean isEventApplied = false;
 
@@ -90,7 +105,9 @@ public abstract class StochasticEvent {
 		}
 
 		System.out.println(event.toString(isEventApplied) + " intVal1 = "
-				+ sumBy + " StringVal1 = NULL ");
+				+ sumBy + " StringVal1 = NULL " + " GeneratedNumber = "
+				+ possessionGeneratedNumber + " possessionMean = "
+				+ possessionMean);
 	}
 
 	protected BigDecimal save(BigDecimal backendID, Integer intVal1,

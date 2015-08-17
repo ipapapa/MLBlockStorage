@@ -22,7 +22,7 @@ public class StatisticalGroupping extends Scheduler {
 	private double predicatedAVG = 41; // 41.4823;
 
 	BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-			1200, 2000, 800, 500, 800, 200, 0, true);
+			1200, 2000, 800, 500, 800, 200, 0, true, 50);
 
 	private void RankRequest(VolumeRequest request) {
 
@@ -73,31 +73,31 @@ public class StatisticalGroupping extends Scheduler {
 
 		String description = "StatisticalGroupping NO DESCC";
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Small);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Small);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Medium);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Medium);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Large);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.Large);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XLarge);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XXLarge);
 
-		super.getExperiment().AddBackEnd(description, backendSpecifications,
+		super.getExperiment().addBackEnd(description, backendSpecifications,
 				VolumeRequestCategories.XXXLarge);
 	}
 
@@ -149,11 +149,11 @@ public class StatisticalGroupping extends Scheduler {
 
 		Backend bestFit = this.GetBestBackEndForRequest(request);
 
-		Volume volume = bestFit.createVolumeThenSave(
-				request.ToVolumeSpecifications(), schedulerResponse);
+		Volume volume = bestFit.createVolumeThenAdd(request.ToVolumeSpecifications(),
+				schedulerResponse);
 
 		BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-				1200, 2000, 800, 500, 800, 200, 0, true);
+				1200, 2000, 800, 500, 800, 200, 0, true, 50);
 
 		// here volume will never be null
 		if (volume == null) {
@@ -163,7 +163,7 @@ public class StatisticalGroupping extends Scheduler {
 			schedulerResponse.backEndScheduled = null;
 
 			schedulerResponse.backEndCreated = super.getExperiment()
-					.AddBackEnd("StatisticalGroupping NO DES",
+					.addBackEnd("StatisticalGroupping NO DES",
 							backendSpecifications); // no backend created
 
 			// no backend turned on
@@ -182,6 +182,16 @@ public class StatisticalGroupping extends Scheduler {
 			super.getRequestQueue().remove();
 		}
 
-		schedulerResponse.Save();
+		schedulerResponse.save();
+
+		if (volume != null)
+
+			volume.save();
+	}
+
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return "StatisticalGroupping";
 	}
 }

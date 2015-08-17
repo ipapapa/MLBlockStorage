@@ -44,33 +44,42 @@ public class Volume extends PersistentObject {
 		return this.specifications;
 	}
 
+	@SuppressWarnings("unused")
 	public int getCurrentIOPS() {
 		int backEndVolumesTotalRequestedIOPS = 0;
 
 		int numberOfVolumes = this.backend.getVolumeList().size();
 
-		for (int i = 0; i < numberOfVolumes; i++) {
-
-			Volume volume = this.backend.getVolumeList().get(i);
-
-			backEndVolumesTotalRequestedIOPS += volume.specifications.getIOPS();
-		}
-
 		int backendCurrentAvailableIOPS = this.backend.getSpecifications()
 				.getIOPS();
 
-		if (backEndVolumesTotalRequestedIOPS >= backendCurrentAvailableIOPS) {
+		if (true) {
 
 			return Math.round(backendCurrentAvailableIOPS / numberOfVolumes);
 
-		} else {
-			// volume SLA IOPS + (available IOPS of the backend)
-			return this.specifications.getIOPS()
-					+ (backendCurrentAvailableIOPS - backEndVolumesTotalRequestedIOPS);
+		} else { // lazmem nisst sakhtesh koni
+			for (int i = 0; i < numberOfVolumes; i++) {
+
+				Volume volume = this.backend.getVolumeList().get(i);
+
+				backEndVolumesTotalRequestedIOPS += volume.specifications
+						.getIOPS();
+			}
+
+			if (backEndVolumesTotalRequestedIOPS >= backendCurrentAvailableIOPS) {
+
+				return Math
+						.round(backendCurrentAvailableIOPS / numberOfVolumes);
+
+			} else {
+				// volume SLA IOPS + (available IOPS of the backend)
+				return this.specifications.getIOPS()
+						+ (backendCurrentAvailableIOPS - backEndVolumesTotalRequestedIOPS);
+			}
 		}
 	}
 
-	public BigDecimal Save() throws SQLException {
+	public BigDecimal save() throws SQLException {
 
 		Connection connection = Database.getConnection();
 
@@ -122,14 +131,24 @@ public class Volume extends PersistentObject {
 		statement.setBigDecimal(2, this.getID());
 
 		statement.executeUpdate();
+
+		this.backend.getVolumeList().remove(this);
 	}
 
 	public String toString() {
-		return this.toString(-10);
+		return this.toString(-10, -10);
 	}
 
-	public String toString(double randomNumber) {
-		return "[VOLUME] ID: " + this.getID() + " random: " + randomNumber;
+	public String toString(double randomNumber, double deleteProbability) {
+
+		String result = "[VOLUME] ID: " + this.getID() + " random: "
+				+ randomNumber + " deleteProbability: " + deleteProbability;
+
+		if (this.ScheduleResponse != null)
+
+			result += " scheduleResponseID= " + this.ScheduleResponse.ID;
+
+		return result;
 	}
 
 }

@@ -1,12 +1,15 @@
 package edu.purdue.simulation.blockstorage.backend;
 
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
@@ -21,29 +24,29 @@ public abstract class Backend extends PersistentObject {
 
 	public Backend(Experiment experiment, String desciption,
 			BackEndSpecifications specifications) {
-		this.VolumeList = new ArrayList<Volume>();
+		this.volumeList = new ArrayList<Volume>();
 
 		this.specifications = specifications;
 
 		this.state = new State(this);
 
-		this.Experiment = experiment;
+		this.experiment = experiment;
 
 		this.setDescription(desciption);
 	}
 
 	private String description;
 
-	private Experiment Experiment;
+	private Experiment experiment;
 
 	private State state;
 
 	private BackEndSpecifications specifications;
 
-	private List<Volume> VolumeList;
+	private List<Volume> volumeList;
 
 	public Experiment getExperiment() {
-		return Experiment;
+		return experiment;
 	}
 
 	public BackEndSpecifications getSpecifications() {
@@ -63,7 +66,8 @@ public abstract class Backend extends PersistentObject {
 	// }
 
 	public String getDescription() {
-		return description;
+		return description + " StabilityPossessionMean: "
+				+ this.getSpecifications().getStabilityPossessionMean();
 	}
 
 	public void setDescription(String description) {
@@ -71,7 +75,95 @@ public abstract class Backend extends PersistentObject {
 	}
 
 	public List<Volume> getVolumeList() {
-		return VolumeList;
+		return volumeList;
+	}
+
+	public int getAvailableIOPSWithRegression() {
+		int n = this.getVolumeList().size();
+
+		int c = Experiment.clock.intValue() % 24;
+
+		double result = 403.78735 + (0.30922 * c) - (115.01801 * n)
+				+ (10.05588 * (n ^ 2));
+
+		c = Experiment.clock.intValue();
+
+		// double result2 = 403.78735 + (0.30922 * c) - (115.01801 * n)
+		// + (10.05588 * (n ^ 2));
+		//
+		// if(c > 80){
+		// System.out.println(result2);
+		// }
+
+		return (int) result;
+	}
+
+	public void createRegressionModel() throws SQLException {
+
+		Connection connection = Database.getConnection();
+
+		CallableStatement statement = connection
+				.prepareCall("{Call data_for_regression(?, ?, ?)}");
+
+		statement.setBigDecimal(1, this.experiment.getID());
+
+		statement.setBigDecimal(2, this.getID());
+
+		statement.setInt(3, 0);
+
+		ResultSet resultset = statement.executeQuery();
+
+		int rowcount = 0;
+
+		if (resultset.last()) {
+			rowcount = resultset.getRow();
+
+			resultset.beforeFirst();
+		}
+
+		double[] y = new double[rowcount];
+
+		double[][] x = new double[rowcount][3];
+
+		int i = 0;
+
+		while (resultset.next()) {
+
+			x[i][0] = resultset.getDouble(1) % 24; // clock
+			x[i][1] = resultset.getDouble(2); // num
+			x[i][2] = x[i][1] * x[i][1]; // num ^ 2
+
+			y[i] = resultset.getDouble(3);
+
+			i++;
+		}
+
+		final OLSMultipleLinearRegression reg = new OLSMultipleLinearRegression();
+
+		reg.newSampleData(y, x);
+
+		double[] beta = reg.estimateRegressionParameters();
+
+		double r2 = reg.calculateRSquared();
+
+		PreparedStatement statement2 = connection.prepareStatement(
+				"insert into backend_regression"
+						+ "	(backend_ID, clock, R2, Description)" + "		Values"
+						+ "	(?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
+
+		statement2.setBigDecimal(1, this.getID());
+
+		statement2.setBigDecimal(2, Experiment.clock);
+
+		statement2.setDouble(3, r2);
+
+		String description = String.format(
+				"y = %f + (%f * clock) + (%f * num) + (%f * num2)", beta[0],
+				beta[1], beta[2], beta[3]);
+
+		statement2.setString(4, description);
+
+		statement2.executeUpdate();
 	}
 
 	private BigDecimal doSave(boolean isUpdate, int operationID)
@@ -81,20 +173,22 @@ public abstract class Backend extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert into backend"
-								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description)"
+								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description, stability_possession_mean)"
 								+ "		Values"
-								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
-		statement.setBigDecimal(1, this.Experiment.getID());
+		statement.setBigDecimal(1, this.experiment.getID());
 
 		statement.setInt(2, this.specifications.getCapacity());
 
 		statement.setInt(3, this.specifications.getIOPS());
 
-		statement.setBoolean(4, this.specifications.IsOnline);
+		statement.setBoolean(4, this.specifications.getIsOnline());
 
 		statement.setBigDecimal(5, edu.purdue.simulation.Experiment.clock);
+
+		statement.setInt(10, operationID);
 
 		if (isUpdate) {
 
@@ -106,6 +200,10 @@ public abstract class Backend extends PersistentObject {
 
 			statement.setNull(9, java.sql.Types.INTEGER);
 
+			statement.setString(11, null);
+
+			statement.setNull(12, java.sql.Types.DOUBLE);
+
 		} else {
 			statement.setInt(6, this.specifications.getMaxCapacity());
 
@@ -114,11 +212,12 @@ public abstract class Backend extends PersistentObject {
 			statement.setInt(8, this.specifications.getMaxIOPS());
 
 			statement.setInt(9, this.specifications.getMinIOPS());
+
+			statement.setString(11, this.getDescription());
+
+			statement.setDouble(12,
+					this.specifications.getStabilityPossessionMean());
 		}
-
-		statement.setInt(10, operationID);
-
-		statement.setString(11, this.description);
 
 		statement.executeUpdate();
 
@@ -165,14 +264,14 @@ public abstract class Backend extends PersistentObject {
 
 	public boolean removeVolume(Volume volume) {
 
-		this.VolumeList.remove(volume);
+		this.volumeList.remove(volume);
 
 		return true;
 	}
 
-	public Volume createVolumeThenSave(
+	public Volume createVolumeThenAdd(
 			VolumeSpecifications volumeSpecifications,
-			ScheduleResponse scheduleRequest, boolean isPingVolume)
+			ScheduleResponse scheduleResponse, boolean isPingVolume)
 			throws SQLException {
 
 		if (isPingVolume) {
@@ -181,32 +280,30 @@ public abstract class Backend extends PersistentObject {
 			// is_deleted
 			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1);
 
-			scheduleRequest = null;
+			scheduleResponse = null;
 
 		} else if (this.getState().getAvailableCapacity() < volumeSpecifications
 				.getCapacity()) {
 			return null;
 		}
 
-		Volume result = new Volume(this, scheduleRequest, volumeSpecifications);
+		Volume result = new Volume(this, scheduleResponse, volumeSpecifications);
 
-		result.Save();
-
-		this.VolumeList.add(result);
+		this.volumeList.add(result);
 
 		return result;
 	}
 
-	public Volume createPingVolumeThenSave() throws SQLException {
+	public Volume createPingVolume() throws SQLException {
 
-		return this.createVolumeThenSave(null, null, true);
+		return this.createVolumeThenAdd(null, null, true);
 	}
 
-	public Volume createVolumeThenSave(
+	public Volume createVolumeThenAdd(
 			VolumeSpecifications volumeSpecifications,
-			ScheduleResponse scheduleRequest) throws SQLException {
+			ScheduleResponse scheduleResponse) throws SQLException {
 
-		return this.createVolumeThenSave(volumeSpecifications, scheduleRequest,
+		return this.createVolumeThenAdd(volumeSpecifications, scheduleResponse,
 				false);
 	}
 
@@ -217,7 +314,7 @@ public abstract class Backend extends PersistentObject {
 						this.getID().toString(),
 						this.specifications.getCapacity(),
 						this.specifications.getIOPS(),
-						this.specifications.IsOnline,
+						this.specifications.getIsOnline(),
 						this.specifications.getLatency());
 	}
 

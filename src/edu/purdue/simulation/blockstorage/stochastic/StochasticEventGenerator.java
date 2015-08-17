@@ -1,10 +1,8 @@
 package edu.purdue.simulation.blockstorage.stochastic;
 
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
-
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 
@@ -25,9 +23,9 @@ public class StochasticEventGenerator implements Runnable {
 	public StochasticEventGenerator() {
 		events = new ArrayList<StochasticEvent>();
 
-		events.add(new IncreaseCapacityEvent());
+		// events.add(new IncreaseCapacityEvent());
 
-		events.add(new DecreaseCapacityEvent());
+		// events.add(new DecreaseCapacityEvent());
 
 		events.add(new IncreaseIOPSEvent());
 
@@ -36,9 +34,12 @@ public class StochasticEventGenerator implements Runnable {
 		this.clock = 1;
 	}
 
-	private final int clockGap = 4; // every 4 times
+	public static int clockGap = 4; // every 4 times
 									// cause
 									// an event
+
+	private final boolean applyToAllBackends = true;
+
 	private int clock;
 
 	public void run() {
@@ -49,17 +50,36 @@ public class StochasticEventGenerator implements Runnable {
 
 			this.clock = 1;
 
-			Backend target = this.selectRandomBackEnd();
+			if (applyToAllBackends) {
 
-			StochasticEvent event = this.events.get(this.eventRandom
-					.nextInt(this.events.size()));
+				for (int i = 0; i < Experiment.backEndList.size(); i++) {
+					Backend backend = Experiment.backEndList.get(i);
 
-			try {
-				event.fire(target);
-			} catch (SQLException e) {
-				e.printStackTrace();
+					StochasticEvent event = this.events.get(this.eventRandom
+							.nextInt(this.events.size()));
+
+					try {
+						event.fire(backend);
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+
+			} else {
+
+				// bad code
+
+				Backend target = this.selectRandomBackEnd();
+
+				StochasticEvent event = this.events.get(this.eventRandom
+						.nextInt(this.events.size()));
+
+				try {
+					event.fire(target);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
-
 		}
 
 		this.clock++;

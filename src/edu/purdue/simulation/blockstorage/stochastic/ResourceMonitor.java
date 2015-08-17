@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 
 import edu.purdue.simulation.Experiment;
+import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
 import edu.purdue.simulation.blockstorage.VolumePerformanceMeter;
 import edu.purdue.simulation.blockstorage.backend.Backend;
@@ -19,24 +20,36 @@ import edu.purdue.simulation.blockstorage.backend.BackendPerformanceMeter;
  */
 public class ResourceMonitor implements Runnable {
 
-	private final int clockGap = 3; // every 3 times measure resources
+	public static int clockGap = 2; // every 3 times measure resources
 									// performance
+
+	public static boolean enableBackendPerformanceMeter = false;
+
+	public static boolean enableVolumePerformanceMeter = false;
+
+	public static int devideVolumeDeleteProbability = 3;
 
 	public ResourceMonitor() {
 
 	}
 
-	private int clock = 1;
+	private int clock = 0;
 
 	public void run() {
 		// while (true) {
-		if (this.clock == this.clockGap) {
 
-			this.clock = 1; // reset clock
+		if (this.clock == ResourceMonitor.clockGap)
 
-			for (int i = 0; i < Experiment.backEndList.size(); i++) {
+			this.clock = 0; // reset clock
 
-				Backend backend = Experiment.backEndList.get(i);
+		this.clock++;
+		
+		for (int i = 0; i < Experiment.backEndList.size(); i++) {
+
+			Backend backend = Experiment.backEndList.get(i);
+
+			if (ResourceMonitor.enableBackendPerformanceMeter
+					&& this.clock == ResourceMonitor.clockGap) {
 
 				BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(
 						backend);
@@ -44,7 +57,9 @@ public class ResourceMonitor implements Runnable {
 				Volume pingVolume = null;
 
 				try {
-					pingVolume = backend.createPingVolumeThenSave();
+					pingVolume = backend.createPingVolume();
+
+					pingVolume.save();
 
 					backendPerformanceMeter.Save(pingVolume);
 
@@ -54,7 +69,10 @@ public class ResourceMonitor implements Runnable {
 
 					e.printStackTrace();
 				}
+			}
 
+			// for now no need to read all volumes performance
+			if (ResourceMonitor.enableVolumePerformanceMeter) {
 				for (int j = 0; j < backend.getVolumeList().size(); j++) {
 
 					Volume volume = backend.getVolumeList().get(j);
@@ -70,9 +88,8 @@ public class ResourceMonitor implements Runnable {
 					}
 				}
 			}
-		}
 
-		this.clock++;
+		}
 
 		// }
 	}

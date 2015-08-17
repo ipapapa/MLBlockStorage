@@ -5,6 +5,8 @@ import java.sql.SQLException;
 import java.util.*;
 
 import edu.purdue.simulation.blockstorage.*;
+import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
+import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 public class BlockStorageSimulator {
 
@@ -23,6 +25,22 @@ public class BlockStorageSimulator {
 	}
 
 	public static void main(String[] args) {
+
+		ResourceMonitor.enableBackendPerformanceMeter = true;
+
+		ResourceMonitor.enableVolumePerformanceMeter = true;
+
+		ResourceMonitor.clockGap = 1;
+
+		Scheduler.maxClock = 500;
+
+		Scheduler.schedulePausePoissonMean = 5;
+
+		Scheduler.devideVolumeDeleteProbability = 3;
+
+		Scheduler.considerIOPS = false;
+
+		StochasticEventGenerator.clockGap = 4;
 
 		try {
 
@@ -56,11 +74,10 @@ public class BlockStorageSimulator {
 				// Experiment experiment = new Experiment(
 				// "MostAvailableCapacity Run 1", "MostAvailableCapacity");
 
-				Experiment experiment = new Experiment(workload,
-						"StatisticalGroupping Run 1", "StatisticalGroupping");
+				Experiment experiment = new Experiment(workload, "", "");
 
 				//
-				experiment.Save();
+				experiment.save();
 				//
 				// experiment.GenerateBackEnd();
 				//
@@ -79,17 +96,22 @@ public class BlockStorageSimulator {
 					System.out.println("simulation done, experiment ID ="
 							+ experiment.getID());
 
-					for (int i = 0; i < scheduler.getExperiment().backEndList
-							.size(); i++) {
+					scheduler.getExperiment();
+					for (int i = 0; i < Experiment.backEndList.size(); i++) {
+						scheduler.getExperiment();
 						System.out.println("Backend ID = "
-								+ scheduler.getExperiment().backEndList.get(i)
-										.getID());
+								+ Experiment.backEndList.get(i).getID());
 					}
 
 					System.out.println("sum: " + Scheduler.sum
 							+ " randGeneratedNumbers "
 							+ Scheduler.randGeneratedNumbers + " mean: "
 							+ (Scheduler.sum / Scheduler.randGeneratedNumbers));
+
+					System.out.println("Clock: " + Experiment.clock);
+
+					System.out
+							.println("**Remmeber MAX clock number is: " + 90213);
 				}
 			}
 
@@ -103,18 +125,5 @@ public class BlockStorageSimulator {
 
 		}
 
-	}
-
-	private static int getPoissonRandom(double mean) {
-		Random r = new Random();
-
-		double L = Math.exp(-mean);
-		int k = 0;
-		double p = 1.0;
-		do {
-			p = p * r.nextDouble();
-			k++;
-		} while (p > L);
-		return k - 1;
 	}
 }

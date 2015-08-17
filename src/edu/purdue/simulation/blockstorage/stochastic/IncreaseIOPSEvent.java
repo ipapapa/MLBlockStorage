@@ -12,15 +12,13 @@ public class IncreaseIOPSEvent extends
 
 	Random random = new Random();
 
-	int[] sizes = new int[4];
+	int[] sizes = new int[1];
 
 	public IncreaseIOPSEvent() {
-		sizes[0] = 100;
-		sizes[1] = 150;
-		sizes[2] = 200;
-		sizes[3] = 250;
+		sizes[0] = 1;
+
 	}
-	
+
 	@Override
 	public Random getRandom() {
 		return this.random;

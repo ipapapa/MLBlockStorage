@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 
+import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
 import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
 import edu.purdue.simulation.blockstorage.VolumeSpecifications;
@@ -12,14 +13,18 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.backend.LVM;
+import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
+import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 public class Experiment extends PersistentObject {
 
 	public Experiment(Workload workload, String comment,
 			String schedulerAlgorithm) {
 		super();
-		Comment = comment;
-		SchedulerAlgorithm = schedulerAlgorithm;
+
+		this.setComment(comment);
+
+		this.setSchedulerAlgorithm(schedulerAlgorithm);
 
 		Experiment.backEndList = new ArrayList<>();
 
@@ -28,18 +33,41 @@ public class Experiment extends PersistentObject {
 		this.setWorkload(workload);
 	}
 
-	private String Comment;
+	private String comment;
 
 	private Workload workload;
 
-	public String SchedulerAlgorithm;
+	public String schedulerAlgorithm;
 
 	public static ArrayList<Backend> backEndList;
 
 	public static BigDecimal clock;
 
+	public String getSchedulerAlgorithm() {
+		return this.schedulerAlgorithm;
+	}
+
+	public void setSchedulerAlgorithm(String schedulerAlgorithm) {
+		this.schedulerAlgorithm = schedulerAlgorithm;
+	}
+
 	public String getComment() {
-		return Comment;
+		return (this.comment + " ").trim() //
+				+ " ResourceMonitor.enableBackendPerformanceMeter = "
+				+ ResourceMonitor.enableBackendPerformanceMeter //
+				+ " \nResourceMonitor.enableVolumePerformanceMeter = "
+				+ ResourceMonitor.enableVolumePerformanceMeter //
+				+ " \nResourceMonitor.clockGap = "
+				+ ResourceMonitor.clockGap //
+				+ " \nScheduler.maxClock = "
+				+ Scheduler.maxClock //
+				+ " \nScheduler.schedulePausePoissonMean = "
+				+ Scheduler.schedulePausePoissonMean //
+				+ " \nScheduler.devideVolumeDeleteProbability = "
+				+ Scheduler.devideVolumeDeleteProbability //
+				+ " \nStochasticEventGenerator.clockGap = "
+				+ StochasticEventGenerator.clockGap //
+		;
 	}
 
 	public Workload getWorkload() {
@@ -51,20 +79,20 @@ public class Experiment extends PersistentObject {
 	}
 
 	public void setComment(String comment) {
-		Comment = comment;
+		this.comment = comment;
 	}
 
-	public ArrayList<Backend> GenerateBackEnd() throws SQLException {
+	public ArrayList<Backend> generateBackEnd() throws SQLException {
 
 		if (this.getID() == null
 				|| !(this.getID().compareTo(BigDecimal.ZERO) > 0))
 
-			this.Save();
+			this.save();
 
 		backEndList = new ArrayList<Backend>();
 
 		BackEndSpecifications specification = new BackEndSpecifications(1200,
-				2000, 800, 500, 800, 200, 0, true);
+				2000, 800, 500, 800, 200, 0, true, 10000);
 
 		BackEndSpecifications[] specifications = { specification,
 				specification, specification, specification, specification,
@@ -141,8 +169,8 @@ public class Experiment extends PersistentObject {
 					rs.getInt(9),// MaxIOPS
 					rs.getInt(10),// MinIOPS
 					0, // latency
-					rs.getBoolean(11)// isOnline
-			);
+					rs.getBoolean(11),// isOnline
+					rs.getDouble(13));
 
 			Backend backend = new LVM(//
 					experiment,//
@@ -193,11 +221,11 @@ public class Experiment extends PersistentObject {
 
 	}
 
-	public Backend AddBackEnd(String description,
+	public Backend addBackEnd(String description,
 			BackEndSpecifications backEndSpecifications,
 			VolumeRequestCategories groupSize) throws SQLException {
 
-		Backend backEnd = this.AddBackEnd(description, backEndSpecifications);
+		Backend backEnd = this.addBackEnd(description, backEndSpecifications);
 
 		// I cant understand why is needed in BackEndSpecifications for
 		// statisticalGroupping method
@@ -206,7 +234,7 @@ public class Experiment extends PersistentObject {
 		return backEnd;
 	}
 
-	public Backend AddBackEnd(String description,
+	public Backend addBackEnd(String description,
 			BackEndSpecifications backEndSpecifications) throws SQLException {
 
 		Backend backEnd = new LVM(this, description, backEndSpecifications);
@@ -218,7 +246,27 @@ public class Experiment extends PersistentObject {
 		return backEnd;
 	}
 
-	public BigDecimal Save() throws SQLException {
+	public void update() throws SQLException {
+		Connection connection = Database.getConnection();
+
+		PreparedStatement statement = connection
+				.prepareStatement(
+						"Update	experiment	Set	scheduler_algorithm	=?, comment= ?, workload_ID = ?	Where	ID	= ?",
+						Statement.RETURN_GENERATED_KEYS);
+
+		statement.setString(1, this.getSchedulerAlgorithm());
+
+		statement.setString(2, this.getComment());
+
+		statement.setBigDecimal(3, this.getWorkload().getID());
+
+		statement.setBigDecimal(4, this.getID());
+
+		statement.executeUpdate();
+	}
+
+	@Override
+	public BigDecimal save() throws SQLException {
 
 		Connection connection = Database.getConnection();
 
@@ -228,9 +276,9 @@ public class Experiment extends PersistentObject {
 						+ "		Values" + "	(?, ?, ?)",
 				Statement.RETURN_GENERATED_KEYS);
 
-		statement.setString(1, this.Comment);
+		statement.setString(1, this.getComment());
 
-		statement.setString(2, this.SchedulerAlgorithm);
+		statement.setString(2, this.getSchedulerAlgorithm());
 
 		statement.setBigDecimal(3, this.getWorkload().getID());
 
@@ -250,7 +298,8 @@ public class Experiment extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return String.format("ID: %d - comment: %d - SchedulerAlgorithm: %d",
-				this.getID().toString(), this.Comment, this.SchedulerAlgorithm);
+		return String.format("ID: %d - SchedulerAlgorithm: %d - comment: %d",
+				this.getID().toString(), this.getSchedulerAlgorithm(),
+				this.getComment());
 	}
 }

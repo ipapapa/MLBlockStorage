@@ -12,7 +12,7 @@ public class BackEndSpecifications extends Specifications {
 
 	public BackEndSpecifications(int capacity, int maxCapacity,
 			int minCapacity, int IOPS, int maxIOPS, int minIOPS, int latency,
-			boolean isOnline) {
+			boolean isOnline, double stabilityPossessionMean) {
 		super(capacity, IOPS, latency);
 
 		this.setMaxIOPS(maxIOPS);
@@ -22,10 +22,14 @@ public class BackEndSpecifications extends Specifications {
 		this.setMinCapacity(minCapacity);
 
 		this.setLatency(latency);
+		
+		this.setStabilityPossessionMean(stabilityPossessionMean);
 
 	}
 
-	public boolean IsOnline;
+	private double stabilityPossessionMean;
+
+	private boolean isOnline;
 
 	private int maxIOPS;
 
@@ -35,12 +39,20 @@ public class BackEndSpecifications extends Specifications {
 
 	private int minCapacity;
 
-	public boolean isIsOnline() {
-		return IsOnline;
+	public double getStabilityPossessionMean() {
+		return stabilityPossessionMean;
+	}
+
+	public void setStabilityPossessionMean(double stabilityPossessionMean) {
+		this.stabilityPossessionMean = stabilityPossessionMean;
+	}
+
+	public boolean getIsOnline() {
+		return this.isOnline;
 	}
 
 	public void setIsOnline(boolean isOnline) {
-		IsOnline = isOnline;
+		this.isOnline = isOnline;
 	}
 
 	public int getMaxIOPS() {
