@@ -101,7 +101,7 @@ public class Volume extends PersistentObject {
 
 		statement.setBoolean(5, this.specifications.IsDeleted);
 
-		statement.setDouble(6, this.specifications.deleteProbability);
+		statement.setDouble(6, this.specifications.deleteFactor);
 
 		statement.executeUpdate();
 
@@ -136,13 +136,13 @@ public class Volume extends PersistentObject {
 	}
 
 	public String toString() {
-		return this.toString(-10, -10);
+		return this.toString(-10);
 	}
 
-	public String toString(double randomNumber, double deleteProbability) {
+	public String toString(double deleteFactor) {
 
-		String result = "[VOLUME] ID: " + this.getID() + " random: "
-				+ randomNumber + " deleteProbability: " + deleteProbability;
+		String result = "[VOLUME] ID: " + this.getID() + " deleteProbability: "
+				+ deleteFactor;
 
 		if (this.ScheduleResponse != null)
 

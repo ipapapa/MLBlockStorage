@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Random;
 
+import edu.purdue.simulation.blockstorage.Scheduler;
+
 public class Workload extends PersistentObject {
 
 	public Workload(int generateMethod, String comment) {
@@ -61,7 +63,7 @@ public class Workload extends PersistentObject {
 		VolumeRequestList = volumeRequestList;
 	}
 
-	public void GenerateWorkload() throws SQLException {
+	public void GenerateWorkload2(int numberOfRequests) throws SQLException {
 
 		if (super.getID() == null
 				|| !(super.getID().compareTo(BigDecimal.ZERO) > 0))
@@ -70,77 +72,51 @@ public class Workload extends PersistentObject {
 
 		this.VolumeRequestList = new ArrayList<VolumeRequest>();
 
-		int[] potentialVolumeCapacity = { 60, 70, 90, 200, 300, 400 };
+		int[] potentialVolumeCapacity = { 100, 500, 1000 };
 
 		Random volumeRandom = new Random();
 
-		int[] potentialIOPS = { 300, 400, 500, 600, 800, 1000 };
+		int[] potentialIOPS = { 200, 350, 450 };
 
 		Random IOPSRandom = new Random();
 
-		for (int i = 1; i < 50; i++) {
+		int arrivalTime = 0;
+
+		Connection connection = Database.getConnection();
+
+		String batchQuery = "";
+
+		Statement statement = connection.createStatement();
+
+		for (int i = 1; i < numberOfRequests; i++) {
 			// random = getPoissonRandom(10000);
 
 			// Random r = new Random();
 
-			VolumeRequest request = new VolumeRequest(this,
-					1, // type
-					potentialVolumeCapacity[volumeRandom
-							.nextInt(potentialVolumeCapacity.length)],
-					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)]);
-
-			request.Save();
-
-			this.VolumeRequestList.add(request);
-		}
-	}
-
-	public void GenerateWorkload2() throws SQLException {
-
-		if (super.getID() == null
-				|| !(super.getID().compareTo(BigDecimal.ZERO) > 0))
-
-			this.Save();
-
-		this.VolumeRequestList = new ArrayList<VolumeRequest>();
-
-		int[] potentialVolumeCapacity = { 60, 70, 90, 200, 300, 400 };
-
-		Random volumeRandom = new Random();
-
-		int[] potentialIOPS = { 300, 400, 500, 600, 800, 1000 };
-
-		Random IOPSRandom = new Random();
-
-		int[] gapTimeSecond = { 60, 80, 10, 5, 120, 210 };
-
-		Random gapTimeSecondRandom = new Random();
-
-		for (int i = 1; i < 50; i++) {
-			// random = getPoissonRandom(10000);
-
-			// Random r = new Random();
+			arrivalTime += Scheduler.getPoissonRandom(20);
 
 			VolumeRequest request = new VolumeRequest(this, //
 					1, // type
 					potentialVolumeCapacity[volumeRandom
 							.nextInt(potentialVolumeCapacity.length)], //
-					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)]);
+					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)],//
+					Scheduler.getPoissonRandom(600), //
+					arrivalTime);
 
-			request.Save();
+			statement.addBatch(request.getSaveQuery());
 
-			try {
-				int sleepSeconds = gapTimeSecond[gapTimeSecondRandom
-						.nextInt(gapTimeSecond.length)];
+			if (i % 10000 == 0) {
+				statement.executeBatch();
 
-				Thread.sleep(sleepSeconds * 1000);
-			} catch (InterruptedException e) {
-
-				e.printStackTrace();
+				// statement.close();
 			}
+
+			System.out.println("current index: " + i);
 
 			this.VolumeRequestList.add(request);
 		}
+
+		System.out.println(this.toString());
 	}
 
 	public BigDecimal Save() throws SQLException {
@@ -206,10 +182,13 @@ public class Workload extends PersistentObject {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
-				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability" // no need for create_time
+				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability / 5, Arrival_Time / 2" // no
+																										// need
+																										// for
+																										// create_time
 						+ " From	volume_request	Where	workload_ID		= ?" //
 						+ " And	ID	> ?" //
-						+ " Limit	1000;");
+						+ " Limit	" + Scheduler.maxClock + ";");
 
 		statement.setBigDecimal(1, this.getID());
 
@@ -232,6 +211,6 @@ public class Workload extends PersistentObject {
 	@Override
 	public String toString() {
 		return String.format("ID: %d - comment: %d - GenerateMethod: %d", super
-				.getID().toString(), this.Comment, this.GenerateMethod);
+				.getID().intValue(), this.Comment, this.GenerateMethod);
 	}
 }

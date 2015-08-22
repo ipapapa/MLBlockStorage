@@ -11,186 +11,117 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
+import edu.purdue.simulation.blockstorage.ScheduleResponse.RejectionReason;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 import edu.purdue.simulation.blockstorage.backend.BackendCategories;
+import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 
 public class MaxCapacityFirstScheduler extends Scheduler {
-
-	private weka.classifiers.trees.REPTree repTree;
 
 	public MaxCapacityFirstScheduler(
 			edu.purdue.simulation.Experiment experiment,
 			edu.purdue.simulation.Workload workload) {
 		super(experiment, workload);
-
-		String arguments = "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3";
-
-		this.repTree = new REPTree();
-
-		AbstractClassifier.runClassifier(this.repTree, arguments.split(" "));
 	}
 
 	@SuppressWarnings("unused")
 	protected void preRun() throws SQLException {
 
-		super.getExperiment().addBackEnd("Back 1", new BackEndSpecifications(//
-				300, // Capacity
-				500,// Max Capacity
-				350, // Min capacity
-				600, // IOPS
-				800, // Max IOPS
-				400, // Min IOPS
+		int capacity = 7200;
+
+		int bandwidth = 1948;
+
+		int maxBandwidth = bandwidth + 500;
+
+		int minBandwidth = bandwidth - 500;
+
+		String path = "D:\\Research\\experiment\\Custom\\";
+
+		super.getExperiment().addBackEnd("B1", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100 // stabilityPossessionMean
-				));
+				200, // stabilityPossessionMean
+				path + "backend1_186752_ex594.arff",//
+				MachineLearningAlgorithm.RepTree));
 
-		super.getExperiment().addBackEnd("Back 2", new BackEndSpecifications(//
-				300, // Capacity
-				500,// Max Capacity
-				350, // Min capacity
-				600, // IOPS
-				800, // Max IOPS
-				400, // Min IOPS
+		super.getExperiment().addBackEnd("B2", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100 // stabilityPossessionMean
-				));
-		
-		super.getExperiment().addBackEnd("Back 3", new BackEndSpecifications(//
-				300, // Capacity
-				500,// Max Capacity
-				350, // Min capacity
-				600, // IOPS
-				800, // Max IOPS
-				400, // Min IOPS
+				300, // stabilityPossessionMean
+				path + "backend2_186753_ex594.arff",//
+				MachineLearningAlgorithm.RepTree));
+
+		super.getExperiment().addBackEnd("B3", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100 // stabilityPossessionMean
-				));
-		
-		super.getExperiment().addBackEnd("Back 4", new BackEndSpecifications(//
-				300, // Capacity
-				500,// Max Capacity
-				350, // Min capacity
-				600, // IOPS
-				800, // Max IOPS
-				400, // Min IOPS
+				400, // stabilityPossessionMean
+				path + "backend3_186754_ex594.arff",//
+				MachineLearningAlgorithm.RepTree));
+
+		super.getExperiment().addBackEnd("B4", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100 // stabilityPossessionMean
-				));
-		
-		super.getExperiment().addBackEnd("Back 4", new BackEndSpecifications(//
-				300, // Capacity
-				500,// Max Capacity
-				350, // Min capacity
-				600, // IOPS
-				800, // Max IOPS
-				400, // Min IOPS
+				500, // stabilityPossessionMean
+				path + "backend4_186755_ex594.arff",//
+				MachineLearningAlgorithm.RepTree));
+
+		super.getExperiment().addBackEnd("B5", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100 // stabilityPossessionMean
-				));
-		
-		if (false) {
+				100, // stabilityPossessionMean
+				path + "backend5_186756_ex594.arff",//
+				MachineLearningAlgorithm.RepTree));
 
-			super.getExperiment().addBackEnd("", new BackEndSpecifications(//
-					300, // Capacity
-					250,// Max Capacity
-					150, // Min capacity
-					400, // IOPS
-					800, // Max IOPS
-					100, // Min IOPS
-					0, // Latency
-					true, // is online
-					50 // stabilityPossessionMean
-					));
-
-			super.getExperiment().addBackEnd("", new BackEndSpecifications(//
-					300, // Capacity
-					800,// Max Capacity
-					350, // Min capacity
-					800, // IOPS
-					1500, // Max IOPS
-					550, // Min IOPS
-					0, // Latency
-					true, // is online
-					200 // stabilityPossessionMean
-					));
-
-			super.getExperiment().addBackEnd("", new BackEndSpecifications(//
-					300, // Capacity
-					850,// Max Capacity
-					320, // Min capacity
-					760, // IOPS
-					950, // Max IOPS
-					520, // Min IOPS
-					0, // Latency
-					true, // is online
-					180 // stabilityPossessionMean
-					));
-		}
-
+		super.getExperiment().addBackEnd("B6", new BackEndSpecifications(//
+				capacity, // Capacity
+				capacity,// Max Capacity
+				capacity, // Min capacity
+				bandwidth, // IOPS
+				maxBandwidth, // Max IOPS
+				minBandwidth, // Min IOPS
+				0, // Latency
+				true, // is online
+				600, // stabilityPossessionMean
+				path + "backend6_186757_ex594.arff", //
+				MachineLearningAlgorithm.RepTree));
 	}
 
-	private boolean doScheduler(Backend backend,
-			VolumeSpecifications volumeSpecifications) {
+	public void schedule() throws java.lang.Exception {
 
-		Instance instance = new DenseInstance(4);
+		super.sortBackendListBaseOnAvailableCapacity();
 
-		int clock = Experiment.clock.intValue();
-
-		int backendSize = backend.getVolumeList().size();
-
-		int totalRequestedCap = 0;
-
-		for (int i = 0; i < backendSize; i++) {
-			totalRequestedCap += backend.getVolumeList().get(i)
-					.getSpecifications().getIOPS();
-		}
-
-		//instance.setValue(0, (clock % 48) / 2);
-		instance.setValue(0, clock % 24);
-		instance.setValue(1, backendSize + 1);
-		// instance.setValue(3, 10);
-		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
-
-		try {
-			double[] predictors = this.repTree
-					.distributionForInstance(instance);
-
-			if (predictors[0] > predictors[1] + predictors[2] + predictors[3])
-
-				return true;
-
-			else
-
-				return false;
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return false;
-
-	}
-
-	public void schedule() throws SQLException {
-
-		Collections.sort(edu.purdue.simulation.Experiment.backEndList,
-				new Comparator<Backend>() {
-					@Override
-					public int compare(Backend backEnd1, Backend backEnd2) {
-						return Integer.compare(backEnd2.getState()
-								.getAvailableCapacity(), backEnd1.getState()
-								.getAvailableCapacity());
-					}
-				});
-
-		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.backEndList
+		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.backendList
 				.get(0);
 
 		VolumeRequest request = super.getRequestQueue().peek();
@@ -199,35 +130,33 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				this.getExperiment(), //
 				request);
 
-		if (Experiment.clock.intValue() > 495) {
-			// maxAvailableCapacityBackEnd.createRegressionModel();
-			int ii = 1;
-		}
+		// if (Experiment.clock.intValue() > 495) {
+		// // maxAvailableCapacityBackEnd.createRegressionModel();
+		// int ii = 1;
+		// }
 
 		VolumeSpecifications requestedSpecifications = request
 				.ToVolumeSpecifications();
 
 		Volume volume = null;
 
-		int requestedIOPS = requestedSpecifications.getIOPS();
+		// int requestedIOPS = requestedSpecifications.getIOPS();
 
-		// TODO check the available IOPS, print injecetion reason\
+		ScheduleResponse.RejectionReason rejectionReason = ScheduleResponse.RejectionReason.none;
 
-		int avail = maxAvailableCapacityBackEnd
-				.getAvailableIOPSWithRegression();
+		if (Scheduler.isTraining == false)
 
-		boolean MLResult = doScheduler(maxAvailableCapacityBackEnd,
-				requestedSpecifications);
+			rejectionReason = super.validateResources(
+					maxAvailableCapacityBackEnd, requestedSpecifications,
+					MachineLearningAlgorithm.RepTree);
 
-		// if (!Scheduler.considerIOPS || avail > requestedIOPS) {
-		// volume = maxAvailableCapacityBackEnd.createVolumeThenAdd(
-		// requestedSpecifications, schedulerResponse);
-		// }
-
-		if (MLResult)
+		// Scheduler.isTraining if is true -> only capacity will be checked
+		if (Scheduler.isTraining
+				|| rejectionReason == ScheduleResponse.RejectionReason.none) {
 
 			volume = maxAvailableCapacityBackEnd.createVolumeThenAdd(
 					requestedSpecifications, schedulerResponse);
+		}
 
 		// there is no volume available. either reject or create new volume
 		// in case of reject a SchedulerResponse record will be saved
@@ -260,12 +189,20 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			super.getRequestQueue().remove();
 		}
 
-		schedulerResponse.save(); // first save this then volume
+		schedulerResponse.save(rejectionReason); // first save this then volume
 
 		if (volume != null)
 
 			volume.save();
 	}
+
+	/**
+	 * @param backend
+	 * @param volumeRequestSpecifications
+	 * @param method
+	 *            1 is RepTree
+	 * @return
+	 */
 
 	@Override
 	public String getName() {

@@ -74,6 +74,8 @@ public class wekaTest {
 			// add the instance
 			isTrainingSet.add(iExample);
 
+			
+			
 			System.out.println(Arrays.toString(repTree
 					.distributionForInstance(iExample)));
 

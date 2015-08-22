@@ -12,7 +12,9 @@ public class BackEndSpecifications extends Specifications {
 
 	public BackEndSpecifications(int capacity, int maxCapacity,
 			int minCapacity, int IOPS, int maxIOPS, int minIOPS, int latency,
-			boolean isOnline, double stabilityPossessionMean) {
+			boolean isOnline, double stabilityPossessionMean,
+			String trainingDataSetPath,
+			MachineLearningAlgorithm machineLearningAlgorithm) {
 		super(capacity, IOPS, latency);
 
 		this.setMaxIOPS(maxIOPS);
@@ -22,9 +24,12 @@ public class BackEndSpecifications extends Specifications {
 		this.setMinCapacity(minCapacity);
 
 		this.setLatency(latency);
-		
+
 		this.setStabilityPossessionMean(stabilityPossessionMean);
 
+		this.setTrainingDataSetPath(trainingDataSetPath);
+
+		this.setMachineLearningAlgorithm(machineLearningAlgorithm);
 	}
 
 	private double stabilityPossessionMean;
@@ -38,6 +43,27 @@ public class BackEndSpecifications extends Specifications {
 	private int maxCapacity;
 
 	private int minCapacity;
+
+	private String trainingDataSetPath;
+
+	private MachineLearningAlgorithm machineLearningAlgorithm;
+
+	public String getTrainingDataSetPath() {
+		return trainingDataSetPath;
+	}
+
+	public void setTrainingDataSetPath(String setTrainingDataSetPath) {
+		this.trainingDataSetPath = setTrainingDataSetPath;
+	}
+
+	public MachineLearningAlgorithm getMachineLearningAlgorithm() {
+		return machineLearningAlgorithm;
+	}
+
+	public void setMachineLearningAlgorithm(
+			MachineLearningAlgorithm machineLearningAlgorithm) {
+		this.machineLearningAlgorithm = machineLearningAlgorithm;
+	}
 
 	public double getStabilityPossessionMean() {
 		return stabilityPossessionMean;

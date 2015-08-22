@@ -6,11 +6,23 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 
 import edu.purdue.simulation.*;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class ScheduleResponse {
+
+	public enum RejectionReason {
+
+		none(-1), IOPS(1), Capacity(2), IOPS_Capacity(3);
+
+		RejectionReason(int ID) {
+			this.ID = ID;
+		}
+
+		public final int ID;
+	}
 
 	public ScheduleResponse(Experiment experiment, VolumeRequest volumeRequest) {
 		super();
@@ -19,6 +31,8 @@ public class ScheduleResponse {
 
 		this.experiment = experiment;
 	}
+
+	public RejectionReason rejectionReason;
 
 	public VolumeRequest volumeRequest;
 
@@ -34,15 +48,15 @@ public class ScheduleResponse {
 
 	public boolean isSuccessful;
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save(RejectionReason rejectionReason) throws SQLException {
 
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert	Into	BlockStorageSimulator.schedule_response"
-								+ "		(experiment_id, volume_request_ID, backend_turned_on, backend_create, backend_scheduled, is_successful, clock)"
-								+ "			values" + "		(?, ?, ?, ?, ?, ?, ?)",
+								+ "		(experiment_id, volume_request_ID, backend_turned_on, backend_create, backend_scheduled, is_successful, clock, rejection_reason_ID)"
+								+ "			values" + "		(?, ?, ?, ?, ?, ?, ?, ?)",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.experiment.getID());
@@ -61,6 +75,15 @@ public class ScheduleResponse {
 		statement.setBoolean(6, this.isSuccessful);
 
 		statement.setBigDecimal(7, Experiment.clock);
+
+		if (this.rejectionReason == null
+				|| this.rejectionReason == RejectionReason.none)
+
+			statement.setNull(8, Types.INTEGER);
+
+		else
+
+			statement.setInt(8, rejectionReason.ID);
 
 		statement.executeUpdate();
 

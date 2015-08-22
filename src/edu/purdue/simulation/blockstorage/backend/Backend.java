@@ -1,6 +1,8 @@
 package edu.purdue.simulation.blockstorage.backend;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +13,14 @@ import java.util.*;
 
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
+import weka.classifiers.AbstractClassifier;
+import weka.classifiers.trees.REPTree;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
@@ -20,10 +30,12 @@ import edu.purdue.simulation.blockstorage.*;
  * @author ravandi
  *
  */
+
 public abstract class Backend extends PersistentObject {
 
 	public Backend(Experiment experiment, String desciption,
 			BackEndSpecifications specifications) {
+
 		this.volumeList = new ArrayList<Volume>();
 
 		this.specifications = specifications;
@@ -33,6 +45,124 @@ public abstract class Backend extends PersistentObject {
 		this.experiment = experiment;
 
 		this.setDescription(desciption);
+	}
+
+	public REPTree repTree;
+
+	public void createRepTree(String params) {
+		String arguments = params;
+		// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3"
+
+		this.repTree = new REPTree();
+
+		AbstractClassifier.runClassifier(this.repTree, arguments.split(" "));
+	}
+
+	public static void createTrainingDataForRepTree(int numberOfRecords,
+			Experiment experiment, Backend backend, String path)
+			throws java.lang.Exception {
+
+		Connection connection = Database.getConnection();
+
+		CallableStatement cStmt = connection
+				.prepareCall("{call data_for_ML(?, ?, ?, ?)}"); // ex_ID,
+																// backend_ID
+																// ,lim
+																// ,modBy
+
+		cStmt.setBigDecimal(1, experiment.getID());
+
+		cStmt.setBigDecimal(2, backend.getID());
+
+		cStmt.setInt(3, numberOfRecords);
+
+		cStmt.setInt(4, 1440); // each day is 1440
+
+		cStmt.execute();
+
+		ResultSet rs = cStmt.getResultSet();
+
+		Attribute clockAttribute = new Attribute("clock");
+		Attribute numAttribute = new Attribute("num");
+
+		FastVector<String> fvClassVal = new FastVector<String>(2);
+
+		fvClassVal.addElement("v1");
+		fvClassVal.addElement("v2");
+		fvClassVal.addElement("v3");
+		fvClassVal.addElement("v4");
+
+		Attribute violationNumbersAttribute = new Attribute("vio", fvClassVal);
+
+		Attribute totalRequestedIOPSAttribute = new Attribute("tot");
+
+		FastVector<Attribute> attributesVector = new FastVector<Attribute>(5);
+
+		attributesVector.addElement(clockAttribute); // 0
+		attributesVector.addElement(numAttribute); // 1
+		attributesVector.addElement(violationNumbersAttribute); // 2
+		attributesVector.addElement(totalRequestedIOPSAttribute); // 3
+
+		Instances trainingInstances = new Instances("Rel", attributesVector, 10);
+
+		trainingInstances.setClassIndex(3); // total 4 attributes
+
+		while (rs.next()) {
+			Instance trainingInstance = new DenseInstance(4);
+
+			trainingInstance.setValue(clockAttribute, rs.getBigDecimal(1)
+					.doubleValue());
+
+			trainingInstance.setValue(numAttribute, rs.getInt(2));
+
+			int numberOfViolations = rs.getInt(3);
+
+			String group = "";
+
+			if (numberOfViolations == 0) {
+				group = "v1";
+			} else if (numberOfViolations > 0 && numberOfViolations <= 2) {
+				group = "v2";
+			} else if (numberOfViolations > 2 && numberOfViolations <= 4) {
+				group = "v3";
+			} else {
+				group = "v4";
+			}
+
+			trainingInstance.setValue(violationNumbersAttribute, group);
+
+			trainingInstance
+					.setValue(totalRequestedIOPSAttribute, rs.getInt(4));
+
+			// add the instance
+			trainingInstances.add(trainingInstance);
+		}
+
+		ArffSaver saver = new ArffSaver();
+
+		saver.setInstances(trainingInstances);
+
+		String saveToPath = "";
+
+		if (path == null || path == "")
+
+			saveToPath = "D:\\Research\\experiment\\"
+					+ backend.getExperiment().getID() + "_" + backend.getID()
+					+ "_" + backend.getDescription() + ".arff";
+
+		else
+
+			saveToPath = path;
+
+		saver.setFile(new File(saveToPath));
+
+		// saver.setDestination(new File(path));
+
+		saver.writeBatch();
+		// Create the instance
+
+		// System.out.println(Arrays.toString(repTree
+		// .distributionForInstance(iExample)));
 	}
 
 	private String description;
@@ -53,7 +183,7 @@ public abstract class Backend extends PersistentObject {
 		return specifications;
 	}
 
-	// I cant understand why VolumeRequestCategories is needed here ??!!
+	// I cant understand why VolumeRequestCategories is needed here ?!!
 
 	// private VolumeRequestCategories GroupSize;
 
@@ -66,7 +196,26 @@ public abstract class Backend extends PersistentObject {
 	// }
 
 	public String getDescription() {
-		return description + " StabilityPossessionMean: "
+
+		String path = this.getSpecifications().getTrainingDataSetPath();
+
+		String result = "";
+
+		if (Scheduler.isTraining) {
+
+			result = "_training_";
+
+			if (path != null && path != "") {
+				String[] pathParts = this.getSpecifications()
+						.getTrainingDataSetPath().split("\\");
+
+				if (pathParts.length > 0)
+
+					result += pathParts[pathParts.length - 1];
+			}
+		}
+
+		return description + result + "_StabilityPossessionMean_"
 				+ this.getSpecifications().getStabilityPossessionMean();
 	}
 
@@ -278,7 +427,8 @@ public abstract class Backend extends PersistentObject {
 
 			// TODO actually implement delete volume which update the field
 			// is_deleted
-			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1);
+			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1,
+					Experiment.clock.intValue());
 
 			scheduleResponse = null;
 

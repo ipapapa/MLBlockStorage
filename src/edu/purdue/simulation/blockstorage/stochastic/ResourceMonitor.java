@@ -29,6 +29,8 @@ public class ResourceMonitor implements Runnable {
 
 	public static int devideVolumeDeleteProbability = 3;
 
+	public static boolean recordVolumePerformanceForClocksWithNoVolume = false;
+
 	public ResourceMonitor() {
 
 	}
@@ -43,10 +45,10 @@ public class ResourceMonitor implements Runnable {
 			this.clock = 0; // reset clock
 
 		this.clock++;
-		
-		for (int i = 0; i < Experiment.backEndList.size(); i++) {
 
-			Backend backend = Experiment.backEndList.get(i);
+		for (int i = 0; i < Experiment.backendList.size(); i++) {
+
+			Backend backend = Experiment.backendList.get(i);
 
 			if (ResourceMonitor.enableBackendPerformanceMeter
 					&& this.clock == ResourceMonitor.clockGap) {
@@ -72,19 +74,36 @@ public class ResourceMonitor implements Runnable {
 			}
 
 			// for now no need to read all volumes performance
-			if (ResourceMonitor.enableVolumePerformanceMeter) {
-				for (int j = 0; j < backend.getVolumeList().size(); j++) {
+			if (ResourceMonitor.enableVolumePerformanceMeter
+					&& this.clock == ResourceMonitor.clockGap) {
 
-					Volume volume = backend.getVolumeList().get(j);
-
+				if (ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume
+						&& backend.getVolumeList().size() == 0) {
 					VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
-							volume);
+							null, backend);
 
 					try {
 						volumePerformanceMeter.Save();
 					} catch (SQLException e) {
 
 						e.printStackTrace();
+					}
+
+				} else {
+
+					for (int j = 0; j < backend.getVolumeList().size(); j++) {
+
+						Volume volume = backend.getVolumeList().get(j);
+
+						VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
+								volume, backend);
+
+						try {
+							volumePerformanceMeter.Save();
+						} catch (SQLException e) {
+
+							e.printStackTrace();
+						}
 					}
 				}
 			}

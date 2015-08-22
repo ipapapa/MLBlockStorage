@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 
+import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
 import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
@@ -26,9 +27,7 @@ public class Experiment extends PersistentObject {
 
 		this.setSchedulerAlgorithm(schedulerAlgorithm);
 
-		Experiment.backEndList = new ArrayList<>();
-
-		Experiment.clock = new BigDecimal(1);
+		Experiment.backendList = new ArrayList<>();
 
 		this.setWorkload(workload);
 	}
@@ -39,9 +38,9 @@ public class Experiment extends PersistentObject {
 
 	public String schedulerAlgorithm;
 
-	public static ArrayList<Backend> backEndList;
+	public static ArrayList<Backend> backendList;
 
-	public static BigDecimal clock;
+	public static BigDecimal clock = new BigDecimal(1);
 
 	public String getSchedulerAlgorithm() {
 		return this.schedulerAlgorithm;
@@ -89,10 +88,10 @@ public class Experiment extends PersistentObject {
 
 			this.save();
 
-		backEndList = new ArrayList<Backend>();
+		backendList = new ArrayList<Backend>();
 
 		BackEndSpecifications specification = new BackEndSpecifications(1200,
-				2000, 800, 500, 800, 200, 0, true, 10000);
+				2000, 800, 500, 800, 200, 0, true, 10000, null, null);
 
 		BackEndSpecifications[] specifications = { specification,
 				specification, specification, specification, specification,
@@ -103,10 +102,10 @@ public class Experiment extends PersistentObject {
 
 			backEnd.save();
 
-			backEndList.add(backEnd);
+			backendList.add(backEnd);
 		}
 
-		return backEndList;
+		return backendList;
 
 	}
 
@@ -170,7 +169,8 @@ public class Experiment extends PersistentObject {
 					rs.getInt(10),// MinIOPS
 					0, // latency
 					rs.getBoolean(11),// isOnline
-					rs.getDouble(13));
+					rs.getDouble(13),//
+					null, null);
 
 			Backend backend = new LVM(//
 					experiment,//
@@ -179,12 +179,12 @@ public class Experiment extends PersistentObject {
 
 			backend.setID(rs.getBigDecimal(1));
 
-			Experiment.backEndList.add(backend);
+			Experiment.backendList.add(backend);
 		}
 
-		for (int i = 0; i < Experiment.backEndList.size(); i++) {
+		for (int i = 0; i < Experiment.backendList.size(); i++) {
 
-			Backend backend = Experiment.backEndList.get(i);
+			Backend backend = Experiment.backendList.get(i);
 
 			ResultSet volumesResultSet = Database
 					.executeQuery(
@@ -198,7 +198,9 @@ public class Experiment extends PersistentObject {
 						volumesResultSet.getInt(5), // IOPS
 						0, // latency
 						volumesResultSet.getBoolean(6), // isDeleted
-						volumesResultSet.getDouble(7));
+						volumesResultSet.getDouble(7), //
+						0 // create time
+				);
 
 				Volume volume = new Volume(backend, null, volumeSpecifications);
 
@@ -239,9 +241,16 @@ public class Experiment extends PersistentObject {
 
 		Backend backEnd = new LVM(this, description, backEndSpecifications);
 
+		if (Scheduler.isTraining == false
+				&& backEndSpecifications.getMachineLearningAlgorithm() == MachineLearningAlgorithm.RepTree) {
+			backEnd.createRepTree(String.format(
+					"-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3",
+					backEndSpecifications.getTrainingDataSetPath()));
+		}
+
 		backEnd.save();
 
-		backEndList.add(backEnd);
+		backendList.add(backEnd);
 
 		return backEnd;
 	}

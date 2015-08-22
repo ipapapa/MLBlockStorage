@@ -5,28 +5,35 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.sql.Statement;
+import java.sql.Types;
 
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
 import edu.purdue.simulation.blockstorage.Volume;
+import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class VolumePerformanceMeter extends PersistentObject {
 
-	public VolumePerformanceMeter(Volume volume) {
+	public VolumePerformanceMeter(Volume volume, Backend backend) {
 
 		this.volume = volume;
 
+		this.backend = backend;
 	}
 
 	private Volume volume;
 
+	private Backend backend;
+
 	public String toString(boolean SLAViolation) {
 		return "[VOLUME PERFORMANCE] clock = " + Experiment.clock
 				+ " SLAViolation = " + SLAViolation + " ID = " + this.getID()
-				+ " volume_ID = " + this.volume.getID() + " backendID = "
-				+ this.volume.getBackend().getID();
+				+ " volume_ID = "
+				+ (this.volume == null ? " NULL " : this.volume.getID())
+				+ " backendID = " + this.backend.getID();
 	}
 
 	public BigDecimal Save() throws SQLException {
@@ -36,25 +43,35 @@ public class VolumePerformanceMeter extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"Insert Into BlockStorageSimulator.volume_performance_meter"
-								+ "	(experiment_ID, volume_ID, clock, available_IOPS, SLA_violation)"
-								+ "		values" + "	(?, ?, ?, ?, ?);",
+								+ "	(experiment_ID, volume_ID, clock, available_IOPS, SLA_violation, backend_ID)"
+								+ "		values" + "	(?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
-		statement.setBigDecimal(1, this.volume.getBackend().getExperiment()
-				.getID());
+		statement.setBigDecimal(1, this.backend.getExperiment().getID());
 
-		statement.setBigDecimal(2, this.volume.getID());
+		int currentIOPS = 0;
+
+		boolean SLAViolation = false;
+
+		if (this.volume == null) {
+
+			statement.setNull(2, Types.NUMERIC);
+		} else {
+			currentIOPS = this.volume.getCurrentIOPS();
+
+			SLAViolation = currentIOPS < this.volume.getSpecifications()
+					.getIOPS();
+
+			statement.setBigDecimal(2, this.volume.getID());
+		}
 
 		statement.setBigDecimal(3, Experiment.clock);
 
-		int currentIOPS = this.volume.getCurrentIOPS();
-
 		statement.setInt(4, currentIOPS);
 
-		boolean SLAViolation = currentIOPS < this.volume.getSpecifications()
-				.getIOPS();
-
 		statement.setBoolean(5, SLAViolation);
+
+		statement.setBigDecimal(6, this.backend.getID());
 
 		statement.executeUpdate();
 

@@ -21,7 +21,8 @@ public class VolumeRequest extends Specifications {
 
 	}
 
-	public VolumeRequest(Workload workload, int type, int capacity, int IOPS) {
+	public VolumeRequest(Workload workload, int type, int capacity, int IOPS,
+			double deleteFactor, int arrivalTime) {
 		super();
 
 		this.setWorkload(workload);
@@ -31,6 +32,10 @@ public class VolumeRequest extends Specifications {
 		this.setIOPS(IOPS);
 
 		this.setType(type);
+
+		this.setDeleteFactor(deleteFactor);
+
+		this.setArrivalTime(arrivalTime);
 	}
 
 	private VolumeRequestCategories GroupSize;
@@ -39,14 +44,24 @@ public class VolumeRequest extends Specifications {
 
 	private Workload Workload;
 
-	private double deleteProbability;
+	private double deleteFactor;
 
-	public double getDeleteProbability() {
-		return deleteProbability;
+	private int arrivalTime;
+
+	public int getArrivalTime() {
+		return arrivalTime;
 	}
 
-	public void setDeleteProbability(double deleteProbability) {
-		this.deleteProbability = deleteProbability;
+	public void setArrivalTime(int arrivalTime) {
+		this.arrivalTime = arrivalTime;
+	}
+
+	public double getDeleteFactor() {
+		return deleteFactor;
+	}
+
+	public void setDeleteFactor(double deleteProbability) {
+		this.deleteFactor = deleteProbability;
 	}
 
 	public VolumeRequestCategories getGroupSize() {
@@ -79,19 +94,35 @@ public class VolumeRequest extends Specifications {
 				this.getIOPS(), //
 				this.getLatency(), //
 				false, //
-				this.getDeleteProbability());
+				this.getDeleteFactor(), //
+				Experiment.clock.intValue());
 
 		return result;
+	}
+
+	public String getSaveQuery() {
+		return String
+				.format(" insert into volume_request\n"
+						+ "	(workload_id, capacity, type, IOPS, Delete_Probability, Arrival_Time)\n"
+						+ "		Values" + "	(%d, %d, %d, %d, %f, %d); \n",//
+						this.Workload.getID().intValue(),//
+						this.getCapacity(), //
+						this.getType(), //
+						this.getIOPS(), //
+						this.getDeleteFactor(), //
+						this.getArrivalTime());
 	}
 
 	public BigDecimal Save() throws SQLException {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection.prepareStatement(
-				"insert into volume_request"
-						+ "	(workload_id, capacity, type, IOPS)" + "		Values"
-						+ "	(?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(
+						"insert into volume_request"
+								+ "	(workload_id, capacity, type, IOPS, Delete_Probability, Arrival_Time)"
+								+ "		Values" + "	(?, ?, ?, ?, ?, ?);",
+						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.Workload.getID());
 
@@ -100,6 +131,10 @@ public class VolumeRequest extends Specifications {
 		statement.setInt(3, this.getType());
 
 		statement.setInt(4, this.getIOPS());
+
+		statement.setDouble(5, this.getDeleteFactor());
+
+		statement.setInt(6, this.getArrivalTime());
 
 		statement.executeUpdate();
 
@@ -128,13 +163,15 @@ public class VolumeRequest extends Specifications {
 
 		this.setType(resulSet.getInt(4));
 
-		double requestedIOPS = resulSet.getInt(5) / 2;
+		double requestedIOPS = resulSet.getInt(5);
 
 		super.setIOPS((int) requestedIOPS); // lower the IOPS
 
-		this.setDeleteProbability(resulSet.getDouble(6));
+		this.setDeleteFactor(resulSet.getDouble(6));
 
-		super.retrievePersistentProperties(resulSet, 7);
+		this.setArrivalTime(resulSet.getInt(7));
+
+		super.retrievePersistentProperties(resulSet, 8);
 
 		return true;
 	}
@@ -143,7 +180,7 @@ public class VolumeRequest extends Specifications {
 	public String toString() {
 		return String.format("%s ID: %s - Type: %d Clock = %s", //
 				super.toString(), //
-				this.getID().toString(), //
+				this.getID(), //
 				this.Type, Experiment.clock.toString()); //
 	}
 }

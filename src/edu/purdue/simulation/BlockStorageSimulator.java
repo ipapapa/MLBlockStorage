@@ -26,64 +26,41 @@ public class BlockStorageSimulator {
 
 	public static void main(String[] args) {
 
-		ResourceMonitor.enableBackendPerformanceMeter = true;
+		ResourceMonitor.enableBackendPerformanceMeter = false;
 
 		ResourceMonitor.enableVolumePerformanceMeter = true;
 
-		ResourceMonitor.clockGap = 1;
+		ResourceMonitor.clockGap = 5;
 
-		Scheduler.maxClock = 500;
+		ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = false;
 
-		Scheduler.schedulePausePoissonMean = 5;
+		Scheduler.maxClock = 110000;// 110000;
 
-		Scheduler.devideVolumeDeleteProbability = 3;
+		Scheduler.schedulePausePoissonMean = 5; // not used
+
+		Scheduler.devideVolumeDeleteProbability = 3; // not used
 
 		Scheduler.considerIOPS = false;
 
+		Scheduler.isTraining = false;
+
 		StochasticEventGenerator.clockGap = 4;
 
+		int workloadID = 62;
+
 		try {
-
-			// Random r = new Random();
-			//
-			// for (int i = 0; i < 100; i++) {
-			// System.out.println(r.nextDouble());
-			// }
-
-			// retrieveExperiment(BigDecimal.valueOf(331));
-
-			// for (int i = 0; i < 600; i++) {
-			// System.out.println(i + "\t" + getPoissonRandom(1000));
-			// }
-
-			// args = null;
 
 			if (args != null) {
 
 				System.out.println("start");
 
-				// Workload workload = new Workload(1 // generate method
-				// , "workload with time gap");
-				//
-				// workload.GenerateWorkload2();
-
-				Workload workload = new Workload(BigDecimal.valueOf(37));
+				Workload workload = new Workload(BigDecimal.valueOf(workloadID));
 
 				workload.RetrieveVolumeRequests();
 
-				// Experiment experiment = new Experiment(
-				// "MostAvailableCapacity Run 1", "MostAvailableCapacity");
-
 				Experiment experiment = new Experiment(workload, "", "");
 
-				//
 				experiment.save();
-				//
-				// experiment.GenerateBackEnd();
-				//
-				// Scheduler scheduler = new
-				// edu.purdue.simulation.blockstorage.StatisticalGroupping(
-				// experiment, workload);
 
 				Scheduler scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(
 						experiment, workload);
@@ -97,10 +74,10 @@ public class BlockStorageSimulator {
 							+ experiment.getID());
 
 					scheduler.getExperiment();
-					for (int i = 0; i < Experiment.backEndList.size(); i++) {
+					for (int i = 0; i < Experiment.backendList.size(); i++) {
 						scheduler.getExperiment();
 						System.out.println("Backend ID = "
-								+ Experiment.backEndList.get(i).getID());
+								+ Experiment.backendList.get(i).getID());
 					}
 
 					System.out.println("sum: " + Scheduler.sum
@@ -110,8 +87,8 @@ public class BlockStorageSimulator {
 
 					System.out.println("Clock: " + Experiment.clock);
 
-					System.out
-							.println("**Remmeber MAX clock number is: " + 90213);
+					// System.out
+					// .println("**Remmeber MAX clock number is: " + 90213);
 				}
 			}
 

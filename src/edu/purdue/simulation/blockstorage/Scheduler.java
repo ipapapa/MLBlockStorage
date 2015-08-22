@@ -2,6 +2,7 @@ package edu.purdue.simulation.blockstorage;
 
 import java.sql.SQLException;
 import java.util.*;
+
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.Workload;
@@ -10,7 +11,11 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
+
 import java.math.BigDecimal;
+
+import weka.core.DenseInstance;
+import weka.core.Instance;
 
 //import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -46,6 +51,8 @@ public abstract class Scheduler {
 
 	public static boolean considerIOPS = false;
 
+	public static boolean isTraining = false;
+
 	private Experiment experiment;
 
 	private Workload Workload;
@@ -74,6 +81,112 @@ public abstract class Scheduler {
 
 	public void setRequestQueue(LinkedList<VolumeRequest> requestQueue) {
 		this.requestQueue = requestQueue;
+	}
+
+	protected boolean validateWithRepTree(Backend backend,
+			VolumeSpecifications volumeSpecifications) {
+
+		Instance instance = new DenseInstance(4);
+
+		int clock = Experiment.clock.intValue();
+
+		int backendSize = backend.getVolumeList().size();
+
+		int totalRequestedCap = 0;
+
+		for (int i = 0; i < backendSize; i++) {
+			totalRequestedCap += backend.getVolumeList().get(i)
+					.getSpecifications().getIOPS();
+		}
+
+		// instance.setValue(0, (clock % 48) / 2);
+		instance.setValue(0, clock % 24);
+		instance.setValue(1, backendSize + 1);
+		// instance.setValue(3, 10);
+		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
+
+		try {
+			double[] predictors = backend.repTree.distributionForInstance(instance);
+
+			if (predictors[0] > predictors[1] + predictors[2] + predictors[3])
+
+				return true;
+
+			else
+
+				return false;
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		}
+
+		// TODO FIX THIS
+
+		return true;
+	}
+
+	protected void sortBackendListBaseOnAvailableCapacity() {
+		Collections.sort(edu.purdue.simulation.Experiment.backendList,
+				new Comparator<Backend>() {
+					@Override
+					public int compare(Backend backEnd1, Backend backEnd2) {
+						return Integer.compare(backEnd2.getState()
+								.getAvailableCapacity(), backEnd1.getState()
+								.getAvailableCapacity());
+					}
+				});
+	}
+
+	protected ScheduleResponse.RejectionReason validateResources(
+			Backend backend, VolumeSpecifications volumeRequestSpecifications,
+			MachineLearningAlgorithm machineLearningAlgorithm) throws Exception {
+
+		ScheduleResponse.RejectionReason result = ScheduleResponse.RejectionReason.none;
+
+		boolean validateIOPS = false;
+
+		if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
+			validateIOPS = validateWithRepTree(backend,
+					volumeRequestSpecifications);
+		} else {
+			throw new java.lang.Exception(
+					"the validation method is not defined;");
+		}
+
+		boolean validateCapacity = true;
+
+		if (backend.getState().getAvailableCapacity() < volumeRequestSpecifications
+				.getCapacity()) {
+
+			validateCapacity = false;
+		}
+
+		if (!validateIOPS)
+
+			result = ScheduleResponse.RejectionReason.IOPS;
+
+		if (!validateCapacity)
+
+			result = ScheduleResponse.RejectionReason.Capacity;
+
+		if (!validateIOPS && !validateCapacity)
+
+			result = ScheduleResponse.RejectionReason.IOPS_Capacity;
+
+		// TODO check the available IOPS, print injecetion reason\
+
+		// int avail =
+		// maxAvailableCapacityBackEnd.getAvailableIOPSWithRegression();
+
+		// if (!Scheduler.considerIOPS || avail > requestedIOPS) {
+		// volume = maxAvailableCapacityBackEnd.createVolumeThenAdd(
+		// requestedSpecifications, schedulerResponse);
+		// }
+
+		return result;
+
 	}
 
 	protected void preRun() throws SQLException {
@@ -146,7 +259,7 @@ public abstract class Scheduler {
 		return k - 1;
 	}
 
-	public void run() throws SQLException {
+	public void run() throws Exception {
 
 		this.preRun();
 
@@ -184,7 +297,10 @@ public abstract class Scheduler {
 
 			this.deleteExpiredVolumes();
 
-			if (pauseTime == pauseTimer) {
+			int arrivalTime = this.getRequestQueue().peek().getArrivalTime();
+
+			// if (pauseTime == pauseTimer) {
+			if (arrivalTime == i) {
 
 				pauseTime = getPoissonRandom(Scheduler.schedulePausePoissonMean);
 				pauseTimer = -1; // in case we get 0 in pauseTime
@@ -212,6 +328,15 @@ public abstract class Scheduler {
 			// break;
 		}
 
+		if (Scheduler.isTraining) {
+			for (i = 0; i < Experiment.backendList.size(); i++) {
+
+				Backend.createTrainingDataForRepTree(0, this.getExperiment(),
+						Experiment.backendList.get(i), null);
+
+			}
+		}
+
 		// eventGeneratorThread.interrupt();
 		// ResourceMonitorThread.interrupt();
 		//
@@ -231,8 +356,10 @@ public abstract class Scheduler {
 		//
 		// }
 
-		for (int i = 0; i < edu.purdue.simulation.Experiment.backEndList.size(); i++) {
-			Backend backend = edu.purdue.simulation.Experiment.backEndList
+		int currentClock = Experiment.clock.intValue();
+
+		for (int i = 0; i < edu.purdue.simulation.Experiment.backendList.size(); i++) {
+			Backend backend = edu.purdue.simulation.Experiment.backendList
 					.get(i);
 
 			for (int j = 0; j < backend.getVolumeList().size(); j++) {
@@ -240,20 +367,28 @@ public abstract class Scheduler {
 
 				randGeneratedNumbers++;
 
-				double randomValue = this.random.nextDouble();
+				/*
+				 * double randomValue = this.random.nextDouble();
+				 * 
+				 * sum += randomValue;
+				 * 
+				 * double deleteProbability =
+				 * volume.getSpecifications().deleteFactor /
+				 * Scheduler.devideVolumeDeleteProbability;
+				 * 
+				 * // deleteProbability = 0.2;
+				 */
 
-				sum += randomValue;
+				VolumeSpecifications volumeSpec = volume.getSpecifications();
 
-				double deleteProbability = volume.getSpecifications().deleteProbability
-						/ Scheduler.devideVolumeDeleteProbability;
+				int deleteFactor = (int) (volumeSpec.deleteFactor + volumeSpec.createClock);
 
-				// deleteProbability = 0.2;
-
-				if (randomValue < deleteProbability) {
+				// if (randomValue < deleteProbability) {
+				if (deleteFactor <= currentClock) {
 					volume.delete();
 
 					System.out.println("[DELETED VOLUME] "
-							+ volume.toString(randomValue, deleteProbability));
+							+ volume.toString(deleteFactor));
 				}
 			}
 		}
@@ -261,5 +396,5 @@ public abstract class Scheduler {
 
 	public abstract String getName();
 
-	public abstract void schedule() throws SQLException;
+	public abstract void schedule() throws Exception;
 }

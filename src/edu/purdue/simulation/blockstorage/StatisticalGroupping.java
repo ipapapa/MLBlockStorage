@@ -22,7 +22,7 @@ public class StatisticalGroupping extends Scheduler {
 	private double predicatedAVG = 41; // 41.4823;
 
 	BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-			1200, 2000, 800, 500, 800, 200, 0, true, 50);
+			1200, 2000, 800, 500, 800, 200, 0, true, 50, null, null);
 
 	private void RankRequest(VolumeRequest request) {
 
@@ -112,7 +112,7 @@ public class StatisticalGroupping extends Scheduler {
 		for (int i = 1; i <= MaxGroupSize; i++) {
 
 			this.getExperiment();
-			List<Backend> candidateList = edu.purdue.simulation.Experiment.backEndList
+			List<Backend> candidateList = edu.purdue.simulation.Experiment.backendList
 					.stream()
 					// I CANT UNDERSTAND WHY getGroupSize is needed
 					// .filter(b -> (b.getGroupSize().order == start)
@@ -149,11 +149,11 @@ public class StatisticalGroupping extends Scheduler {
 
 		Backend bestFit = this.GetBestBackEndForRequest(request);
 
-		Volume volume = bestFit.createVolumeThenAdd(request.ToVolumeSpecifications(),
-				schedulerResponse);
+		Volume volume = bestFit.createVolumeThenAdd(
+				request.ToVolumeSpecifications(), schedulerResponse);
 
 		BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-				1200, 2000, 800, 500, 800, 200, 0, true, 50);
+				1200, 2000, 800, 500, 800, 200, 0, true, 50, null, null);
 
 		// here volume will never be null
 		if (volume == null) {
@@ -182,11 +182,15 @@ public class StatisticalGroupping extends Scheduler {
 			super.getRequestQueue().remove();
 		}
 
-		schedulerResponse.save();
+		if (volume == null) {
 
-		if (volume != null)
+			schedulerResponse.save(ScheduleResponse.RejectionReason.Capacity);
+
+		} else {
+			schedulerResponse.save(null);
 
 			volume.save();
+		}
 	}
 
 	@Override
