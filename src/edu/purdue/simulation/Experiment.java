@@ -1,10 +1,16 @@
 package edu.purdue.simulation;
 
-import java.io.Console;
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
@@ -12,7 +18,6 @@ import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
 import edu.purdue.simulation.blockstorage.VolumeSpecifications;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
-import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.backend.LVM;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
@@ -41,6 +46,8 @@ public class Experiment extends PersistentObject {
 	public static ArrayList<Backend> backendList;
 
 	public static BigDecimal clock = new BigDecimal(1);
+
+	public static String saveResultPath = "";
 
 	public String getSchedulerAlgorithm() {
 		return this.schedulerAlgorithm;
@@ -243,6 +250,7 @@ public class Experiment extends PersistentObject {
 
 		if (Scheduler.isTraining == false
 				&& backEndSpecifications.getMachineLearningAlgorithm() == MachineLearningAlgorithm.RepTree) {
+
 			backEnd.createRepTree(String.format(
 					"-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3",
 					backEndSpecifications.getTrainingDataSetPath()));
@@ -310,5 +318,216 @@ public class Experiment extends PersistentObject {
 		return String.format("ID: %d - SchedulerAlgorithm: %d - comment: %d",
 				this.getID().toString(), this.getSchedulerAlgorithm(),
 				this.getComment());
+	}
+
+	/**
+	 * @param rs
+	 * @param backend
+	 * @param path
+	 * @param includeViolationsNumber
+	 *            0: Don't include SLA violations number 1: include SLA
+	 *            violations number 2: include SLA violation number and remove
+	 *            violation label
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "deprecation" })
+	private void saveBackend(ResultSet rs, Backend backend, String path,
+			int includeViolationsNumber) throws Exception {
+
+		FastVector<Attribute> attributesVector = new FastVector<Attribute>(4);
+
+		Attribute clockAttribute = new Attribute("clock");
+
+		Attribute numAttribute = new Attribute("num");
+
+		Attribute violationGroupAttribute = null;
+
+		if (includeViolationsNumber < 2) {
+			FastVector<String> fvClassVal = new FastVector<String>(4);
+
+			fvClassVal.addElement("v1");
+			fvClassVal.addElement("v2");
+			fvClassVal.addElement("v3");
+			fvClassVal.addElement("v4");
+
+			violationGroupAttribute = new Attribute("vio", fvClassVal);
+
+			attributesVector.addElement(violationGroupAttribute); // 2
+		}
+
+		Attribute totalRequestedIOPSAttribute = new Attribute("tot");
+
+		attributesVector.addElement(clockAttribute); // 0
+
+		attributesVector.addElement(numAttribute); // 1
+
+		attributesVector.addElement(totalRequestedIOPSAttribute); // 3
+
+		Attribute violationNumberAttribute = null;
+
+		if (includeViolationsNumber > 0) {
+
+			violationNumberAttribute = new Attribute("vioNum");
+
+			attributesVector.addElement(violationNumberAttribute);
+		}
+
+		Instances trainingInstances = new Instances("Rel", attributesVector, 10);
+
+		trainingInstances.setClassIndex(attributesVector.size() - 1);
+
+		while (rs.next()) {
+
+			Instance trainingInstance = new DenseInstance(
+					attributesVector.size());
+
+			trainingInstance.setValue(clockAttribute, rs.getBigDecimal(1)
+					.doubleValue());
+
+			trainingInstance.setValue(numAttribute, rs.getInt(2));
+
+			int numberOfViolations = rs.getInt(3);
+
+			if (violationGroupAttribute != null) {
+
+				String group = "";
+
+				if (numberOfViolations == 0) {
+					group = "v1";
+				} else if (numberOfViolations > 0 && numberOfViolations <= 2) {
+					group = "v2";
+				} else if (numberOfViolations > 2 && numberOfViolations <= 4) {
+					group = "v3";
+				} else {
+					group = "v4";
+				}
+
+				trainingInstance.setValue(violationGroupAttribute, group);
+			}
+
+			trainingInstance
+					.setValue(totalRequestedIOPSAttribute, rs.getInt(4));
+
+			if (violationNumberAttribute != null)
+
+				trainingInstance.setValue(violationNumberAttribute,
+						numberOfViolations);
+
+			// add the instance
+			trainingInstances.add(trainingInstance);
+		}
+
+		ArffSaver saver = new ArffSaver();
+
+		saver.setInstances(trainingInstances);
+
+		String saveToPath = "";
+
+		if (path == null || path == "")
+
+			path = Experiment.saveResultPath;
+
+		saveToPath = path + backend.getExperiment().getID() + "_"
+				+ backend.getID() + "_" + backend.getDescription() + ".arff";
+
+		saver.setFile(new File(saveToPath));
+
+		// saver.setDestination(new File(path));
+
+		saver.writeBatch();
+		// Create the instance
+
+		// System.out.println(Arrays.toString(repTree
+		// .distributionForInstance(iExample)));
+	}
+
+	/**
+	 * @param numberOfRecords
+	 *            limits the number of records to be in the resultset coming
+	 *            from MySQL DB
+	 * @param experiment
+	 * @param path
+	 *            null will use the default path.
+	 * @param includeViolationsNumber
+	 *            0: Don't include SLA violations number 1: include SLA
+	 *            violations number 2: include SLA violation number and remove
+	 *            violation label
+	 * @throws Exception
+	 */
+	public void createTrainingDataForRepTree(int numberOfRecords,
+			Experiment experiment, String path, int includeViolationsNumber)
+			throws java.lang.Exception {
+
+		Connection connection = Database.getConnection();
+
+		CallableStatement cStmt = connection
+				.prepareCall("{call data_for_ML(?, ?, ?)}"); // ex_ID,
+																// ,lim
+																// ,modBy
+
+		cStmt.setBigDecimal(1, experiment.getID());
+
+		cStmt.setInt(2, numberOfRecords);
+
+		cStmt.setInt(3, Scheduler.modClockBy);
+
+		cStmt.execute();
+
+		ResultSet rs = null;
+
+		boolean hasResultSet = true;
+
+		boolean reportResulSet = true;
+
+		BigDecimal currentBackendID;
+
+		Backend currentBackend = null;
+
+		while (hasResultSet) {
+
+			rs = cStmt.getResultSet();
+
+			if (rs == null)
+
+				break;
+
+			if (reportResulSet) {
+
+				rs.next();
+
+				currentBackendID = rs.getBigDecimal(2);
+
+				for (int i = 0; i < Experiment.backendList.size(); i++) {
+
+					currentBackend = Experiment.backendList.get(i);
+
+					if (currentBackend.getID().compareTo(currentBackendID) == 0)
+
+						break;
+
+					currentBackend = null;
+				}
+
+				if (currentBackend == null)
+
+					throw new Exception(
+							"could not find the backend in SQL resultset.");
+
+				reportResulSet = false;
+
+			} else {
+
+				this.saveBackend(rs, currentBackend, path,
+						includeViolationsNumber);
+
+				reportResulSet = true;
+
+			}
+
+			rs.close();
+
+			hasResultSet = !((cStmt.getMoreResults() == false) && //
+			(cStmt.getUpdateCount() == -1));
+		}
 	}
 }

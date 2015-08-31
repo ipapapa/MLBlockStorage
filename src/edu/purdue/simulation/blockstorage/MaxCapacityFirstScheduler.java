@@ -1,21 +1,12 @@
 package edu.purdue.simulation.blockstorage;
 
+import java.io.File;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 
-import weka.classifiers.AbstractClassifier;
-import weka.classifiers.trees.REPTree;
-import weka.core.DenseInstance;
-import weka.core.Instance;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
-import edu.purdue.simulation.blockstorage.ScheduleResponse.RejectionReason;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
-import edu.purdue.simulation.blockstorage.backend.BackendCategories;
-import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 
 public class MaxCapacityFirstScheduler extends Scheduler {
 
@@ -25,7 +16,6 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		super(experiment, workload);
 	}
 
-	@SuppressWarnings("unused")
 	protected void preRun() throws SQLException {
 
 		int capacity = 7200;
@@ -36,7 +26,28 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 		int minBandwidth = bandwidth - 500;
 
-		String path = "D:\\Research\\experiment\\Custom\\";
+		String path = Experiment.saveResultPath;
+
+		File folder = new File(path);
+
+		File[] listOfFiles = folder.listFiles();
+
+		String[] backends = new String[6];
+
+		int j = 0;
+
+		for (int i = 0; i < listOfFiles.length; i++) {
+			if (listOfFiles[i].isFile()) {
+				String fileName = listOfFiles[i].getName();
+
+				if (fileName.startsWith(Scheduler.trainingExperimentID
+						.toString())) {
+					backends[j] = path + fileName;
+
+					j++;
+				}
+			}
+		}
 
 		super.getExperiment().addBackEnd("B1", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -48,7 +59,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				200, // stabilityPossessionMean
-				path + "backend1_186752_ex594.arff",//
+				backends[0],//
 				MachineLearningAlgorithm.RepTree));
 
 		super.getExperiment().addBackEnd("B2", new BackEndSpecifications(//
@@ -61,7 +72,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				300, // stabilityPossessionMean
-				path + "backend2_186753_ex594.arff",//
+				backends[1],//
 				MachineLearningAlgorithm.RepTree));
 
 		super.getExperiment().addBackEnd("B3", new BackEndSpecifications(//
@@ -74,7 +85,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				400, // stabilityPossessionMean
-				path + "backend3_186754_ex594.arff",//
+				backends[2],//
 				MachineLearningAlgorithm.RepTree));
 
 		super.getExperiment().addBackEnd("B4", new BackEndSpecifications(//
@@ -87,7 +98,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				500, // stabilityPossessionMean
-				path + "backend4_186755_ex594.arff",//
+				backends[3],//
 				MachineLearningAlgorithm.RepTree));
 
 		super.getExperiment().addBackEnd("B5", new BackEndSpecifications(//
@@ -100,7 +111,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				100, // stabilityPossessionMean
-				path + "backend5_186756_ex594.arff",//
+				backends[4],//
 				MachineLearningAlgorithm.RepTree));
 
 		super.getExperiment().addBackEnd("B6", new BackEndSpecifications(//
@@ -113,7 +124,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				0, // Latency
 				true, // is online
 				600, // stabilityPossessionMean
-				path + "backend6_186757_ex594.arff", //
+				backends[5], //
 				MachineLearningAlgorithm.RepTree));
 	}
 
@@ -130,11 +141,6 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				this.getExperiment(), //
 				request);
 
-		// if (Experiment.clock.intValue() > 495) {
-		// // maxAvailableCapacityBackEnd.createRegressionModel();
-		// int ii = 1;
-		// }
-
 		VolumeSpecifications requestedSpecifications = request
 				.ToVolumeSpecifications();
 
@@ -142,35 +148,37 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 		// int requestedIOPS = requestedSpecifications.getIOPS();
 
-		ScheduleResponse.RejectionReason rejectionReason = ScheduleResponse.RejectionReason.none;
+		ScheduleResponse.RejectionReason rejectionReason = super
+				.validateResources(maxAvailableCapacityBackEnd,
+						requestedSpecifications,
+						MachineLearningAlgorithm.RepTree);
 
-		if (Scheduler.isTraining == false)
-
-			rejectionReason = super.validateResources(
-					maxAvailableCapacityBackEnd, requestedSpecifications,
-					MachineLearningAlgorithm.RepTree);
-
-		// Scheduler.isTraining if is true -> only capacity will be checked
-		if (Scheduler.isTraining
-				|| rejectionReason == ScheduleResponse.RejectionReason.none) {
+		/*
+		 * Scheduler.isTraining if is true -> only capacity will be checked
+		 */
+		if (rejectionReason == ScheduleResponse.RejectionReason.none) {
 
 			volume = maxAvailableCapacityBackEnd.createVolumeThenAdd(
 					requestedSpecifications, schedulerResponse);
 		}
 
-		// there is no volume available. either reject or create new volume
-		// in case of reject a SchedulerResponse record will be saved
+		/*
+		 * there is no volume available. either reject or create new volume in
+		 * case of reject a SchedulerResponse record will be saved
+		 */
 		if (volume == null) {
 
 			schedulerResponse.isSuccessful = false;
 
 			schedulerResponse.backEndScheduled = null;
 
-			// I only want to have 1 backend
+			/*
+			 * You can dynamically add backends here if needed, or just reject
+			 * the volume
+			 */
 			// schedulerResponse.backEndCreated = super.getExperiment()
 			// .AddBackEnd(this.specifications); // no backend created
 
-			// if cant schedule, drop it
 			super.getRequestQueue().remove();
 
 			schedulerResponse.backEndTurnedOn = null; // no backend turned on
@@ -189,7 +197,10 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			super.getRequestQueue().remove();
 		}
 
-		schedulerResponse.save(rejectionReason); // first save this then volume
+		/*
+		 * first save the schedule response then the volume
+		 */
+		schedulerResponse.save(rejectionReason);
 
 		if (volume != null)
 

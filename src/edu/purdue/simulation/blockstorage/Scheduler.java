@@ -3,6 +3,7 @@ package edu.purdue.simulation.blockstorage;
 import java.sql.SQLException;
 import java.util.*;
 
+import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.Workload;
@@ -10,6 +11,7 @@ import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
+import edu.purdue.simulation.blockstorage.stochastic.StochasticEvent;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 import java.math.BigDecimal;
@@ -43,13 +45,19 @@ public abstract class Scheduler {
 				.getVolumeRequestList()));
 	}
 
+	public static Integer trainingExperimentID;
+
+	public static int modClockBy = 1140;
+
 	public static int maxClock = 0;
+
+	public static int minRequests = 0;
 
 	public static int schedulePausePoissonMean = 0;
 
 	public static int devideVolumeDeleteProbability = 1;
 
-	public static boolean considerIOPS = false;
+	// public static boolean considerIOPS = false;
 
 	public static boolean isTraining = false;
 
@@ -100,15 +108,23 @@ public abstract class Scheduler {
 		}
 
 		// instance.setValue(0, (clock % 48) / 2);
-		instance.setValue(0, clock % 24);
+		instance.setValue(0, clock % Scheduler.modClockBy);
 		instance.setValue(1, backendSize + 1);
 		// instance.setValue(3, 10);
 		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
 
 		try {
-			double[] predictors = backend.repTree.distributionForInstance(instance);
+			double[] predictors = backend.repTree
+					.distributionForInstance(instance);
 
-			if (predictors[0] > predictors[1] + predictors[2] + predictors[3])
+			// if (predictors[0] > predictors[1] + predictors[2] +
+			// predictors[3])
+			// if ((predictors[1] >= predictors[2])
+			// && (predictors[1] >= predictors[3])
+			// //&& (predictors[0] >= predictors[3])
+			// )
+
+			if (predictors[3] < 0.999)
 
 				return true;
 
@@ -147,12 +163,21 @@ public abstract class Scheduler {
 
 		boolean validateIOPS = false;
 
-		if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
-			validateIOPS = validateWithRepTree(backend,
-					volumeRequestSpecifications);
+		/*
+		 * Do not consider IOPS in training
+		 */
+		if (Scheduler.isTraining) {
+			validateIOPS = true;
+
 		} else {
-			throw new java.lang.Exception(
-					"the validation method is not defined;");
+
+			if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
+				validateIOPS = validateWithRepTree(backend,
+						volumeRequestSpecifications);
+			} else {
+				throw new java.lang.Exception(
+						"the validation method is not defined;");
+			}
 		}
 
 		boolean validateCapacity = true;
@@ -267,13 +292,13 @@ public abstract class Scheduler {
 
 		ResourceMonitor resourceMonitor = new ResourceMonitor();
 
-		@SuppressWarnings("unused")
-		Thread eventGeneratorThread = new Thread(eventGenerator);
+		// @SuppressWarnings("unused")
+		// Thread eventGeneratorThread = new Thread(eventGenerator);
 
 		// eventGeneratorThread.start();
 
-		@SuppressWarnings("unused")
-		Thread ResourceMonitorThread = new Thread(resourceMonitor);
+		// @SuppressWarnings("unused")
+		// Thread ResourceMonitorThread = new Thread(resourceMonitor);
 
 		// ResourceMonitorThread.start();
 
@@ -285,11 +310,21 @@ public abstract class Scheduler {
 
 		int pauseTimer = 0;
 
+		int queueInitialSize = this.getRequestQueue().size();
+
 		while (true) {
 
-			if (i == Scheduler.maxClock)
+			if (i >= Scheduler.maxClock) {
 
-				break;
+				if (Scheduler.minRequests == 0) {
+
+					break;
+				} else if ((queueInitialSize - this.getRequestQueue().size()) >= Scheduler.minRequests) {
+
+					break;
+
+				}
+			}
 
 			i++;
 
@@ -326,16 +361,27 @@ public abstract class Scheduler {
 			// if (sum.compareTo(new BigInteger("100")) == 0)
 			//
 			// break;
+
+			Database.executeBatchQuery(StochasticEvent.queries, 1000);
+
+			Database.executeBatchQuery(VolumePerformanceMeter.queries, 1000);
 		}
 
-		if (Scheduler.isTraining) {
-			for (i = 0; i < Experiment.backendList.size(); i++) {
+		Database.executeBatchQuery(StochasticEvent.queries, 0);
 
-				Backend.createTrainingDataForRepTree(0, this.getExperiment(),
-						Experiment.backendList.get(i), null);
+		Database.executeBatchQuery(VolumePerformanceMeter.queries, 0);
 
-			}
-		}
+		// for (i = 0; i < Experiment.backendList.size(); i++) {
+		//
+		// Backend.createTrainingDataForRepTree(0, this.getExperiment(),
+		// Experiment.backendList.get(i), null);
+		//
+		// }
+
+		this.experiment.createTrainingDataForRepTree(0, this.getExperiment(),
+				null, 0);
+
+		// }
 
 		// eventGeneratorThread.interrupt();
 		// ResourceMonitorThread.interrupt();

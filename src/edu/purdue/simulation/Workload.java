@@ -84,8 +84,6 @@ public class Workload extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		String batchQuery = "";
-
 		Statement statement = connection.createStatement();
 
 		for (int i = 1; i < numberOfRequests; i++) {
@@ -98,10 +96,12 @@ public class Workload extends PersistentObject {
 			VolumeRequest request = new VolumeRequest(this, //
 					1, // type
 					potentialVolumeCapacity[volumeRandom
-							.nextInt(potentialVolumeCapacity.length)], //
-					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)],//
-					Scheduler.getPoissonRandom(600), //
-					arrivalTime);
+							.nextInt(potentialVolumeCapacity.length)], // Capacity
+
+					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)],// IOPS
+					Scheduler.getPoissonRandom(600), // Delete Factor
+					arrivalTime // Arrival time
+			);
 
 			statement.addBatch(request.getSaveQuery());
 
@@ -182,10 +182,10 @@ public class Workload extends PersistentObject {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
-				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability / 5, Arrival_Time / 2" // no
-																										// need
-																										// for
-																										// create_time
+				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability / 1, Arrival_Time / 1" 
+						/*
+						 * Delete_Probability is deleteFactor
+						 */
 						+ " From	volume_request	Where	workload_ID		= ?" //
 						+ " And	ID	> ?" //
 						+ " Limit	" + Scheduler.maxClock + ";");

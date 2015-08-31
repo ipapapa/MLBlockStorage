@@ -18,7 +18,7 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
  *         could help scheduling volume request with better performance
  */
 
-public class StochasticEventGenerator implements Runnable {
+public class StochasticEventGenerator {// implements Runnable {
 
 	public StochasticEventGenerator() {
 		events = new ArrayList<StochasticEvent>();
@@ -38,19 +38,19 @@ public class StochasticEventGenerator implements Runnable {
 									// cause
 									// an event
 
-	private final boolean applyToAllBackends = true;
+	public static boolean applyToAllBackends = true;
 
 	private int clock;
 
-	public void run() {
+	public void run() throws SQLException {
 
 		// while (true) {
 
-		if (this.clock == this.clockGap) {
+		if (this.clock == StochasticEventGenerator.clockGap) {
 
 			this.clock = 1;
 
-			if (applyToAllBackends) {
+			if (StochasticEventGenerator.applyToAllBackends) {
 
 				for (int i = 0; i < Experiment.backendList.size(); i++) {
 					Backend backend = Experiment.backendList.get(i);
@@ -58,11 +58,8 @@ public class StochasticEventGenerator implements Runnable {
 					StochasticEvent event = this.events.get(this.eventRandom
 							.nextInt(this.events.size()));
 
-					try {
-						event.fire(backend);
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
+					event.fire(backend);
+
 				}
 
 			} else {
@@ -74,11 +71,8 @@ public class StochasticEventGenerator implements Runnable {
 				StochasticEvent event = this.events.get(this.eventRandom
 						.nextInt(this.events.size()));
 
-				try {
-					event.fire(target);
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+				event.fire(target);
+
 			}
 		}
 

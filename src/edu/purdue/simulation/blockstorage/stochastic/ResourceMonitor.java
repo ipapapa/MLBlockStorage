@@ -1,8 +1,12 @@
 package edu.purdue.simulation.blockstorage.stochastic;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
+import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
@@ -18,7 +22,7 @@ import edu.purdue.simulation.blockstorage.backend.BackendPerformanceMeter;
  *         now all I can think is recognizing (classifying) when a backend have
  *         harddrives removed or added
  */
-public class ResourceMonitor implements Runnable {
+public class ResourceMonitor { // implements Runnable {
 
 	public static int clockGap = 2; // every 3 times measure resources
 									// performance
@@ -37,7 +41,7 @@ public class ResourceMonitor implements Runnable {
 
 	private int clock = 0;
 
-	public void run() {
+	public void run() throws SQLException {
 		// while (true) {
 
 		if (this.clock == ResourceMonitor.clockGap)
@@ -46,19 +50,25 @@ public class ResourceMonitor implements Runnable {
 
 		this.clock++;
 
-		for (int i = 0; i < Experiment.backendList.size(); i++) {
+		if (this.clock == ResourceMonitor.clockGap) {
 
-			Backend backend = Experiment.backendList.get(i);
+			// PreparedStatement statement = VolumePerformanceMeter
+			// .getSaveStatement();
 
-			if (ResourceMonitor.enableBackendPerformanceMeter
-					&& this.clock == ResourceMonitor.clockGap) {
+			for (int i = 0; i < Experiment.backendList.size(); i++) {
 
-				BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(
-						backend);
+				Backend backend = Experiment.backendList.get(i);
 
-				Volume pingVolume = null;
+				/*
+				 * For now save backend performance is completely not supported
+				 */
+				if (false && ResourceMonitor.enableBackendPerformanceMeter) {
 
-				try {
+					BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(
+							backend);
+
+					Volume pingVolume = null;
+
 					pingVolume = backend.createPingVolume();
 
 					pingVolume.save();
@@ -67,49 +77,46 @@ public class ResourceMonitor implements Runnable {
 
 					backend.removeVolume(pingVolume);
 
-				} catch (SQLException e) {
-
-					e.printStackTrace();
 				}
-			}
 
-			// for now no need to read all volumes performance
-			if (ResourceMonitor.enableVolumePerformanceMeter
-					&& this.clock == ResourceMonitor.clockGap) {
+				// for now no need to read all volumes performance
+				if (ResourceMonitor.enableVolumePerformanceMeter) {
 
-				if (ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume
-						&& backend.getVolumeList().size() == 0) {
-					VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
-							null, backend);
+					if (ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume
+							&& backend.getVolumeList().size() == 0) {
 
-					try {
-						volumePerformanceMeter.Save();
-					} catch (SQLException e) {
+						// VolumePerformanceMeter volumePerformanceMeter = new
+						// VolumePerformanceMeter(
+						// null, backend);
 
-						e.printStackTrace();
-					}
+						// volumePerformanceMeter.save();
 
-				} else {
+					} else {
 
-					for (int j = 0; j < backend.getVolumeList().size(); j++) {
+						if (backend.getVolumeList().size() > 1) {
+							int q2 = 1;
 
-						Volume volume = backend.getVolumeList().get(j);
+							q2++;
+						}
 
-						VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
-								volume, backend);
+						for (int j = 0; j < backend.getVolumeList().size(); j++) {
 
-						try {
-							volumePerformanceMeter.Save();
-						} catch (SQLException e) {
+							Volume volume = backend.getVolumeList().get(j);
 
-							e.printStackTrace();
+							VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
+									volume, backend);
+
+							volumePerformanceMeter.save();
+
+							// q += statement.toString() + "\n";
+
+							// q += volumePerformanceMeter.save2() + "\n\n";
 						}
 					}
-				}
-			}
 
+				} // end volume performance meter
+			} // end for
 		}
-
 		// }
 	}
 }

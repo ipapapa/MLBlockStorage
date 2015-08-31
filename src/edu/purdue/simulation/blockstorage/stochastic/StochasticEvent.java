@@ -3,9 +3,9 @@ package edu.purdue.simulation.blockstorage.stochastic;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Random;
 
 import edu.purdue.simulation.Database;
@@ -15,6 +15,10 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.State;
 
 public abstract class StochasticEvent {
+
+	public static boolean saveStochasticEvents = true;
+
+	public static ArrayList<String> queries = new ArrayList<String>();
 
 	protected abstract int[] getSizes();
 
@@ -92,16 +96,25 @@ public abstract class StochasticEvent {
 			}
 		}
 
-		if (isEventApplied) {
+		if (StochasticEvent.saveStochasticEvents) {
+			if (isEventApplied) {
 
-			backend.saveCurrentState();
+				/*
+				 * Save the current available capacity of the backend which
+				 * reflects the effect of stochastic events on capacity and
+				 * IOPS. It is not needed if recording stochastic events is not
+				 * needed
+				 */
 
-			event.save(backend.getID(), sumBy, null, isEventApplied);
+				backend.saveCurrentState();
 
-		} else {
+				event.save(backend.getID(), sumBy, null, isEventApplied);
 
-			event.save(backend.getID(), sumBy, null, isEventApplied);
+			} else {
 
+				event.save(backend.getID(), sumBy, null, isEventApplied);
+
+			}
 		}
 
 		System.out.println(event.toString(isEventApplied) + " intVal1 = "
@@ -112,6 +125,11 @@ public abstract class StochasticEvent {
 
 	protected BigDecimal save(BigDecimal backendID, Integer intVal1,
 			String stringVal1, boolean isApplied) throws SQLException {
+
+		if (StochasticEvent.saveStochasticEvents == false)
+
+			return BigDecimal.valueOf(-1);
+
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
@@ -133,15 +151,17 @@ public abstract class StochasticEvent {
 
 		statement.setBoolean(6, isApplied);
 
-		statement.executeUpdate();
+		StochasticEvent.queries.add(Database.getQuery(statement));
 
-		ResultSet rs = statement.getGeneratedKeys();
-
-		if (rs.next()) {
-
-			return rs.getBigDecimal(1);
-
-		}
+		// statement.executeUpdate();
+		//
+		// ResultSet rs = statement.getGeneratedKeys();
+		//
+		// if (rs.next()) {
+		//
+		// return rs.getBigDecimal(1);
+		//
+		// }
 
 		return BigDecimal.valueOf(-1);
 	}

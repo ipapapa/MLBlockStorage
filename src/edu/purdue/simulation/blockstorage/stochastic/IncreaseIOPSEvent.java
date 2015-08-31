@@ -3,9 +3,7 @@ package edu.purdue.simulation.blockstorage.stochastic;
 import java.sql.SQLException;
 import java.util.Random;
 
-import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.blockstorage.backend.Backend;
-import edu.purdue.simulation.blockstorage.backend.State;
 
 public class IncreaseIOPSEvent extends
 		edu.purdue.simulation.blockstorage.stochastic.StochasticEvent {

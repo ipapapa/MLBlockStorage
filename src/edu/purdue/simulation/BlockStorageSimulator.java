@@ -6,6 +6,7 @@ import java.util.*;
 
 import edu.purdue.simulation.blockstorage.*;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
+import edu.purdue.simulation.blockstorage.stochastic.StochasticEvent;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 public class BlockStorageSimulator {
@@ -20,11 +21,13 @@ public class BlockStorageSimulator {
 	public static void retrieveExperiment(BigDecimal experimentID)
 			throws SQLException {
 
-		Experiment experiment = Experiment.resumeExperiment(experimentID);
+		// Experiment experiment = Experiment.resumeExperiment(experimentID);
 
 	}
 
 	public static void main(String[] args) {
+
+		StochasticEvent.saveStochasticEvents = false;
 
 		ResourceMonitor.enableBackendPerformanceMeter = false;
 
@@ -34,17 +37,27 @@ public class BlockStorageSimulator {
 
 		ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = false;
 
-		Scheduler.maxClock = 110000;// 110000;
+		Scheduler.maxClock = 10000;// 110000;
+
+		Scheduler.modClockBy = 1440;
 
 		Scheduler.schedulePausePoissonMean = 5; // not used
 
 		Scheduler.devideVolumeDeleteProbability = 3; // not used
 
-		Scheduler.considerIOPS = false;
+		Scheduler.minRequests = 5000;
+
+		// Scheduler.considerIOPS = false;
 
 		Scheduler.isTraining = false;
 
+		Scheduler.trainingExperimentID = 689;
+
 		StochasticEventGenerator.clockGap = 4;
+
+		StochasticEventGenerator.applyToAllBackends = true;
+
+		Experiment.saveResultPath = "D:\\Dropbox\\Research\\experiment\\";
 
 		int workloadID = 62;
 
@@ -67,15 +80,24 @@ public class BlockStorageSimulator {
 
 				try {
 					scheduler.run();
+
+					Database.getConnection().close();
 				} catch (Exception ex) {
-					System.out.println("ERROR" + ex.getMessage());
+
+					System.out.println("***ERROR***\n   " + ex.getMessage()
+							+ "\n***ERROR***");
+
+					ex.printStackTrace();
+
 				} finally {
 					System.out.println("simulation done, experiment ID ="
 							+ experiment.getID());
 
 					scheduler.getExperiment();
+
 					for (int i = 0; i < Experiment.backendList.size(); i++) {
 						scheduler.getExperiment();
+
 						System.out.println("Backend ID = "
 								+ Experiment.backendList.get(i).getID());
 					}

@@ -3,7 +3,6 @@ package edu.purdue.simulation.blockstorage.stochastic;
 import java.sql.SQLException;
 import java.util.Random;
 
-import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class DecreaseIOPSEvent extends

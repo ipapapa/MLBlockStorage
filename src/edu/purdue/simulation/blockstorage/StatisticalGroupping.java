@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
-import edu.purdue.simulation.blockstorage.backend.BackendCategories;
 
 public class StatisticalGroupping extends Scheduler {
 	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment,
