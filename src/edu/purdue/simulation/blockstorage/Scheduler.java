@@ -14,10 +14,12 @@ import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEvent;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
+import java.io.File;
 import java.math.BigDecimal;
 
 import weka.core.DenseInstance;
 import weka.core.Instance;
+import weka.core.Instances;
 
 //import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -45,17 +47,21 @@ public abstract class Scheduler {
 				.getVolumeRequestList()));
 	}
 
+	public static MachineLearningAlgorithm machineLearningAlgorithm = MachineLearningAlgorithm.J48;
+
 	public static Integer trainingExperimentID;
 
 	public static int modClockBy = 1140;
 
-	public static int maxClock = 0;
+	public static int maxRequest = 0;
 
 	public static int minRequests = 0;
 
 	public static int schedulePausePoissonMean = 0;
 
 	public static int devideVolumeDeleteProbability = 1;
+
+	public static AssessmentPolicy assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
 
 	// public static boolean considerIOPS = false;
 
@@ -107,15 +113,22 @@ public abstract class Scheduler {
 					.getSpecifications().getIOPS();
 		}
 
-		// instance.setValue(0, (clock % 48) / 2);
-		instance.setValue(0, clock % Scheduler.modClockBy);
-		instance.setValue(1, backendSize + 1);
-		// instance.setValue(3, 10);
+		// @attribute vio {v1,v2,v3,v4} //index 0
+		// @attribute clock numeric //index 1
+		// @attribute num numeric //index 2
+		// @attribute tot numeric //index 3
+
+		instance.setValue(1, clock % Scheduler.modClockBy);
+		instance.setValue(2, backendSize + 1);
 		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
 
 		try {
 			double[] predictors = backend.repTree
 					.distributionForInstance(instance);
+
+			/*
+			 * predictors[0]: the probability of being in group V1
+			 */
 
 			// if (predictors[0] > predictors[1] + predictors[2] +
 			// predictors[3])
@@ -124,7 +137,8 @@ public abstract class Scheduler {
 			// //&& (predictors[0] >= predictors[3])
 			// )
 
-			if (predictors[3] < 0.999)
+			// if (predictors[3] < 0.999)
+			if (predictors[0] > 0.9 || predictors[0] > 0.2)
 
 				return true;
 
@@ -141,6 +155,99 @@ public abstract class Scheduler {
 		// TODO FIX THIS
 
 		return true;
+	}
+
+	protected boolean validateWithJ48(Backend backend,
+			VolumeSpecifications volumeSpecifications) {
+
+		DenseInstance instance = new DenseInstance(4);
+
+		int clock = Experiment.clock.intValue();
+
+		int backendSize = backend.getVolumeList().size();
+
+		int totalRequestedCap = 0;
+
+		for (int i = 0; i < backendSize; i++) {
+			totalRequestedCap += backend.getVolumeList().get(i)
+					.getSpecifications().getIOPS();
+		}
+
+		// @attribute vio {v1,v2,v3,v4} //index 0
+		// @attribute clock numeric //index 1
+		// @attribute num numeric //index 2
+		// @attribute tot numeric //index 3
+
+		instance.setValue(1, clock % Scheduler.modClockBy);
+		instance.setValue(2, backendSize + 1);
+		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
+
+		Instances ii = Experiment.createWekaDataset(0);
+
+		instance.setDataset(ii);
+
+		boolean result = false;
+
+		try {
+
+			double[] predictors = backend.j48.distributionForInstance(instance);
+
+			/*
+			 * predictors[0]: the probability of being in group V1
+			 */
+
+			// if (predictors[0] > predictors[1] + predictors[2] +
+			// predictors[3])
+			// if ((predictors[1] >= predictors[2])
+			// && (predictors[1] >= predictors[3])
+			// //&& (predictors[0] >= predictors[3])
+			// )
+
+			// if (predictors[3] < 0.999)
+
+			switch (Scheduler.assessmentPolicy) {
+			case StrictQoS:
+
+				if (predictors[0] >= 0.5)
+
+					result = true;
+
+				break;
+
+			case QoSFirst:
+
+				if (predictors[0] + predictors[1] > 0.1)
+
+					result = true;
+
+				break;
+
+			case EfficiencyFirst:
+
+				if (predictors[0] + predictors[1] > 0.1 || predictors[2] == 1)
+
+					result = true;
+
+				break;
+
+			case MaxEfficiency:
+
+				if (predictors[0] + predictors[1] > 0.1 || predictors[3] != 1)
+
+					result = true;
+
+				break;
+			}
+
+		} catch (Exception e) {
+
+			System.out.println(e.getMessage());
+
+			e.printStackTrace();
+
+		}
+
+		return result;
 	}
 
 	protected void sortBackendListBaseOnAvailableCapacity() {
@@ -171,12 +278,31 @@ public abstract class Scheduler {
 
 		} else {
 
-			if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
+			switch (machineLearningAlgorithm) {
+			case RepTree:
+
 				validateIOPS = validateWithRepTree(backend,
 						volumeRequestSpecifications);
-			} else {
+
+				break;
+
+			case J48:
+
+				validateIOPS = validateWithJ48(backend,
+						volumeRequestSpecifications);
+
+				break;
+
+			default:
 				throw new java.lang.Exception(
 						"the validation method is not defined;");
+
+			}
+
+			if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
+
+			} else {
+
 			}
 		}
 
@@ -214,7 +340,7 @@ public abstract class Scheduler {
 
 	}
 
-	protected void preRun() throws SQLException {
+	protected void preRun() throws Exception {
 		throw new UnsupportedOperationException();
 	}
 
@@ -284,7 +410,44 @@ public abstract class Scheduler {
 		return k - 1;
 	}
 
+	private LinkedList<String> validateConfigurationParameres() {
+
+		LinkedList<String> result = new LinkedList<String>();
+
+		if (Scheduler.maxRequest <= Scheduler.minRequests) {
+
+			result.add("Scheduler.maxClock must be bigger than Scheduler.minRequests");
+		}
+
+		File folder = new File(Experiment.saveResultPath);
+
+		if (folder.exists() == false)
+
+			result.add("Experiment.saveResultPath - path does not exists - "
+					+ Experiment.saveResultPath);
+
+		return result;
+	}
+
 	public void run() throws Exception {
+
+		// #1: initialize the clock to the first request arrival time
+		edu.purdue.simulation.Experiment.clock = new BigDecimal(this
+				.getRequestQueue().peek().getArrivalTime());
+
+		LinkedList<String> validationResult = this
+				.validateConfigurationParameres();
+
+		if (validationResult.size() > 0) {
+
+			String exceptionMessage = "";
+
+			for (String err : validationResult) {
+				exceptionMessage += err + "\n\n";
+			}
+
+			throw new Exception(exceptionMessage);
+		}
 
 		this.preRun();
 
@@ -304,17 +467,19 @@ public abstract class Scheduler {
 
 		BigDecimal numOne = new BigDecimal(1);
 
-		int i = 0;
-
-		int pauseTime = 0;
-
-		int pauseTimer = 0;
+		int requestNumber = 1; // first request number is 1
 
 		int queueInitialSize = this.getRequestQueue().size();
 
+		int clockIntValue = 0;
+
+		int currentClockRequests = 0;
+
 		while (true) {
 
-			if (i >= Scheduler.maxClock) {
+			clockIntValue = edu.purdue.simulation.Experiment.clock.intValue();
+
+			if (requestNumber >= Scheduler.maxRequest) {
 
 				if (Scheduler.minRequests == 0) {
 
@@ -326,35 +491,50 @@ public abstract class Scheduler {
 				}
 			}
 
-			i++;
-
 			eventGenerator.run();
 
 			this.deleteExpiredVolumes();
 
-			int arrivalTime = this.getRequestQueue().peek().getArrivalTime();
+			VolumeRequest volumeRequest = this.getRequestQueue().peek();
+
+			int arrivalTime = volumeRequest.getArrivalTime();
 
 			// if (pauseTime == pauseTimer) {
-			if (arrivalTime == i) {
-
-				pauseTime = getPoissonRandom(Scheduler.schedulePausePoissonMean);
-				pauseTimer = -1; // in case we get 0 in pauseTime
+			if (arrivalTime == clockIntValue) {
 
 				if (this.getRequestQueue().isEmpty()) {
 
 					// break;
 				} else {
 
-					this.schedule();
+					// if (currentClockRequests < 4)
+
+					this.schedule(volumeRequest);
+
+					this.getRequestQueue().remove();
+
+					requestNumber++;
 				}
 			}
 
 			resourceMonitor.run();
 
-			pauseTimer++;
+			// edu.purdue.simulation.Experiment.clock =
+			// edu.purdue.simulation.Experiment.clock
+			// .add(numOne);
 
-			edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock
-					.add(numOne);
+			int nextRequestClock = this.getRequestQueue().peek()
+					.getArrivalTime();
+
+			if (nextRequestClock > clockIntValue) {
+
+				edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock
+						.add(numOne);
+
+				currentClockRequests = 0;
+			}
+
+			currentClockRequests++;
 
 			// sum.add(new BigInteger("1"));
 			//
@@ -378,8 +558,15 @@ public abstract class Scheduler {
 		//
 		// }
 
-		this.experiment.createTrainingDataForRepTree(0, this.getExperiment(),
-				null, 0);
+		if (Scheduler.isTraining)
+
+			this.experiment.createTrainingDataForRepTree(0,
+					this.getExperiment(), null, 0);
+
+		else
+
+			this.experiment.createTrainingDataForRepTree(0,
+					this.getExperiment(), null, 1); // include all values
 
 		// }
 
@@ -442,5 +629,5 @@ public abstract class Scheduler {
 
 	public abstract String getName();
 
-	public abstract void schedule() throws Exception;
+	public abstract void schedule(VolumeRequest volumeRequest) throws Exception;
 }

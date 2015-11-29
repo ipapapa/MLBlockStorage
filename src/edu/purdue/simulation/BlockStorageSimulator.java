@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import edu.purdue.simulation.blockstorage.*;
+import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEvent;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
@@ -29,6 +30,12 @@ public class BlockStorageSimulator {
 
 		StochasticEvent.saveStochasticEvents = false;
 
+		/*
+		 * SQL procedures to create report for this section are lost still you
+		 * can have this switch to record bacjends behaviour such as stochastic
+		 * event, but it will slow down the process unless batch query be
+		 * applied
+		 */
 		ResourceMonitor.enableBackendPerformanceMeter = false;
 
 		ResourceMonitor.enableVolumePerformanceMeter = true;
@@ -37,7 +44,8 @@ public class BlockStorageSimulator {
 
 		ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = false;
 
-		Scheduler.maxClock = 10000;// 110000;
+		// Condition must hold -> Scheduler.maxClock > Scheduler.minRequests
+		Scheduler.minRequests = 0; // 0 means no minimum requests
 
 		Scheduler.modClockBy = 1440;
 
@@ -45,21 +53,27 @@ public class BlockStorageSimulator {
 
 		Scheduler.devideVolumeDeleteProbability = 3; // not used
 
-		Scheduler.minRequests = 5000;
+		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.J48;
 
 		// Scheduler.considerIOPS = false;
 
+		Workload.devideDeleteFactorBy = 2.5;
+
+		Scheduler.maxRequest = 5000;// 110000;
+
 		Scheduler.isTraining = false;
 
-		Scheduler.trainingExperimentID = 689;
+		Scheduler.assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
+
+		Scheduler.trainingExperimentID = 824;
+
+		int workloadID = 161; // 161
 
 		StochasticEventGenerator.clockGap = 4;
 
 		StochasticEventGenerator.applyToAllBackends = true;
 
-		Experiment.saveResultPath = "D:\\Dropbox\\Research\\experiment\\";
-
-		int workloadID = 62;
+		Experiment.saveResultPath = "D:\\Dropbox\\Research\\MLScheduler\\experiment\\";
 
 		try {
 
@@ -90,22 +104,46 @@ public class BlockStorageSimulator {
 					ex.printStackTrace();
 
 				} finally {
-					System.out.println("simulation done, experiment ID ="
-							+ experiment.getID());
 
-					scheduler.getExperiment();
+					double sumClassifierEvaluation = 0;
 
 					for (int i = 0; i < Experiment.backendList.size(); i++) {
 						scheduler.getExperiment();
 
-						System.out.println("Backend ID = "
-								+ Experiment.backendList.get(i).getID());
+						Backend backend = Experiment.backendList.get(i);
+
+						String classifierEvalString = " Classifier Accuracy: None";
+
+						if (backend.classifierEvaluation != null) {
+
+							sumClassifierEvaluation += backend.classifierEvaluation
+									.pctCorrect();
+
+							classifierEvalString = " Classifier Accuracy: "
+									+ backend.classifierEvaluation.pctCorrect();
+						}
+
+						System.out.println("Backend ID = " + backend.getID()
+								+ classifierEvalString);
 					}
 
-					System.out.println("sum: " + Scheduler.sum
-							+ " randGeneratedNumbers "
-							+ Scheduler.randGeneratedNumbers + " mean: "
-							+ (Scheduler.sum / Scheduler.randGeneratedNumbers));
+					System.out.println("simulation done, experiment ID ="
+							+ experiment.getID()
+							+ "\nAverage Backends Classifiers Accuracy: "
+							+ (sumClassifierEvaluation / Experiment.backendList
+									.size()));
+
+					if (Scheduler.isTraining == false)
+
+						System.out
+								.println("training dataset from experiment exp#"
+										+ Scheduler.trainingExperimentID);
+					/*
+					 * System.out.println("sum: " + Scheduler.sum +
+					 * " randGeneratedNumbers " + Scheduler.randGeneratedNumbers
+					 * + " mean: " + (Scheduler.sum /
+					 * Scheduler.randGeneratedNumbers));
+					 */
 
 					System.out.println("Clock: " + Experiment.clock);
 

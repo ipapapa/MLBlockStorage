@@ -41,6 +41,7 @@ public class ResourceMonitor { // implements Runnable {
 
 	private int clock = 0;
 
+	@SuppressWarnings("unused")
 	public void run() throws SQLException {
 		// while (true) {
 

@@ -1,6 +1,8 @@
 package edu.purdue.simulation;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -45,7 +47,7 @@ public class Experiment extends PersistentObject {
 
 	public static ArrayList<Backend> backendList;
 
-	public static BigDecimal clock = new BigDecimal(1);
+	public static BigDecimal clock;
 
 	public static String saveResultPath = "";
 
@@ -66,7 +68,7 @@ public class Experiment extends PersistentObject {
 				+ " \nResourceMonitor.clockGap = "
 				+ ResourceMonitor.clockGap //
 				+ " \nScheduler.maxClock = "
-				+ Scheduler.maxClock //
+				+ Scheduler.maxRequest //
 				+ " \nScheduler.schedulePausePoissonMean = "
 				+ Scheduler.schedulePausePoissonMean //
 				+ " \nScheduler.devideVolumeDeleteProbability = "
@@ -232,7 +234,7 @@ public class Experiment extends PersistentObject {
 
 	public Backend addBackEnd(String description,
 			BackEndSpecifications backEndSpecifications,
-			VolumeRequestCategories groupSize) throws SQLException {
+			VolumeRequestCategories groupSize) throws Exception {
 
 		Backend backEnd = this.addBackEnd(description, backEndSpecifications);
 
@@ -244,16 +246,70 @@ public class Experiment extends PersistentObject {
 	}
 
 	public Backend addBackEnd(String description,
-			BackEndSpecifications backEndSpecifications) throws SQLException {
+			BackEndSpecifications backEndSpecifications) throws Exception {
 
 		Backend backEnd = new LVM(this, description, backEndSpecifications);
 
 		if (Scheduler.isTraining == false
-				&& backEndSpecifications.getMachineLearningAlgorithm() == MachineLearningAlgorithm.RepTree) {
+		// && backEndSpecifications.getMachineLearningAlgorithm() ==
+		// MachineLearningAlgorithm.RepTree
+		) {
 
-			backEnd.createRepTree(String.format(
-					"-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3",
+			BufferedReader reader = new BufferedReader(new FileReader(
 					backEndSpecifications.getTrainingDataSetPath()));
+
+			Instances data = new Instances(reader);
+
+			int j = -1;
+
+			for (int i = 0; i < data.numAttributes(); i++) {
+
+				if (data.attribute(i).name().compareTo("vio") == 0) {
+
+					j = i;
+
+					break;
+				}
+
+				j = -1;
+			}
+
+			if (j == -1)
+
+				throw new Exception(
+						"Cannot find attribute vio in the training dataset");
+
+			reader.close();
+			data = null; // dispose it
+
+			switch (backEndSpecifications.getMachineLearningAlgorithm()) {
+
+			case RepTree:
+
+				backEnd.createRepTree(String.format(
+						"-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+						backEndSpecifications.getTrainingDataSetPath(), //
+						j + 1));
+
+				break;
+
+			case J48:
+
+				backEnd.createJ48Tree(String.format(
+				// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+						"-t %s -c %d -C 0.25 -M 2", //
+						backEndSpecifications.getTrainingDataSetPath(), //
+						j + 1), //
+						backEndSpecifications.getTrainingDataSetPath(),//
+						j//
+				);
+
+				break;
+			default:
+
+				throw new Exception(
+						"specifies machine learning algorithm is not implemented");
+			}
 		}
 
 		backEnd.save();
@@ -321,19 +377,14 @@ public class Experiment extends PersistentObject {
 	}
 
 	/**
-	 * @param rs
-	 * @param backend
-	 * @param path
 	 * @param includeViolationsNumber
 	 *            0: Don't include SLA violations number 1: include SLA
 	 *            violations number 2: include SLA violation number and remove
 	 *            violation label
-	 * @throws Exception
 	 */
-	@SuppressWarnings({ "deprecation" })
-	private void saveBackend(ResultSet rs, Backend backend, String path,
-			int includeViolationsNumber) throws Exception {
-
+	@SuppressWarnings("deprecation")
+	public FastVector<Attribute> getDatasetAttributes(
+			int includeViolationsNumber) {
 		FastVector<Attribute> attributesVector = new FastVector<Attribute>(4);
 
 		Attribute clockAttribute = new Attribute("clock");
@@ -372,23 +423,111 @@ public class Experiment extends PersistentObject {
 			attributesVector.addElement(violationNumberAttribute);
 		}
 
+		return attributesVector;
+	}
+
+	public static Instances wekaDataset = null;
+
+	/**
+	 * @param includeViolationsNumber
+	 *            -1: return cashed | dataset 0: Don't include SLA violations
+	 *            number 1: include SLA violations number 2: include SLA
+	 *            violation number and remove violation label
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "deprecation" })
+	public static Instances createWekaDataset(int includeViolationsNumber) {
+
+		if (includeViolationsNumber == -1 && wekaDataset != null)
+
+			return wekaDataset;
+
+		FastVector<Attribute> attributesVector = new FastVector<Attribute>(4);
+
+		Attribute clockAttribute = new Attribute("clock");
+
+		Attribute numAttribute = new Attribute("num");
+
+		Attribute violationGroupAttribute = null;
+
+		if (includeViolationsNumber < 2) {
+			FastVector<String> fvClassVal = new FastVector<String>(4);
+
+			fvClassVal.addElement("v1");
+			fvClassVal.addElement("v2");
+			fvClassVal.addElement("v3");
+			fvClassVal.addElement("v4");
+
+			violationGroupAttribute = new Attribute("vio", fvClassVal);
+
+			attributesVector.addElement(violationGroupAttribute); // 2
+		}
+
+		Attribute totalRequestedIOPSAttribute = new Attribute("tot");
+
+		attributesVector.addElement(clockAttribute); // 0
+
+		attributesVector.addElement(numAttribute); // 1
+
+		attributesVector.addElement(totalRequestedIOPSAttribute); // 3
+
+		Attribute violationNumberAttribute = null;
+
+		Attribute clockModAttribute = null;
+
+		if (includeViolationsNumber > 0) {
+
+			violationNumberAttribute = new Attribute("vioNum");
+
+			attributesVector.addElement(violationNumberAttribute);
+
+			clockModAttribute = new Attribute("clockMod");
+
+			attributesVector.addElement(clockModAttribute);
+		}
+
 		Instances trainingInstances = new Instances("Rel", attributesVector, 10);
 
-		trainingInstances.setClassIndex(attributesVector.size() - 1);
+		trainingInstances.setClassIndex(0);// attributesVector.size() - 1);
+
+		wekaDataset = trainingInstances;
+
+		return trainingInstances;
+	}
+
+	/**
+	 * @param rs
+	 * @param backend
+	 * @param path
+	 * @param includeViolationsNumber
+	 *            0: Don't include SLA violations number 1: include SLA
+	 *            violations number 2: include SLA violation number and remove
+	 *            violation label
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "deprecation" })
+	private void saveBackend(ResultSet rs, Backend backend, String path,
+			int includeViolationsNumber) throws Exception {
+
+		Instances trainingInstances = Experiment
+				.createWekaDataset(includeViolationsNumber);
 
 		while (rs.next()) {
 
 			Instance trainingInstance = new DenseInstance(
-					attributesVector.size());
+					trainingInstances.numAttributes());
 
-			trainingInstance.setValue(clockAttribute, rs.getBigDecimal(1)
-					.doubleValue());
+			double clock = rs.getBigDecimal(1).doubleValue();
 
-			trainingInstance.setValue(numAttribute, rs.getInt(2));
+			trainingInstance.setValue(trainingInstances.attribute("clock"),
+					clock);
 
+			trainingInstance.setValue(trainingInstances.attribute("num"),
+					rs.getInt(2));
+			// rs.getInt(1);
 			int numberOfViolations = rs.getInt(3);
-
-			if (violationGroupAttribute != null) {
+			// rs.last() rs.getRow()
+			if (trainingInstances.attribute("vio") != null) {
 
 				String group = "";
 
@@ -402,16 +541,23 @@ public class Experiment extends PersistentObject {
 					group = "v4";
 				}
 
-				trainingInstance.setValue(violationGroupAttribute, group);
+				trainingInstance.setValue(trainingInstances.attribute("vio"),
+						group);
 			}
 
-			trainingInstance
-					.setValue(totalRequestedIOPSAttribute, rs.getInt(4));
+			trainingInstance.setValue(trainingInstances.attribute("tot"),
+					rs.getInt(4));
 
-			if (violationNumberAttribute != null)
+			if (trainingInstances.attribute("vioNum") != null) {
 
-				trainingInstance.setValue(violationNumberAttribute,
+				trainingInstance.setValue(
+						trainingInstances.attribute("vioNum"),
 						numberOfViolations);
+
+				trainingInstance.setValue(
+						trainingInstances.attribute("clockMod"), clock
+								% Scheduler.modClockBy);
+			}
 
 			// add the instance
 			trainingInstances.add(trainingInstance);
@@ -427,8 +573,11 @@ public class Experiment extends PersistentObject {
 
 			path = Experiment.saveResultPath;
 
-		saveToPath = path + backend.getExperiment().getID() + "_"
-				+ backend.getID() + "_" + backend.getDescription() + ".arff";
+		saveToPath = path
+				+ //
+				(Scheduler.isTraining == true ? "TRN_" : "EXP_") //
+				+ backend.getExperiment().getID() + "_" + backend.getID() + "_"
+				+ backend.getDescription() + ".arff";
 
 		saver.setFile(new File(saveToPath));
 
@@ -461,7 +610,7 @@ public class Experiment extends PersistentObject {
 		Connection connection = Database.getConnection();
 
 		CallableStatement cStmt = connection
-				.prepareCall("{call data_for_ML(?, ?, ?)}"); // ex_ID,
+				.prepareCall("{call data_for_ML2(?, ?, ?)}"); // ex_ID,
 																// ,lim
 																// ,modBy
 
@@ -469,7 +618,13 @@ public class Experiment extends PersistentObject {
 
 		cStmt.setInt(2, numberOfRecords);
 
-		cStmt.setInt(3, Scheduler.modClockBy);
+		if (includeViolationsNumber == 0)
+
+			cStmt.setInt(3, Scheduler.modClockBy);
+
+		else
+
+			cStmt.setInt(3, 0);
 
 		cStmt.execute();
 
@@ -492,10 +647,10 @@ public class Experiment extends PersistentObject {
 				break;
 
 			if (reportResulSet) {
-
+				// rs.last() rs.getRow()
 				rs.next();
 
-				currentBackendID = rs.getBigDecimal(2);
+				currentBackendID = rs.getBigDecimal(1);
 
 				for (int i = 0; i < Experiment.backendList.size(); i++) {
 
@@ -516,7 +671,7 @@ public class Experiment extends PersistentObject {
 				reportResulSet = false;
 
 			} else {
-
+				// rs.last() rs.getRow()
 				this.saveBackend(rs, currentBackend, path,
 						includeViolationsNumber);
 

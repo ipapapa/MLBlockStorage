@@ -65,7 +65,7 @@ public class StatisticalGroupping extends Scheduler {
 		request.setGroupSize(size);
 	}
 
-	private void addNewBackends() throws SQLException {
+	private void addNewBackends() throws Exception {
 		// 1200 is an assumption
 		@SuppressWarnings("unused")
 		int OptimalBinNumbers = (int) (this.PredictedTotalCapacity / 1200);
@@ -103,7 +103,7 @@ public class StatisticalGroupping extends Scheduler {
 	private static int start;
 
 	private Backend GetBestBackEndForRequest(VolumeRequest request)
-			throws SQLException {
+			throws Exception {
 		int MaxGroupSize = 6;
 
 		start = request.getGroupSize().order;
@@ -136,7 +136,7 @@ public class StatisticalGroupping extends Scheduler {
 		return this.GetBestBackEndForRequest(request);
 	}
 
-	public void schedule() throws SQLException {
+	public void schedule(VolumeRequest volumeRequest) throws Exception {
 
 		VolumeRequest request = super.getRequestQueue().peek();
 

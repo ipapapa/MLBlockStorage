@@ -16,9 +16,9 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		super(experiment, workload);
 	}
 
-	protected void preRun() throws SQLException {
+	protected void preRun() throws Exception {
 
-		int capacity = 7200;
+		int capacity = 7200 * 5; // no problem with capacity
 
 		int bandwidth = 1948;
 
@@ -26,9 +26,17 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 		int minBandwidth = bandwidth - 500;
 
+		MachineLearningAlgorithm machineLearningAlgorithm = Scheduler.machineLearningAlgorithm;
+
 		String path = Experiment.saveResultPath;
 
 		File folder = new File(path);
+
+		if (folder.exists() == false)
+
+			throw new Exception(
+					"Experiment.saveResultPath - path does not exists - "
+							+ path);
 
 		File[] listOfFiles = folder.listFiles();
 
@@ -40,8 +48,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			if (listOfFiles[i].isFile()) {
 				String fileName = listOfFiles[i].getName();
 
-				if (fileName.startsWith(Scheduler.trainingExperimentID
-						.toString())) {
+				if (fileName.startsWith("TRN_"
+						+ Scheduler.trainingExperimentID.toString())) {
 					backends[j] = path + fileName;
 
 					j++;
@@ -60,7 +68,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				200, // stabilityPossessionMean
 				backends[0],//
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B2", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -73,7 +81,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				300, // stabilityPossessionMean
 				backends[1],//
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B3", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -86,7 +94,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				400, // stabilityPossessionMean
 				backends[2],//
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B4", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -99,7 +107,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				500, // stabilityPossessionMean
 				backends[3],//
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B5", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -112,7 +120,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				100, // stabilityPossessionMean
 				backends[4],//
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B6", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -125,23 +133,22 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				true, // is online
 				600, // stabilityPossessionMean
 				backends[5], //
-				MachineLearningAlgorithm.RepTree));
+				machineLearningAlgorithm));
 	}
 
-	public void schedule() throws java.lang.Exception {
+	public void schedule(VolumeRequest volumeRequest)
+			throws java.lang.Exception {
 
 		super.sortBackendListBaseOnAvailableCapacity();
 
 		Backend maxAvailableCapacityBackEnd = edu.purdue.simulation.Experiment.backendList
 				.get(0);
 
-		VolumeRequest request = super.getRequestQueue().peek();
-
 		ScheduleResponse schedulerResponse = new ScheduleResponse( //
 				this.getExperiment(), //
-				request);
+				volumeRequest);
 
-		VolumeSpecifications requestedSpecifications = request
+		VolumeSpecifications requestedSpecifications = volumeRequest
 				.ToVolumeSpecifications();
 
 		Volume volume = null;
@@ -151,7 +158,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		ScheduleResponse.RejectionReason rejectionReason = super
 				.validateResources(maxAvailableCapacityBackEnd,
 						requestedSpecifications,
-						MachineLearningAlgorithm.RepTree);
+						Scheduler.machineLearningAlgorithm);
 
 		/*
 		 * Scheduler.isTraining if is true -> only capacity will be checked
@@ -179,11 +186,10 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			// schedulerResponse.backEndCreated = super.getExperiment()
 			// .AddBackEnd(this.specifications); // no backend created
 
-			super.getRequestQueue().remove();
-
 			schedulerResponse.backEndTurnedOn = null; // no backend turned on
 
-			System.out.println("[Failed to schedule] ->" + request.toString());
+			System.out.println("[Failed to schedule] ->"
+					+ volumeRequest.toString());
 		} else {
 
 			schedulerResponse.isSuccessful = true;
@@ -191,10 +197,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 			schedulerResponse.backEndScheduled = maxAvailableCapacityBackEnd;
 
 			System.out.println("[Successfully scheduled] ->"
-					+ request.toString() + " backendID= "
+					+ volumeRequest.toString() + " backendID= "
 					+ schedulerResponse.backEndScheduled.getID());
-
-			super.getRequestQueue().remove();
 		}
 
 		/*

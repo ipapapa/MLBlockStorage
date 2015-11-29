@@ -102,10 +102,10 @@ public class VolumeRequest extends Specifications {
 
 	public String getSaveQuery() {
 		return String
-				.format(" insert into volume_request\n"
-						+ "	(workload_id, capacity, type, IOPS, Delete_Probability, Arrival_Time)\n"
-						+ "		Values" + "	(%d, %d, %d, %d, %f, %d); \n",//
-						this.Workload.getID().intValue(),//
+				.format("insert into volume_request\n"
+						+ "(workload_id,capacity,type,IOPS,Delete_Probability,Arrival_Time)\n"
+						+ "Values(%d, %d, %d, %d, %f, %d)\n",//
+				this.Workload.getID().intValue(),//
 						this.getCapacity(), //
 						this.getType(), //
 						this.getIOPS(), //

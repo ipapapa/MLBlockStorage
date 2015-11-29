@@ -15,8 +15,8 @@ public class generateTrainingDateset {
 		// IDs[0] = 616;
 		// IDs[1] = 427327;
 
-		IDs[0] = 689;
-		IDs[1] = 427747;
+		IDs[0] = 761;
+		IDs[1] = 428072;
 
 		for (int i = 2; i < 7; i++) {
 			IDs[i] = IDs[1] + i - 1;
@@ -54,15 +54,16 @@ public class generateTrainingDateset {
 			 * This API is changed, fix it if u need this program
 			 */
 
-			Scheduler.modClockBy = 0;
-			
 			ex.createTrainingDataForRepTree(
 			//
 					0,//
 					ex,//
 						// null
-					"D:\\Dropbox\\Research\\experiment\\NoModClock\\", //
-					1);
+					String.format(
+							"D:\\Dropbox\\Research\\experiment\\%d\\",
+							IDs[0]), //
+					0 // dont iunclude SLA violation numbers
+					);
 
 			System.out.println("DONE!");
 

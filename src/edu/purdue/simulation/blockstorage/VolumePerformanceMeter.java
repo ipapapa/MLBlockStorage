@@ -76,20 +76,22 @@ public class VolumePerformanceMeter extends PersistentObject {
 		statement.setBigDecimal(6, this.backend.getID());
 
 		VolumePerformanceMeter.queries.add(Database.getQuery(statement));
-		
-//		statement.executeUpdate();
-//
-//		ResultSet rs = statement.getGeneratedKeys();
-//
-//		if (rs.next()) {
-//
-//			this.setID(rs.getBigDecimal(1));
-//
-//			System.out.println(this.toString(SLAViolation) + " currentIOPS = "
-//					+ currentIOPS);
-//
-//			return this.getID();
-//		}
+
+		System.out.println(this.toString(SLAViolation));
+
+		// statement.executeUpdate();
+		//
+		// ResultSet rs = statement.getGeneratedKeys();
+		//
+		// if (rs.next()) {
+		//
+		// this.setID(rs.getBigDecimal(1));
+		//
+		// System.out.println(this.toString(SLAViolation) + " currentIOPS = "
+		// + currentIOPS);
+		//
+		// return this.getID();
+		// }
 
 		return BigDecimal.valueOf(-1);
 	}

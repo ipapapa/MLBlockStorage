@@ -1,5 +1,8 @@
 package edu.purdue.simulation.blockstorage.backend;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -12,7 +15,11 @@ import java.util.*;
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.evaluation.Evaluation;
+import weka.classifiers.meta.FilteredClassifier;
+import weka.classifiers.trees.J48;
 import weka.classifiers.trees.REPTree;
+import weka.core.Instances;
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
@@ -39,7 +46,11 @@ public abstract class Backend extends PersistentObject {
 		this.setDescription(desciption);
 	}
 
+	public weka.classifiers.trees.J48 j48;
+
 	public REPTree repTree;
+
+	public Evaluation classifierEvaluation;
 
 	public void createRepTree(String params) {
 		String arguments = params;
@@ -48,6 +59,69 @@ public abstract class Backend extends PersistentObject {
 		this.repTree = new REPTree();
 
 		AbstractClassifier.runClassifier(this.repTree, arguments.split(" "));
+	}
+
+	@SuppressWarnings("unused")
+	public void createJ48Tree(String params, String path, int classIndex) {
+
+		if (false) {
+			String arguments = params;
+
+			this.j48 = new J48();
+
+			AbstractClassifier.runClassifier(this.j48, arguments.split(" "));
+			String tos = this.j48.toString();
+		}
+
+		if (true) {
+
+			try {
+				BufferedReader reader;
+
+				reader = new BufferedReader(new FileReader(path));
+
+				Instances train = new Instances(reader);
+
+				reader.close();
+
+				// setting class attribute
+				train.setClassIndex(0);
+
+				this.j48 = new J48();
+
+				this.j48.setUnpruned(true);
+
+				this.j48.buildClassifier(train);
+
+				this.classifierEvaluation = new Evaluation(train);
+
+				Random rand = new Random(1); // using seed = 1
+
+				int folds = 10;
+
+				this.classifierEvaluation.crossValidateModel(this.j48, train,
+						folds, rand);
+
+				System.out.println(this.classifierEvaluation
+						.toClassDetailsString());
+				System.out.println("Accuracy: "
+						+ this.classifierEvaluation.pctCorrect());
+				// FilteredClassifier fc = new FilteredClassifier();
+
+				// fc.setFilter(rm);
+
+				// fc.setClassifier(j48);
+
+				// fc.buildClassifier(train);
+
+				// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3"
+
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private String description;
