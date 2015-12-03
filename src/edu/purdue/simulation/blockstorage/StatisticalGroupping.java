@@ -111,7 +111,7 @@ public class StatisticalGroupping extends Scheduler {
 		for (int i = 1; i <= MaxGroupSize; i++) {
 
 			this.getExperiment();
-			List<Backend> candidateList = edu.purdue.simulation.Experiment.backendList
+			List<Object> candidateList = edu.purdue.simulation.Experiment.backendList
 					.stream()
 					// I CANT UNDERSTAND WHY getGroupSize is needed
 					// .filter(b -> (b.getGroupSize().order == start)
@@ -120,7 +120,7 @@ public class StatisticalGroupping extends Scheduler {
 					.collect(Collectors.toList());
 
 			if (candidateList.size() > 0) {
-				return candidateList.get(0);
+				return (Backend) candidateList.get(0);
 			}
 
 			start = start + 1;

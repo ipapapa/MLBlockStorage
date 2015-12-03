@@ -1,6 +1,11 @@
 package edu.purdue.simulation;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.channels.FileChannel;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -26,7 +31,10 @@ public class BlockStorageSimulator {
 
 	}
 
-	public static void main(String[] args) {
+	public static Map<Integer, Object[][]> feedbackAccuracy = new HashMap<Integer, Object[][]>();
+
+	public static void main(String[] args) throws IOException,
+			InterruptedException {
 
 		StochasticEvent.saveStochasticEvents = false;
 
@@ -63,17 +71,25 @@ public class BlockStorageSimulator {
 
 		Scheduler.isTraining = false;
 
-		Scheduler.assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
+		Scheduler.feedBackLearning = true;
 
-		Scheduler.trainingExperimentID = 824;
+		Scheduler.feedBackLearningInterval = 200;
+
+		Scheduler.assessmentPolicy = AssessmentPolicy.QoSFirst;
+
+		Scheduler.trainingExperimentID = 884;
 
 		int workloadID = 161; // 161
 
-		StochasticEventGenerator.clockGap = 4;
+		StochasticEventGenerator.clockGap = 400;
 
 		StochasticEventGenerator.applyToAllBackends = true;
 
 		Experiment.saveResultPath = "D:\\Dropbox\\Research\\MLScheduler\\experiment\\";
+
+		if (Scheduler.isTraining == true)
+
+			Scheduler.feedBackLearning = false;
 
 		try {
 
@@ -131,7 +147,44 @@ public class BlockStorageSimulator {
 							+ experiment.getID()
 							+ "\nAverage Backends Classifiers Accuracy: "
 							+ (sumClassifierEvaluation / Experiment.backendList
-									.size()));
+									.size()) + "assessmentPolicy: "
+							+ Scheduler.assessmentPolicy);
+
+					double count_accuracyRecords = 0;
+					double total_accuracy = 0;
+
+					if (Scheduler.feedBackLearning) {
+
+						for (Integer key : BlockStorageSimulator.feedbackAccuracy
+								.keySet()) {
+
+							System.out.print("clock: " + key + " - ");
+
+							for (Object[] accuracyRecord : BlockStorageSimulator.feedbackAccuracy
+									.get(key)) {
+								count_accuracyRecords++;
+
+								total_accuracy = total_accuracy
+										+ (double) accuracyRecord[1];
+
+								System.out.print(Math
+										.round((double) accuracyRecord[1])
+										+ "%, ");
+							}
+
+							System.out.println();
+
+						}
+
+						System.out
+								.println("\nFeedback learning average acuracy :"
+										+ (total_accuracy / count_accuracyRecords)
+										+ ", #created models: "
+										+ BlockStorageSimulator.feedbackAccuracy
+												.size()
+										+ ", # accuracy records: "
+										+ count_accuracyRecords);
+					}
 
 					if (Scheduler.isTraining == false)
 
@@ -146,6 +199,15 @@ public class BlockStorageSimulator {
 					 */
 
 					System.out.println("Clock: " + Experiment.clock);
+
+					//
+
+					Thread.sleep(4000);
+
+					copyFile(new File(
+							"D:\\Dropbox\\Research\\experiment\\output.txt"),
+							new File("D:\\Dropbox\\Research\\experiment\\"
+									+ experiment.getID().intValue() + ".txt"));
 
 					// System.out
 					// .println("**Remmeber MAX clock number is: " + 90213);
@@ -162,5 +224,28 @@ public class BlockStorageSimulator {
 
 		}
 
+	}
+
+	public static void copyFile(File sourceFile, File destFile)
+			throws IOException {
+		if (!destFile.exists()) {
+			destFile.createNewFile();
+		}
+
+		FileChannel source = null;
+		FileChannel destination = null;
+
+		try {
+			source = new FileInputStream(sourceFile).getChannel();
+			destination = new FileOutputStream(destFile).getChannel();
+			destination.transferFrom(source, 0, source.size());
+		} finally {
+			if (source != null) {
+				source.close();
+			}
+			if (destination != null) {
+				destination.close();
+			}
+		}
 	}
 }

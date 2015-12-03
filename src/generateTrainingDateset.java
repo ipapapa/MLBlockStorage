@@ -53,17 +53,17 @@ public class generateTrainingDateset {
 			/*
 			 * This API is changed, fix it if u need this program
 			 */
-
-			ex.createTrainingDataForRepTree(
-			//
-					0,//
-					ex,//
-						// null
-					String.format(
-							"D:\\Dropbox\\Research\\experiment\\%d\\",
-							IDs[0]), //
-					0 // dont iunclude SLA violation numbers
-					);
+//
+//			ex.createTrainingDataForRepTree(
+//			//
+//					0,//
+//					ex,//
+//						// null
+//					String.format(
+//							"D:\\Dropbox\\Research\\experiment\\%d\\",
+//							IDs[0]), //
+//					0 // dont iunclude SLA violation numbers
+//					);
 
 			System.out.println("DONE!");
 

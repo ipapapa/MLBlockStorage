@@ -301,7 +301,8 @@ public class Experiment extends PersistentObject {
 						backEndSpecifications.getTrainingDataSetPath(), //
 						j + 1), //
 						backEndSpecifications.getTrainingDataSetPath(),//
-						j//
+						j,//
+						null // no feedback learning/update model
 				);
 
 				break;
@@ -507,7 +508,8 @@ public class Experiment extends PersistentObject {
 	 */
 	@SuppressWarnings({ "deprecation" })
 	private void saveBackend(ResultSet rs, Backend backend, String path,
-			int includeViolationsNumber) throws Exception {
+			int includeViolationsNumber, boolean updateLearningModel)
+			throws Exception {
 
 		Instances trainingInstances = Experiment
 				.createWekaDataset(includeViolationsNumber);
@@ -563,31 +565,45 @@ public class Experiment extends PersistentObject {
 			trainingInstances.add(trainingInstance);
 		}
 
-		ArffSaver saver = new ArffSaver();
+		if (updateLearningModel == true) {
 
-		saver.setInstances(trainingInstances);
+			double accuracy = backend.updateModel(trainingInstances);
 
-		String saveToPath = "";
+			Object[][] backendAccuracy = BlockStorageSimulator.feedbackAccuracy
+					.get(Experiment.clock.intValue());
 
-		if (path == null || path == "")
+			int backendIndex = Experiment.backendList.indexOf(backend);
+			
+			backendAccuracy[backendIndex][0] = backend;
+			backendAccuracy[backendIndex][1] = accuracy;
 
-			path = Experiment.saveResultPath;
+		} else {
+			ArffSaver saver = new ArffSaver();
 
-		saveToPath = path
-				+ //
-				(Scheduler.isTraining == true ? "TRN_" : "EXP_") //
-				+ backend.getExperiment().getID() + "_" + backend.getID() + "_"
-				+ backend.getDescription() + ".arff";
+			saver.setInstances(trainingInstances);
 
-		saver.setFile(new File(saveToPath));
+			String saveToPath = "";
 
-		// saver.setDestination(new File(path));
+			if (path == null || path == "")
 
-		saver.writeBatch();
-		// Create the instance
+				path = Experiment.saveResultPath;
 
-		// System.out.println(Arrays.toString(repTree
-		// .distributionForInstance(iExample)));
+			saveToPath = path
+					+ //
+					(Scheduler.isTraining == true ? "TRN_" : "EXP_") //
+					+ backend.getExperiment().getID() + "_" + backend.getID()
+					+ "_" + backend.getDescription() + ".arff";
+
+			saver.setFile(new File(saveToPath));
+
+			// saver.setDestination(new File(path));
+
+			saver.writeBatch();
+			// Create the instance
+
+			// System.out.println(Arrays.toString(repTree
+			// .distributionForInstance(iExample)));
+		}
 	}
 
 	/**
@@ -603,16 +619,21 @@ public class Experiment extends PersistentObject {
 	 *            violation label
 	 * @throws Exception
 	 */
-	public void createTrainingDataForRepTree(int numberOfRecords,
-			Experiment experiment, String path, int includeViolationsNumber)
+	public void createUpdateTrainingDataForRepTree(int numberOfRecords,
+			Experiment experiment, String path, int includeViolationsNumber,
+			int updateLearningModelByLastNumberOfRecords)
 			throws java.lang.Exception {
+
+		if (updateLearningModelByLastNumberOfRecords > 0)
+
+			includeViolationsNumber = 0; // make it hard constraint
 
 		Connection connection = Database.getConnection();
 
 		CallableStatement cStmt = connection
-				.prepareCall("{call data_for_ML2(?, ?, ?)}"); // ex_ID,
-																// ,lim
-																// ,modBy
+				.prepareCall("{call data_for_ML2(?, ?, ?, ?)}"); // ex_ID,
+																	// ,lim
+																	// ,modBy
 
 		cStmt.setBigDecimal(1, experiment.getID());
 
@@ -625,6 +646,9 @@ public class Experiment extends PersistentObject {
 		else
 
 			cStmt.setInt(3, 0);
+
+		cStmt.setInt(4, Experiment.clock.intValue()
+				- updateLearningModelByLastNumberOfRecords);
 
 		cStmt.execute();
 
@@ -673,7 +697,8 @@ public class Experiment extends PersistentObject {
 			} else {
 				// rs.last() rs.getRow()
 				this.saveBackend(rs, currentBackend, path,
-						includeViolationsNumber);
+						includeViolationsNumber,
+						updateLearningModelByLastNumberOfRecords > 0);
 
 				reportResulSet = true;
 

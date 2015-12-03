@@ -61,8 +61,39 @@ public abstract class Backend extends PersistentObject {
 		AbstractClassifier.runClassifier(this.repTree, arguments.split(" "));
 	}
 
+	public double updateModel(Instances instances) throws Exception {
+
+		switch (this.specifications.getMachineLearningAlgorithm()) {
+
+		case RepTree:
+
+			break;
+
+		case J48:
+
+			// String params, String path, int classIndex, Instances train
+
+			return this.createJ48Tree(
+			// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+					null, // TODO fix this function inputs
+					null, //
+					0, //
+					instances//
+					// no feedback learning/update model
+					);
+
+		default:
+
+			throw new Exception(
+					"specifies machine learning algorithm is not implemented");
+		}
+
+		return 0;
+	}
+
 	@SuppressWarnings("unused")
-	public void createJ48Tree(String params, String path, int classIndex) {
+	public double createJ48Tree(String params, String path, int classIndex,
+			Instances train) {
 
 		if (false) {
 			String arguments = params;
@@ -76,13 +107,17 @@ public abstract class Backend extends PersistentObject {
 		if (true) {
 
 			try {
-				BufferedReader reader;
 
-				reader = new BufferedReader(new FileReader(path));
+				if (train == null) {
 
-				Instances train = new Instances(reader);
+					BufferedReader reader;
 
-				reader.close();
+					reader = new BufferedReader(new FileReader(path));
+
+					train = new Instances(reader);
+
+					reader.close();
+				}
 
 				// setting class attribute
 				train.setClassIndex(0);
@@ -102,10 +137,17 @@ public abstract class Backend extends PersistentObject {
 				this.classifierEvaluation.crossValidateModel(this.j48, train,
 						folds, rand);
 
+				// train.size()
 				System.out.println(this.classifierEvaluation
 						.toClassDetailsString());
+
 				System.out.println("Accuracy: "
-						+ this.classifierEvaluation.pctCorrect());
+						+ this.classifierEvaluation.pctCorrect()
+						+ " Sample Size: " + train.size() + " backendIndex: "
+						+ Experiment.backendList.indexOf(this));
+
+				return this.classifierEvaluation.pctCorrect();
+
 				// FilteredClassifier fc = new FilteredClassifier();
 
 				// fc.setFilter(rm);
@@ -122,6 +164,8 @@ public abstract class Backend extends PersistentObject {
 				e.printStackTrace();
 			}
 		}
+
+		return 0;
 	}
 
 	private String description;

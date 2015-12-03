@@ -3,6 +3,7 @@ package edu.purdue.simulation.blockstorage;
 import java.sql.SQLException;
 import java.util.*;
 
+import edu.purdue.simulation.BlockStorageSimulator;
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.VolumeRequest;
@@ -16,6 +17,8 @@ import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 import java.io.File;
 import java.math.BigDecimal;
+
+import org.apache.commons.math3.analysis.function.Exp;
 
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -60,6 +63,10 @@ public abstract class Scheduler {
 	public static int schedulePausePoissonMean = 0;
 
 	public static int devideVolumeDeleteProbability = 1;
+
+	public static boolean feedBackLearning = false;
+
+	public static int feedBackLearningInterval = 200;
 
 	public static AssessmentPolicy assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
 
@@ -491,6 +498,20 @@ public abstract class Scheduler {
 				}
 			}
 
+			if (Scheduler.feedBackLearning && clockIntValue > 0
+					&& clockIntValue % Scheduler.feedBackLearningInterval == 0) {
+
+				BlockStorageSimulator.feedbackAccuracy.put(clockIntValue,
+						new Object[Experiment.backendList.size()][2]);
+
+				this.experiment.createUpdateTrainingDataForRepTree(//
+						0, //
+						this.getExperiment(), //
+						null, //
+						0, //
+						Scheduler.feedBackLearningInterval);
+			}
+
 			eventGenerator.run();
 
 			this.deleteExpiredVolumes();
@@ -560,13 +581,17 @@ public abstract class Scheduler {
 
 		if (Scheduler.isTraining)
 
-			this.experiment.createTrainingDataForRepTree(0,
-					this.getExperiment(), null, 0);
+			this.experiment.createUpdateTrainingDataForRepTree(0,
+					this.getExperiment(), null, 0, //
+					0 // no feedback learning/update model
+					);
 
 		else
 
-			this.experiment.createTrainingDataForRepTree(0,
-					this.getExperiment(), null, 1); // include all values
+			this.experiment.createUpdateTrainingDataForRepTree(0,
+					this.getExperiment(), null, 1, //
+					0 // no feedback learning/update model
+					); // include all values
 
 		// }
 
