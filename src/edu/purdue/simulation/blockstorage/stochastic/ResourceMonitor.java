@@ -24,8 +24,8 @@ import edu.purdue.simulation.blockstorage.backend.BackendPerformanceMeter;
  */
 public class ResourceMonitor { // implements Runnable {
 
-	public static int clockGap = 2; // every 3 times measure resources
-									// performance
+	// every 2 times measure
+	public static double clockGapProbability = 0.5;
 
 	public static boolean enableBackendPerformanceMeter = false;
 
@@ -39,19 +39,22 @@ public class ResourceMonitor { // implements Runnable {
 
 	}
 
-	private int clock = 0;
+	//	private int clock = 0;
 
 	@SuppressWarnings("unused")
 	public void run() throws SQLException {
 		// while (true) {
 
-		if (this.clock == ResourceMonitor.clockGap)
+//		if (this.clock == ResourceMonitor.clockGapProbability)
+//
+//			this.clock = 0; // reset clock
+//
+//		this.clock++;
 
-			this.clock = 0; // reset clock
+		double d = Math.random();
 
-		this.clock++;
-
-		if (this.clock == ResourceMonitor.clockGap) {
+		// if (this.clock == ResourceMonitor.clockGapProbability) {
+		if (d < ResourceMonitor.clockGapProbability) {
 
 			// PreparedStatement statement = VolumePerformanceMeter
 			// .getSaveStatement();
@@ -94,11 +97,11 @@ public class ResourceMonitor { // implements Runnable {
 
 					} else {
 
-						if (backend.getVolumeList().size() > 1) {
-							int q2 = 1;
-
-							q2++;
-						}
+						// if (backend.getVolumeList().size() > 1) {
+						// int q2 = 1;
+						//
+						// q2++;
+						// }
 
 						for (int j = 0; j < backend.getVolumeList().size(); j++) {
 

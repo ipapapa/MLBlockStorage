@@ -105,7 +105,7 @@ public class VolumeRequest extends Specifications {
 				.format("insert into volume_request\n"
 						+ "(workload_id,capacity,type,IOPS,Delete_Probability,Arrival_Time)\n"
 						+ "Values(%d, %d, %d, %d, %f, %d)\n",//
-				this.Workload.getID().intValue(),//
+						this.Workload.getID().intValue(),//
 						this.getCapacity(), //
 						this.getType(), //
 						this.getIOPS(), //
@@ -158,7 +158,7 @@ public class VolumeRequest extends Specifications {
 
 			throw new SQLException("workload must not be null");
 		}
-
+		// resulSet.getInt(1)
 		super.setCapacity(resulSet.getInt(3));
 
 		this.setType(resulSet.getInt(4));
@@ -178,9 +178,10 @@ public class VolumeRequest extends Specifications {
 
 	@Override
 	public String toString() {
-		return String.format("%s ID: %s - Type: %d Clock = %s", //
+		return String.format("Clock = %s - %s ID: %s - Type: %d", //
+				Experiment.clock.toString(),//
 				super.toString(), //
 				this.getID(), //
-				this.Type, Experiment.clock.toString()); //
+				this.Type); 
 	}
 }

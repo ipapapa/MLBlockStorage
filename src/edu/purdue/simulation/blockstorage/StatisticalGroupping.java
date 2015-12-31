@@ -1,6 +1,5 @@
 package edu.purdue.simulation.blockstorage;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -8,6 +7,11 @@ import edu.purdue.simulation.VolumeRequest;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 
+/*
+ * This class was developed during summer 2015, because I had bad understanding of the proposal.
+ * basically this class focuses on predicting the workload and bin packing instead of focusing on 
+ * modeling the behaviour of backends
+ */
 public class StatisticalGroupping extends Scheduler {
 	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment,
 			edu.purdue.simulation.Workload workload) {
@@ -183,10 +187,10 @@ public class StatisticalGroupping extends Scheduler {
 
 		if (volume == null) {
 
-			schedulerResponse.save(ScheduleResponse.RejectionReason.Capacity);
+			// schedulerResponse.save(ScheduleResponse.RejectionReason.Capacity);
 
 		} else {
-			schedulerResponse.save(null);
+			// schedulerResponse.save(null);
 
 			volume.save();
 		}

@@ -11,7 +11,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import edu.purdue.simulation.Workload;
 
-public class testUtils {
+public class generateWorkloadFromMSRTraces {
 	public static void main(String[] args) throws IOException {
 
 		Workload workload = new Workload(

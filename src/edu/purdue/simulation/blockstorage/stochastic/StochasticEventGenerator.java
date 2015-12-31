@@ -34,9 +34,11 @@ public class StochasticEventGenerator {// implements Runnable {
 		this.clock = 1;
 	}
 
-	public static int clockGap = 4; // every 4 times
-									// cause
-									// an event
+	/*
+	 * The gap to apply the stochastic events. No probability is used, its a
+	 * counter.
+	 */
+	public static double clockGapProbability = 400;
 
 	public static boolean applyToAllBackends = true;
 
@@ -46,7 +48,7 @@ public class StochasticEventGenerator {// implements Runnable {
 
 		// while (true) {
 
-		if (this.clock == StochasticEventGenerator.clockGap) {
+		if (this.clock == StochasticEventGenerator.clockGapProbability) {
 
 			this.clock = 1;
 

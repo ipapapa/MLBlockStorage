@@ -13,7 +13,6 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
-import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 import edu.purdue.simulation.blockstorage.Scheduler;
 import edu.purdue.simulation.blockstorage.Volume;
 import edu.purdue.simulation.blockstorage.VolumeRequestCategories;
@@ -22,8 +21,10 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
 import edu.purdue.simulation.blockstorage.backend.LVM;
 import edu.purdue.simulation.blockstorage.stochastic.ResourceMonitor;
+import edu.purdue.simulation.blockstorage.stochastic.StochasticEvent;
 import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
+@SuppressWarnings("deprecation")
 public class Experiment extends PersistentObject {
 
 	public Experiment(Workload workload, String comment,
@@ -43,7 +44,7 @@ public class Experiment extends PersistentObject {
 
 	private Workload workload;
 
-	public String schedulerAlgorithm;
+	private String schedulerAlgorithm;
 
 	public static ArrayList<Backend> backendList;
 
@@ -60,22 +61,52 @@ public class Experiment extends PersistentObject {
 	}
 
 	public String getComment() {
-		return (this.comment + " ").trim() //
-				+ " ResourceMonitor.enableBackendPerformanceMeter = "
-				+ ResourceMonitor.enableBackendPerformanceMeter //
-				+ " \nResourceMonitor.enableVolumePerformanceMeter = "
-				+ ResourceMonitor.enableVolumePerformanceMeter //
+		return "\n**************************************************************************\n" //
+				+ (this.comment + " ").trim() //
+				+ " \nScheduler.isTraining = " //
+				+ Scheduler.isTraining//
+				+ " \nScheduler.machineLearningAlgorithm = " //
+				+ Scheduler.machineLearningAlgorithm//
+				+ " \nScheduler.assessmentPolicy = " //
+				+ Scheduler.assessmentPolicy//
+				+ " \nScheduler.feedBackLearning = " //
+				+ Scheduler.feedBackLearning//
+				+ " \n~~~~:" //
+				+ BlockStorageSimulator.assessmentPolicyRules
+						.get(Scheduler.assessmentPolicy) //
 				+ " \nResourceMonitor.clockGap = "
-				+ ResourceMonitor.clockGap //
+				+ ResourceMonitor.clockGapProbability //
+				+ " \nScheduler.feedBackLearningInterval = " //
+				+ Scheduler.feedbackLearningInterval//
+				+ " \nStochasticEventGenerator.clockGap = " //
+				+ StochasticEventGenerator.clockGapProbability//
+				+ " \nWorkload.ID = " //
+				+ this.workload.getID()//
+				+ " \nScheduler.trainingExperimentID = " //
+				+ Scheduler.trainingExperimentID//
 				+ " \nScheduler.maxClock = "
 				+ Scheduler.maxRequest //
-				+ " \nScheduler.schedulePausePoissonMean = "
-				+ Scheduler.schedulePausePoissonMean //
-				+ " \nScheduler.devideVolumeDeleteProbability = "
-				+ Scheduler.devideVolumeDeleteProbability //
-				+ " \nStochasticEventGenerator.clockGap = "
-				+ StochasticEventGenerator.clockGap //
-		;
+				+ " \nScheduler.minRequests = " //
+				+ Scheduler.minRequests//
+				+ " \nScheduler.modClockBy =;" //
+				+ Scheduler.modClockBy//
+				+ " \nWorkload.devideDeleteFactorBy = " //
+				+ Workload.devideDeleteFactorBy//
+				+ " \nStochasticEvent.saveStochasticEvents = " //
+				+ StochasticEvent.saveStochasticEvents //
+				+ " \nResourceMonitor.enableBackendPerformanceMeter = " //
+				+ ResourceMonitor.enableBackendPerformanceMeter//
+				+ " \nResourceMonitor.enableVolumePerformanceMeter = " //
+				+ ResourceMonitor.enableVolumePerformanceMeter//
+				+ " \nResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = " //
+				+ ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume//
+				+ " \nStochasticEventGenerator.applyToAllBackends = " //
+				+ StochasticEventGenerator.applyToAllBackends//
+				+ " \nExperiment.saveResultPath = " //
+				+ Experiment.saveResultPath//
+				+ " \nScheduler.schedulePausePoissonMean = NOT USED" //
+				+ Scheduler.schedulePausePoissonMean//
+				+ "\n**************************************************************************";
 	}
 
 	public Workload getWorkload() {
@@ -306,6 +337,20 @@ public class Experiment extends PersistentObject {
 				);
 
 				break;
+
+			case BayesianNetwork:
+
+				backEnd.createBayesianNetwork(String.format(
+				// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+						"-t %s -c %d -C 0.25 -M 2", //
+						backEndSpecifications.getTrainingDataSetPath(), //
+						j + 1), //
+						backEndSpecifications.getTrainingDataSetPath(),//
+						j,//
+						null // no feedback learning/update model
+				);
+
+				break;
 			default:
 
 				throw new Exception(
@@ -372,9 +417,10 @@ public class Experiment extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return String.format("ID: %d - SchedulerAlgorithm: %d - comment: %d",
-				this.getID().toString(), this.getSchedulerAlgorithm(),
-				this.getComment());
+		return String.format(
+				"Experiment ID: %s - SchedulerAlgorithm: %s - comment: %s",
+				this.getID().toString(), this.getSchedulerAlgorithm()
+						.toString(), this.getComment());
 	}
 
 	/**
@@ -383,7 +429,6 @@ public class Experiment extends PersistentObject {
 	 *            violations number 2: include SLA violation number and remove
 	 *            violation label
 	 */
-	@SuppressWarnings("deprecation")
 	public FastVector<Attribute> getDatasetAttributes(
 			int includeViolationsNumber) {
 		FastVector<Attribute> attributesVector = new FastVector<Attribute>(4);
@@ -436,7 +481,7 @@ public class Experiment extends PersistentObject {
 	 *            violation number and remove violation label
 	 * @throws Exception
 	 */
-	@SuppressWarnings({ "deprecation" })
+	@SuppressWarnings({})
 	public static Instances createWekaDataset(int includeViolationsNumber) {
 
 		if (includeViolationsNumber == -1 && wekaDataset != null)
@@ -506,7 +551,7 @@ public class Experiment extends PersistentObject {
 	 *            violation label
 	 * @throws Exception
 	 */
-	@SuppressWarnings({ "deprecation" })
+	@SuppressWarnings({})
 	private void saveBackend(ResultSet rs, Backend backend, String path,
 			int includeViolationsNumber, boolean updateLearningModel)
 			throws Exception {
@@ -567,13 +612,26 @@ public class Experiment extends PersistentObject {
 
 		if (updateLearningModel == true) {
 
+			int trainingSize = trainingInstances.size();
+
+			if (trainingSize < Scheduler.updateLearning_MinNumberOfRecords) {
+
+				System.out
+						.println("[small traning dataset for feedback] trainingInstances.size() < Scheduler.updateLearningModelByLastNumberOfRecords: "
+								+ trainingInstances.size()
+								+ " < "
+								+ Scheduler.updateLearning_MinNumberOfRecords);
+
+				return;
+			}
+
 			double accuracy = backend.updateModel(trainingInstances);
 
 			Object[][] backendAccuracy = BlockStorageSimulator.feedbackAccuracy
 					.get(Experiment.clock.intValue());
 
 			int backendIndex = Experiment.backendList.indexOf(backend);
-			
+
 			backendAccuracy[backendIndex][0] = backend;
 			backendAccuracy[backendIndex][1] = accuracy;
 
@@ -619,8 +677,11 @@ public class Experiment extends PersistentObject {
 	 *            violation label
 	 * @throws Exception
 	 */
-	public void createUpdateTrainingDataForRepTree(int numberOfRecords,
-			Experiment experiment, String path, int includeViolationsNumber,
+	public void createUpdateTrainingData(
+			int numberOfRecords,
+			Experiment experiment,//
+			String path,//
+			int includeViolationsNumber,
 			int updateLearningModelByLastNumberOfRecords)
 			throws java.lang.Exception {
 
@@ -630,10 +691,9 @@ public class Experiment extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
+		// ex_ID, lim, modBy, lastNumOfRecords
 		CallableStatement cStmt = connection
-				.prepareCall("{call data_for_ML2(?, ?, ?, ?)}"); // ex_ID,
-																	// ,lim
-																	// ,modBy
+				.prepareCall("{call data_for_ML2(?, ?, ?, ?)}");
 
 		cStmt.setBigDecimal(1, experiment.getID());
 
@@ -647,8 +707,7 @@ public class Experiment extends PersistentObject {
 
 			cStmt.setInt(3, 0);
 
-		cStmt.setInt(4, Experiment.clock.intValue()
-				- updateLearningModelByLastNumberOfRecords);
+		cStmt.setInt(4, Scheduler.updateLearning_MaxNumberOfRecords);
 
 		cStmt.execute();
 

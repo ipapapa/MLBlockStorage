@@ -13,6 +13,9 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class ScheduleResponse {
 
+	/*
+	 * the whole concept is very difficault to implement, not going to be used
+	 */
 	public enum RejectionReason {
 
 		none(-1), IOPS(1), Capacity(2), IOPS_Capacity(3);
@@ -32,7 +35,7 @@ public class ScheduleResponse {
 		this.experiment = experiment;
 	}
 
-	public RejectionReason rejectionReason;
+	// public RejectionReason rejectionReason;
 
 	public VolumeRequest volumeRequest;
 
@@ -48,7 +51,7 @@ public class ScheduleResponse {
 
 	public boolean isSuccessful;
 
-	public BigDecimal save(RejectionReason rejectionReason) throws SQLException {
+	public BigDecimal save() throws SQLException {
 
 		Connection connection = Database.getConnection();
 
@@ -76,14 +79,16 @@ public class ScheduleResponse {
 
 		statement.setBigDecimal(7, Experiment.clock);
 
-		if (this.rejectionReason == null
-				|| this.rejectionReason == RejectionReason.none)
+		statement.setNull(8, Types.INTEGER);
 
-			statement.setNull(8, Types.INTEGER);
-
-		else
-
-			statement.setInt(8, rejectionReason.ID);
+		// if (this.rejectionReason == null
+		// || this.rejectionReason == RejectionReason.none)
+		//
+		// statement.setNull(8, Types.INTEGER);
+		//
+		// else
+		//
+		// statement.setInt(8, rejectionReason.ID);
 
 		statement.executeUpdate();
 

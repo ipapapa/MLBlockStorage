@@ -56,17 +56,28 @@ public abstract class Scheduler {
 
 	public static int modClockBy = 1140;
 
+	public static String violationGroups;
+
 	public static int maxRequest = 0;
+
+	/*
+	 * it is very important to not use the training/validate dataset for
+	 * experiment so this will skip first n records in the workload
+	 */
+	public static int startTestDatasetFromRecordRank = 10000;
 
 	public static int minRequests = 0;
 
 	public static int schedulePausePoissonMean = 0;
 
-	public static int devideVolumeDeleteProbability = 1;
-
 	public static boolean feedBackLearning = false;
 
-	public static int feedBackLearningInterval = 200;
+	// interval to recreate classifiers
+	public static int feedbackLearningInterval = 200;
+
+	public static int updateLearning_MinNumberOfRecords = 1000;
+
+	public static int updateLearning_MaxNumberOfRecords = 2000;
 
 	public static AssessmentPolicy assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
 
@@ -104,79 +115,20 @@ public abstract class Scheduler {
 		this.requestQueue = requestQueue;
 	}
 
-	protected boolean validateWithRepTree(Backend backend,
-			VolumeSpecifications volumeSpecifications) {
-
-		Instance instance = new DenseInstance(4);
-
-		int clock = Experiment.clock.intValue();
-
-		int backendSize = backend.getVolumeList().size();
-
-		int totalRequestedCap = 0;
-
-		for (int i = 0; i < backendSize; i++) {
-			totalRequestedCap += backend.getVolumeList().get(i)
-					.getSpecifications().getIOPS();
-		}
-
-		// @attribute vio {v1,v2,v3,v4} //index 0
-		// @attribute clock numeric //index 1
-		// @attribute num numeric //index 2
-		// @attribute tot numeric //index 3
-
-		instance.setValue(1, clock % Scheduler.modClockBy);
-		instance.setValue(2, backendSize + 1);
-		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
-
-		try {
-			double[] predictors = backend.repTree
-					.distributionForInstance(instance);
-
-			/*
-			 * predictors[0]: the probability of being in group V1
-			 */
-
-			// if (predictors[0] > predictors[1] + predictors[2] +
-			// predictors[3])
-			// if ((predictors[1] >= predictors[2])
-			// && (predictors[1] >= predictors[3])
-			// //&& (predictors[0] >= predictors[3])
-			// )
-
-			// if (predictors[3] < 0.999)
-			if (predictors[0] > 0.9 || predictors[0] > 0.2)
-
-				return true;
-
-			else
-
-				return false;
-
-		} catch (Exception e) {
-
-			e.printStackTrace();
-
-		}
-
-		// TODO FIX THIS
-
-		return true;
-	}
-
-	protected boolean validateWithJ48(Backend backend,
-			VolumeSpecifications volumeSpecifications) {
+	protected double validateWithClassifier(Backend backend,
+			VolumeSpecifications volumeSpecifications,
+			MachineLearningAlgorithm classifier) {
 
 		DenseInstance instance = new DenseInstance(4);
 
 		int clock = Experiment.clock.intValue();
 
-		int backendSize = backend.getVolumeList().size();
+		int backend_VolumesCount = backend.getVolumeList().size();
 
-		int totalRequestedCap = 0;
+		int backend_totalRequestedIOPS = 0;
 
-		for (int i = 0; i < backendSize; i++) {
-			totalRequestedCap += backend.getVolumeList().get(i)
+		for (int i = 0; i < backend_VolumesCount; i++) {
+			backend_totalRequestedIOPS += backend.getVolumeList().get(i)
 					.getSpecifications().getIOPS();
 		}
 
@@ -186,62 +138,115 @@ public abstract class Scheduler {
 		// @attribute tot numeric //index 3
 
 		instance.setValue(1, clock % Scheduler.modClockBy);
-		instance.setValue(2, backendSize + 1);
-		instance.setValue(3, totalRequestedCap + volumeSpecifications.getIOPS());
+		instance.setValue(2, backend_VolumesCount + 1);
+		instance.setValue(3,
+				backend_totalRequestedIOPS + volumeSpecifications.getIOPS());
 
 		Instances ii = Experiment.createWekaDataset(0);
 
 		instance.setDataset(ii);
 
-		boolean result = false;
+		double result = 0;
 
 		try {
 
-			double[] predictors = backend.j48.distributionForInstance(instance);
+			double[] predictors = null;
+
+			if (classifier == MachineLearningAlgorithm.J48)
+
+				predictors = backend.j48.distributionForInstance(instance);
+
+			else if (classifier == MachineLearningAlgorithm.BayesianNetwork)
+
+				predictors = backend.bayesianNetwork
+						.distributionForInstance(instance);
+
+			else
+
+				throw new Exception("cannot validate with this classifier: "
+						+ classifier);
 
 			/*
 			 * predictors[0]: the probability of being in group V1
 			 */
 
-			// if (predictors[0] > predictors[1] + predictors[2] +
-			// predictors[3])
-			// if ((predictors[1] >= predictors[2])
-			// && (predictors[1] >= predictors[3])
-			// //&& (predictors[0] >= predictors[3])
-			// )
-
-			// if (predictors[3] < 0.999)
+			double[] compareTo;
 
 			switch (Scheduler.assessmentPolicy) {
 			case StrictQoS:
 
-				if (predictors[0] >= 0.5)
+				compareTo = new double[] { 0.98 };
 
-					result = true;
+				if (BlockStorageSimulator.assessmentPolicyRules
+						.containsKey(AssessmentPolicy.StrictQoS) == false) {
+					BlockStorageSimulator.assessmentPolicyRules.put(
+							AssessmentPolicy.StrictQoS, "predictors[0] > "
+									+ compareTo[0]);
+				}
+
+				if (predictors[0] > compareTo[0])
+
+					result = predictors[0];
 
 				break;
 
 			case QoSFirst:
 
-				if (predictors[0] + predictors[1] > 0.1)
+				compareTo = new double[] { 0.1 };
 
-					result = true;
+				if (BlockStorageSimulator.assessmentPolicyRules
+						.containsKey(AssessmentPolicy.QoSFirst) == false) {
+					BlockStorageSimulator.assessmentPolicyRules.put(
+							AssessmentPolicy.QoSFirst,
+							"predictors[0] + predictors[1] > " + compareTo[0]);
+				}
+
+				if (predictors[0] + predictors[1] > compareTo[0])
+
+					result = predictors[0] + predictors[1];
 
 				break;
 
 			case EfficiencyFirst:
 
-				if (predictors[0] + predictors[1] > 0.1 || predictors[2] == 1)
+				compareTo = new double[] { 0.1, 1 };
 
-					result = true;
+				if (BlockStorageSimulator.assessmentPolicyRules
+						.containsKey(AssessmentPolicy.EfficiencyFirst) == false) {
+					BlockStorageSimulator.assessmentPolicyRules.put(
+							AssessmentPolicy.EfficiencyFirst,
+							"predictors[0] + predictors[1] > " + compareTo[0]
+									+ " || predictors[2] == " + compareTo[1]);
+				}
+
+				if (predictors[0] + predictors[1] > compareTo[0]
+						|| predictors[2] == compareTo[1])
+
+					result = predictors[0] + predictors[1] + predictors[2];
 
 				break;
 
 			case MaxEfficiency:
 
-				if (predictors[0] + predictors[1] > 0.1 || predictors[3] != 1)
+				compareTo = new double[] { 0.1, 1 };
 
-					result = true;
+				if (BlockStorageSimulator.assessmentPolicyRules
+						.containsKey(AssessmentPolicy.MaxEfficiency) == false) {
+					BlockStorageSimulator.assessmentPolicyRules.put(
+							AssessmentPolicy.MaxEfficiency,
+							"predictors[0] + predictors[1] > " + compareTo[0]
+									+ " || predictors[3] != " + compareTo[1]);
+				}
+
+				if (predictors[0] + predictors[1] > compareTo[0]
+						|| predictors[3] != compareTo[1])
+
+					/*
+					 * predictors[2] must be used here because we are not
+					 * interested in the probability of having V4 (high
+					 * violations)
+					 */
+					result = predictors[0] + predictors[1] + predictors[2];
 
 				break;
 			}
@@ -269,6 +274,9 @@ public abstract class Scheduler {
 				});
 	}
 
+	/*
+	 * bad function delete it. not used and broken
+	 */
 	protected ScheduleResponse.RejectionReason validateResources(
 			Backend backend, VolumeSpecifications volumeRequestSpecifications,
 			MachineLearningAlgorithm machineLearningAlgorithm) throws Exception {
@@ -285,32 +293,9 @@ public abstract class Scheduler {
 
 		} else {
 
-			switch (machineLearningAlgorithm) {
-			case RepTree:
-
-				validateIOPS = validateWithRepTree(backend,
-						volumeRequestSpecifications);
-
-				break;
-
-			case J48:
-
-				validateIOPS = validateWithJ48(backend,
-						volumeRequestSpecifications);
-
-				break;
-
-			default:
-				throw new java.lang.Exception(
-						"the validation method is not defined;");
-
-			}
-
-			if (machineLearningAlgorithm == MachineLearningAlgorithm.RepTree) {
-
-			} else {
-
-			}
+			// validateIOPS =
+			this.validateWithClassifier(backend, volumeRequestSpecifications,
+					machineLearningAlgorithm);
 		}
 
 		boolean validateCapacity = true;
@@ -486,6 +471,10 @@ public abstract class Scheduler {
 
 			clockIntValue = edu.purdue.simulation.Experiment.clock.intValue();
 
+			if (this.getRequestQueue().size() == 0)
+
+				break;
+
 			if (requestNumber >= Scheduler.maxRequest) {
 
 				if (Scheduler.minRequests == 0) {
@@ -498,30 +487,12 @@ public abstract class Scheduler {
 				}
 			}
 
-			if (Scheduler.feedBackLearning && clockIntValue > 0
-					&& clockIntValue % Scheduler.feedBackLearningInterval == 0) {
-
-				BlockStorageSimulator.feedbackAccuracy.put(clockIntValue,
-						new Object[Experiment.backendList.size()][2]);
-
-				this.experiment.createUpdateTrainingDataForRepTree(//
-						0, //
-						this.getExperiment(), //
-						null, //
-						0, //
-						Scheduler.feedBackLearningInterval);
-			}
-
-			eventGenerator.run();
-
-			this.deleteExpiredVolumes();
-
 			VolumeRequest volumeRequest = this.getRequestQueue().peek();
 
 			int arrivalTime = volumeRequest.getArrivalTime();
 
 			// if (pauseTime == pauseTimer) {
-			if (arrivalTime == clockIntValue) {
+			if (arrivalTime == (clockIntValue % Scheduler.modClockBy)) {
 
 				if (this.getRequestQueue().isEmpty()) {
 
@@ -538,39 +509,80 @@ public abstract class Scheduler {
 				}
 			}
 
-			resourceMonitor.run();
-
-			// edu.purdue.simulation.Experiment.clock =
-			// edu.purdue.simulation.Experiment.clock
-			// .add(numOne);
-
+			/*
+			 * having multiple requests at a same clock, which means a clock
+			 * will increase if there is no more requests for that clock. Most
+			 * functions must be done when the clock is increases. For example,
+			 * the resource evaluation process. The sequence of instructions in
+			 * this block of code is important.
+			 */
 			int nextRequestClock = this.getRequestQueue().peek()
 					.getArrivalTime();
 
-			if (nextRequestClock > clockIntValue) {
+			if (nextRequestClock != clockIntValue % Scheduler.modClockBy) {
 
+				eventGenerator.run();
+
+				this.deleteExpiredVolumes();
+
+				resourceMonitor.run();
+
+				/*
+				 * must save changes in db before feedback learning
+				 */
+
+				Database.executeBatchQuery(VolumePerformanceMeter.queries,
+						false);
+
+				Database.executeBatchQuery(StochasticEvent.queries, false);
+
+				/*
+				 * applies feedback learning
+				 */
+				if (Scheduler.feedBackLearning
+						&& clockIntValue > 0
+						&& (clockIntValue % Scheduler.feedbackLearningInterval == 0)) {
+
+					/*
+					 * having multiple requests in a clock will cause creating
+					 * models multiple times. I prefer to make the model based
+					 * on the first request of each click
+					 */
+					if (BlockStorageSimulator.feedbackAccuracy
+							.containsKey(clockIntValue) == false) {
+
+						BlockStorageSimulator.feedbackAccuracy.put(
+								clockIntValue,
+								new Object[Experiment.backendList.size()][2]);
+
+						this.experiment.createUpdateTrainingData(
+						//
+								0, // numberOfRecords
+								this.getExperiment(), // experiment
+								null, // path
+								0, // includeViolationsNumber
+								Scheduler.updateLearning_MaxNumberOfRecords); // updateLearningModelByLastNumberOfRecords
+					}
+				}
+
+				/*
+				 * clock must be increased after all statements/processes are
+				 * done
+				 */
 				edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock
 						.add(numOne);
 
 				currentClockRequests = 0;
+			} else {
+				currentClockRequests = currentClockRequests;
 			}
 
 			currentClockRequests++;
-
-			// sum.add(new BigInteger("1"));
-			//
-			// if (sum.compareTo(new BigInteger("100")) == 0)
-			//
-			// break;
-
-			Database.executeBatchQuery(StochasticEvent.queries, 1000);
-
-			Database.executeBatchQuery(VolumePerformanceMeter.queries, 1000);
 		}
 
-		Database.executeBatchQuery(StochasticEvent.queries, 0);
+		Database.executeBatchQuery(StochasticEvent.queries, true);
 
-		Database.executeBatchQuery(VolumePerformanceMeter.queries, 0);
+		Database.executeBatchQuery(VolumePerformanceMeter.queries, true);
 
 		// for (i = 0; i < Experiment.backendList.size(); i++) {
 		//
@@ -581,15 +593,15 @@ public abstract class Scheduler {
 
 		if (Scheduler.isTraining)
 
-			this.experiment.createUpdateTrainingDataForRepTree(0,
-					this.getExperiment(), null, 0, //
+			this.experiment.createUpdateTrainingData(0, this.getExperiment(),
+					null, 0, //
 					0 // no feedback learning/update model
 					);
 
 		else
 
-			this.experiment.createUpdateTrainingDataForRepTree(0,
-					this.getExperiment(), null, 1, //
+			this.experiment.createUpdateTrainingData(0, this.getExperiment(),
+					null, 1, //
 					0 // no feedback learning/update model
 					); // include all values
 
@@ -600,8 +612,6 @@ public abstract class Scheduler {
 		//
 		// System.out.println("DONE - with threads");
 	}
-
-	private Random random = new Random();
 
 	public static double sum = 0;
 

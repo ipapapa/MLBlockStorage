@@ -8,6 +8,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
+import edu.purdue.simulation.blockstorage.Scheduler;
+
 public class Database {
 
 	private static Connection CurrentConnection;
@@ -34,20 +38,30 @@ public class Database {
 		return q;
 	}
 
+	private static int compareSize = 1000;
+
 	public static void executeBatchQuery(ArrayList<String> queries,
-			int compareSize) throws SQLException {
+			boolean forceSave) throws SQLException {
 
-		int size = queries.size();
+		int queriesSize = queries.size();
 
-		if (size == 0)
+		boolean save = false;
+
+		if (Scheduler.feedBackLearning) {
+			if (Experiment.clock.intValue()
+					% Scheduler.feedbackLearningInterval == 0)
+
+				save = true;
+
+		} else if (queriesSize >= compareSize)
+
+			save = true;
+
+		save = save || forceSave;
+
+		if (save == false || queries.size() == 0)
 
 			return;
-
-		if (compareSize > 0) {
-			if (size < compareSize)
-
-				return;
-		}
 
 		Connection connection = Database.getConnection();
 
@@ -57,7 +71,7 @@ public class Database {
 
 		boolean isFirst = true;
 
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < queriesSize; i++) {
 			// statement.addBatch(queries.get(i));
 
 			String q = queries.get(i);

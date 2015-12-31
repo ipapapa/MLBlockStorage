@@ -1,0 +1,1319 @@
+-- MySQL dump 10.13  Distrib 5.6.13, for Win32 (x86)
+--
+-- Host: localhost    Database: BlockStorageSimulator
+-- ------------------------------------------------------
+-- Server version	5.6.27-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `airline`
+--
+
+DROP TABLE IF EXISTS `airline`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `airline` (
+  `YEAR` int(11) DEFAULT NULL,
+  `QUARTER` int(11) DEFAULT NULL,
+  `MONTH` int(11) DEFAULT NULL,
+  `DAY_OF_MONTH` int(11) DEFAULT NULL,
+  `DAY_OF_WEEK` varchar(45) DEFAULT NULL,
+  `FL_DATE` varchar(45) DEFAULT NULL,
+  `AIRLINE_ID` int(11) DEFAULT NULL,
+  `FL_NUM` int(11) DEFAULT NULL,
+  `ORIGIN_AIRPORT_ID` int(11) DEFAULT NULL,
+  `ORIGIN` varchar(45) DEFAULT NULL,
+  `ORIGIN_CITY_NAME` varchar(100) DEFAULT NULL,
+  `ORIGIN_STATE_ABR` varchar(2) DEFAULT NULL,
+  `ORIGIN_STATE_NM` varchar(45) DEFAULT NULL,
+  `DEST_AIRPORT_ID` varchar(45) DEFAULT NULL,
+  `DEST` varchar(45) DEFAULT NULL,
+  `DEST_CITY_NAME` varchar(45) DEFAULT NULL,
+  `DEST_STATE_ABR` varchar(2) DEFAULT NULL,
+  `DEST_STATE_NM` varchar(45) DEFAULT NULL,
+  `DEP_DELAY` varchar(45) DEFAULT NULL,
+  `ARR_DELAY` varchar(45) DEFAULT NULL,
+  `CANCELLED` int(11) DEFAULT NULL,
+  `CANCELLATION_CODE` varchar(45) DEFAULT NULL,
+  `CRS_ELAPSED_TIME` varchar(45) DEFAULT NULL,
+  `ACTUAL_ELAPSED_TIME` varchar(45) DEFAULT NULL,
+  `AIR_TIME` varchar(45) DEFAULT NULL,
+  `FLIGHTS` int(11) DEFAULT NULL,
+  `DISTANCE` int(11) DEFAULT NULL,
+  `CARRIER_DELAY` varchar(45) DEFAULT NULL,
+  `WEATHER_DELAY` varchar(45) DEFAULT NULL,
+  `NAS_DELAY` varchar(45) DEFAULT NULL,
+  `SECURITY_DELAY` varchar(45) DEFAULT NULL,
+  `LATE_AIRCRAFT_DELAY` varchar(45) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `backend`
+--
+
+DROP TABLE IF EXISTS `backend`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `backend` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `experiment_id` bigint(20) NOT NULL,
+  `operation_ID` int(11) NOT NULL,
+  `clock` bigint(20) NOT NULL,
+  `capacity` int(11) NOT NULL,
+  `MaxCapacity` int(11) DEFAULT NULL,
+  `MinCapacity` int(11) DEFAULT NULL,
+  `IOPS` int(11) NOT NULL,
+  `MaxIOPS` int(11) DEFAULT NULL,
+  `MinIOPS` int(11) DEFAULT NULL,
+  `is_online` bit(1) NOT NULL DEFAULT b'1',
+  `Description` mediumtext,
+  `stability_possession_mean` double DEFAULT NULL,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `experiment_backend_idx` (`experiment_id`),
+  KEY `FK_backend_operation_idx` (`operation_ID`),
+  CONSTRAINT `FK_backend_operation` FOREIGN KEY (`operation_ID`) REFERENCES `operation` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FK_experiment_backend` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Notice MaxCapacity, MinCapacity, MaxIOPS and MinIOPS are allowing null values, the purpose is keeping record for stoachastic events';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `backend_performance_meter`
+--
+
+DROP TABLE IF EXISTS `backend_performance_meter`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `backend_performance_meter` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `backend_ID` bigint(20) NOT NULL,
+  `volume_ID` bigint(20) NOT NULL,
+  `clock` bigint(20) NOT NULL,
+  `available_IOPS` int(11) NOT NULL,
+  `available_capacity` int(11) NOT NULL,
+  `volumes_count` int(11) NOT NULL DEFAULT '0',
+  `create_date` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `FN_backend_performance_meter_backend_idx` (`backend_ID`),
+  KEY `FK_backend_performance_meter_volume_idx` (`volume_ID`),
+  CONSTRAINT `FK_backend_performance_meter_backend` FOREIGN KEY (`backend_ID`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FK_backend_performance_meter_volume` FOREIGN KEY (`volume_ID`) REFERENCES `volume` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `backend_regression`
+--
+
+DROP TABLE IF EXISTS `backend_regression`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `backend_regression` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `backend_ID` bigint(20) NOT NULL,
+  `clock` bigint(20) NOT NULL,
+  `R2` double NOT NULL,
+  `Description` mediumtext NOT NULL,
+  `create_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `backen_backend_regression_idx` (`backend_ID`),
+  CONSTRAINT `backen_backend_regression` FOREIGN KEY (`backend_ID`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `clock`
+--
+
+DROP TABLE IF EXISTS `clock`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `clock` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `non` char(1) DEFAULT '',
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=90999 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `delay_normalized`
+--
+
+DROP TABLE IF EXISTS `delay_normalized`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `delay_normalized` (
+  `year` int(11) DEFAULT NULL,
+  `month` int(11) DEFAULT NULL,
+  `day_of_month` int(11) DEFAULT NULL,
+  `delay` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `experiment`
+--
+
+DROP TABLE IF EXISTS `experiment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `experiment` (
+  `ID` bigint(8) NOT NULL AUTO_INCREMENT,
+  `workload_ID` bigint(8) NOT NULL,
+  `comment` mediumtext NOT NULL,
+  `scheduler_algorithm` mediumtext NOT NULL,
+  `r2` double DEFAULT NULL,
+  `reg_model` tinytext,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `FK_experiment_workload_idx` (`workload_ID`),
+  CONSTRAINT `FK_experiment_workload` FOREIGN KEY (`workload_ID`) REFERENCES `workload` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `experiment_report`
+--
+
+DROP TABLE IF EXISTS `experiment_report`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `experiment_report` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Experiment_ID` bigint(8) NOT NULL,
+  `Is_Feedback_Learning` bit(1) NOT NULL DEFAULT b'0',
+  `Is_Training` bit(1) NOT NULL,
+  `all_backend_QoS` double NOT NULL,
+  `rejection_rate` double NOT NULL,
+  `requests_count` int(11) NOT NULL,
+  `scheduled_vol_count` int(11) NOT NULL,
+  `rejected_vol_count` int(11) NOT NULL,
+  `deleted_vol_count` int(11) NOT NULL,
+  `avg_requested_capacity` double NOT NULL,
+  `avg_IOPS_requested` double NOT NULL,
+  `avg_available_IOPS` double NOT NULL,
+  `avg_deletion_time` double NOT NULL,
+  `SLA_vio_count` int(11) NOT NULL,
+  `vol_performance_meter_count` int(11) NOT NULL,
+  `max_clock` int(11) NOT NULL,
+  `backend_count` int(11) NOT NULL,
+  `predictors_rules` varchar(1000) NOT NULL,
+  `vio_groups` varchar(1000) NOT NULL,
+  `ML_algorithm` varchar(300) NOT NULL,
+  `clock_unit` varchar(300) NOT NULL,
+  `Assessment_Policy` varchar(300) NOT NULL,
+  `training_experiment_ID` int(11) NOT NULL,
+  `Resource_Monitor_clockGap_probability` double NOT NULL,
+  `Scheduler_modClockBy` int(11) NOT NULL,
+  `Scheduler_Feedback_Learning_Interval` int(11) NOT NULL COMMENT 'interval to recreate classifiers',
+  `Stochastic_Event_Generator_clockGap_probability` double NOT NULL COMMENT 'The gap to apply the stochastic events. No probability is used, its a counter.',
+  `update_Learning_Model_By_Last_Number_Of_Records` int(11) NOT NULL COMMENT '0 means update the classifier using training dataset from all previous resource evaluation records. Used in feedback learning',
+  PRIMARY KEY (`ID`),
+  KEY `Experiment_Report_Experiment_idx` (`Experiment_ID`),
+  CONSTRAINT `Experiment_Report_Experiment` FOREIGN KEY (`Experiment_ID`) REFERENCES `experiment` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `new_table`
+--
+
+DROP TABLE IF EXISTS `new_table`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `new_table` (
+  `user_number` int(11) DEFAULT NULL,
+  `diff` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `operation`
+--
+
+DROP TABLE IF EXISTS `operation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `operation` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` mediumtext,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `rejection_reason`
+--
+
+DROP TABLE IF EXISTS `rejection_reason`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `rejection_reason` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Description` mediumtext NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `schedule_response`
+--
+
+DROP TABLE IF EXISTS `schedule_response`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `schedule_response` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `experiment_id` bigint(20) NOT NULL,
+  `volume_request_ID` bigint(20) NOT NULL,
+  `clock` bigint(20) NOT NULL DEFAULT '1',
+  `rejection_reason_ID` int(11) DEFAULT NULL COMMENT 'very deficault to implement, this function is not used. always null',
+  `backend_turned_on` bigint(20) DEFAULT NULL,
+  `backend_create` bigint(20) DEFAULT NULL,
+  `backend_scheduled` bigint(20) DEFAULT NULL,
+  `is_successful` bit(1) NOT NULL,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `backend_schedule_response_backend_create_idx` (`backend_create`),
+  KEY `backend_schedule_response_backend_scheduled_idx` (`backend_scheduled`),
+  KEY `experiment_schedule_response_idx` (`experiment_id`),
+  KEY `backend_schedule_response_turned_on_idx` (`backend_turned_on`),
+  KEY `volume_request_schedule_response_idx` (`volume_request_ID`),
+  KEY `schedule_response_rejection_reason_idx` (`rejection_reason_ID`),
+  CONSTRAINT `backend_schedule_response_backend_create` FOREIGN KEY (`backend_create`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `backend_schedule_response_backend_scheduled` FOREIGN KEY (`backend_scheduled`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `backend_schedule_response_turned_on` FOREIGN KEY (`backend_turned_on`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `experiment_schedule_response` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `schedule_response_rejection_reason` FOREIGN KEY (`rejection_reason_ID`) REFERENCES `rejection_reason` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `volume_request_schedule_response` FOREIGN KEY (`volume_request_ID`) REFERENCES `volume_request` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `stochastic_event`
+--
+
+DROP TABLE IF EXISTS `stochastic_event`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `stochastic_event` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `stochastic_event_type_ID` int(11) NOT NULL,
+  `backend_ID` bigint(20) NOT NULL,
+  `clock` bigint(20) NOT NULL,
+  `int_val1` int(11) DEFAULT NULL,
+  `string_val1` mediumtext,
+  `is_applied` bit(1) NOT NULL DEFAULT b'0',
+  `create_time` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `FK_stochastic_event_backend_idx` (`backend_ID`),
+  KEY `FK_stochastic_event_stochastic_event_type_idx` (`stochastic_event_type_ID`),
+  CONSTRAINT `FK_stochastic_event_backend` FOREIGN KEY (`backend_ID`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FK_stochastic_event_stochastic_event_type` FOREIGN KEY (`stochastic_event_type_ID`) REFERENCES `stochastic_event_type` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `stochastic_event_type`
+--
+
+DROP TABLE IF EXISTS `stochastic_event_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `stochastic_event_type` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Name` mediumtext NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `volume`
+--
+
+DROP TABLE IF EXISTS `volume`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `volume` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `backend_ID` bigint(20) NOT NULL,
+  `schedule_response_ID` bigint(20) DEFAULT NULL COMMENT 'Schedule_Response_ID allows null in order to distinguish ping volumes',
+  `capacity` int(11) NOT NULL,
+  `IOPS` int(11) NOT NULL COMMENT 'Requested IOPS - populates from the workload volume request',
+  `is_deleted` bit(1) NOT NULL DEFAULT b'0',
+  `Delete_Probability` double NOT NULL,
+  `delete_clock` bigint(20) DEFAULT NULL,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `backend_volume_idx` (`backend_ID`),
+  KEY `backend_schedule_response_idx` (`schedule_response_ID`),
+  CONSTRAINT `backend_schedule_response` FOREIGN KEY (`schedule_response_ID`) REFERENCES `schedule_response` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `backend_volume` FOREIGN KEY (`backend_ID`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `volume_performance_meter`
+--
+
+DROP TABLE IF EXISTS `volume_performance_meter`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `volume_performance_meter` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `experiment_ID` bigint(20) NOT NULL,
+  `backend_ID` bigint(20) NOT NULL DEFAULT '1',
+  `volume_ID` bigint(20) DEFAULT NULL COMMENT 'I dont know why volume_ID allows null maybe it''s related to backend_performance_meter which I dont have anymore ... I gues I should just make it Not Null, but for now Ill use it this way',
+  `clock` bigint(20) NOT NULL,
+  `available_IOPS` int(11) NOT NULL,
+  `SLA_violation` bit(1) NOT NULL,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `experiment_performance_meter_idx` (`experiment_ID`),
+  KEY `performance_meter_volume_idx` (`volume_ID`),
+  KEY `volume_performance_meter_backend_ID_idx` (`backend_ID`),
+  KEY `clock` (`clock`),
+  CONSTRAINT `experiment_performance_meter` FOREIGN KEY (`experiment_ID`) REFERENCES `experiment` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `volume_performance_meter_backend_ID` FOREIGN KEY (`backend_ID`) REFERENCES `backend` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='I dont know why volume_ID allows null maybe it''s related to backend_performance_meter which I dont remmeber what I did for it anymore ... I gues I should just make it Not Null, but for now Ill use it this way';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `volume_request`
+--
+
+DROP TABLE IF EXISTS `volume_request`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `volume_request` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `workload_ID` bigint(20) NOT NULL,
+  `Capacity` int(11) NOT NULL,
+  `type` int(11) NOT NULL,
+  `IOPS` int(11) NOT NULL,
+  `Delete_Probability` double NOT NULL COMMENT 'this used to be a probability, but now it contains a clock to be removed',
+  `Arrival_Time` int(11) NOT NULL DEFAULT '0',
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`),
+  KEY `workload_volume_request_idx` (`workload_ID`),
+  CONSTRAINT `workload_volume_request` FOREIGN KEY (`workload_ID`) REFERENCES `workload` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=627816 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `workload`
+--
+
+DROP TABLE IF EXISTS `workload`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `workload` (
+  `ID` bigint(8) NOT NULL AUTO_INCREMENT,
+  `comment` mediumtext NOT NULL,
+  `generate_method` int(11) NOT NULL,
+  `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=165 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping routines for database 'BlockStorageSimulator'
+--
+/*!50003 DROP FUNCTION IF EXISTS `all_backends_violation_rate` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `all_backends_violation_rate`(
+	exp_ID			BigInt
+) RETURNS float
+BEGIN
+	DECLARE result FLOAT;
+
+	Set	result	= 
+	(
+		Select	Avg(VP.Volume_Vio_Percentage)
+					/*Sum(VP.Volume_Vio_Percentage) / count(VP.Volume_Vio_Percentage)*/
+				From
+				(
+					Select	MySQL_no_trust.volume_ID,
+							Sum(MySQL_no_trust.SLA_Violation) / count(MySQL_no_trust.volume_ID)	As	Volume_Vio_Percentage
+						From	
+						(
+				   
+							Select	volume_ID,
+									SLA_Violation,
+									clock
+								From	volume_performance_meter	vpm
+								where	vpm.experiment_ID	= exp_ID
+								Order	By	volume_ID	Asc
+						)	MySQL_no_trust
+						Group	By	MySQL_no_trust.volume_ID
+				)	As	VP
+	);
+
+RETURN result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `backend_violation_rate` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `backend_violation_rate`(
+	exp_ID			BigInt,
+    bkd_ID			Int #backend_ID
+) RETURNS float
+BEGIN
+	DECLARE result FLOAT;
+
+	Set	result	= 
+	(
+		Select	Avg(VP.Volume_Vio_Percentage)
+					/*Sum(VP.Volume_Vio_Percentage) / count(VP.Volume_Vio_Percentage)*/
+				From
+				(
+					Select	MySQL_no_trust.volume_ID,
+							Sum(MySQL_no_trust.SLA_Violation) / count(MySQL_no_trust.volume_ID)	As	Volume_Vio_Percentage
+						From	
+						(
+				   
+							Select	volume_ID,
+									SLA_Violation,
+									clock
+								From	volume_performance_meter	vpm
+								where	vpm.experiment_ID	= exp_ID	And
+										vpm.backend_ID		= bkd_ID
+								Order	By	volume_ID	Asc
+						)	MySQL_no_trust
+						Group	By	MySQL_no_trust.volume_ID
+				)	As	VP
+	);
+
+RETURN result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `calc_QoS_performance` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `calc_QoS_performance`(
+	exp_ID			BigInt
+)
+BEGIN
+
+	DECLARE done INT DEFAULT FALSE;
+  
+	DECLARE bkd_ID	INT;
+  
+	DECLARE cur1 CURSOR FOR 
+		Select	b.ID			AS	backend_ID#,
+				#ex.ID			As	experiment_ID,
+				#ex.comment		As	experiment_description,
+				#b.description	As	backend_description
+			From	backend		b
+						Inner	Join
+					experiment	ex
+						On	b.experiment_id	= ex.id		And
+							ex.id			= exp_ID;
+                        
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+	DROP TEMPORARY TABLE IF EXISTS pinged_volumes;
+
+	CREATE	TEMPORARY	TABLE	pinged_volumes
+		(
+			clock				BigInt	NOT NULL,
+			Backend_ID			BigInt	NOT NULL,
+			VolumesCount		Int	Not	Null,#Int	Not	Null,
+			SLAViolationCount	Int	Not	Null,#Int	Not	Null,
+			TotalAvailableIOPS	Int	Not	Null,#Int	Not	Null,
+			TotalRequestedIOPS	Int	Not	Null#Int	Not	Null,
+			#,index (Clock, Backend_ID)
+		);
+        
+	Set	@VC = null;
+	Set @SVC = null;
+	Set @TAI = null;
+	Set @TRI = null;
+	Set @clock = null;
+	Set @rnk = null;
+	Set @rnk2 = null;
+
+	OPEN cur1;
+    
+	read_loop: LOOP
+    
+		FETCH cur1 INTO bkd_ID;
+    
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+    
+		Select	bkd_ID;
+       
+		set	@rnkOrder  = 0;
+       
+		Select	backend_violation_rate(exp_ID, bkd_ID);	
+        
+       /* 
+		Select	vpm.volume_ID,
+				sum(vpm.SLA_Violation)
+				
+			From	volume_performance_meter	vpm
+            where	vpm.experiment_ID	= exp_ID	And
+					vpm.backend_ID		= bkd_ID
+			Group	By	vpm.volume_ID	Asc;
+		*/
+	END LOOP;
+
+	CLOSE cur1;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `data_for_ML` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `data_for_ML`(
+	exp_ID		BigInt,
+    Lim			Int,
+    ModBy		int		
+)
+BEGIN
+	DECLARE done INT DEFAULT FALSE;
+  
+	DECLARE bkd_ID	INT;
+  
+	DECLARE cur1 CURSOR FOR 
+		Select	b.ID			AS	backend_ID#,
+				#ex.ID			As	experiment_ID,
+				#ex.comment		As	experiment_description,
+				#b.description	As	backend_description
+			From	backend		b
+						Inner	Join
+					experiment	ex
+						On	b.experiment_id	= ex.id		And
+							ex.id			= exp_ID;
+                        
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+
+	DROP TEMPORARY TABLE IF EXISTS pinged_volumes;
+
+	CREATE	TEMPORARY	TABLE	pinged_volumes
+		(
+			clock				BigInt	NOT NULL,
+			Backend_ID			BigInt	NOT NULL,
+			VolumesCount		Int	Not	Null,
+			SLAViolationCount	Int	Not	Null,
+			TotalAvailableIOPS	Int	Not	Null,
+			TotalRequestedIOPS	Int	Not	Null,
+			index (Clock, Backend_ID)
+		);
+
+	Insert	Into	pinged_volumes
+
+		Select	VPM.clock					As	clock,
+				VPM.Backend_ID				As	Backend_ID,
+				count(*)					As	VolumesCount,
+				Sum(VPM.SLA_violation)		As	SLAViolationCount,
+				sum(VPM.available_IOPS)		As	TotalAvailableIOPS,
+				sum(v.IOPS)					As	TotalRequestedIOPS
+				
+			From	volume_performance_meter		VPM
+						Inner	Join
+					volume							v
+						On	VPM.volume_ID	= v.ID
+			Where	VPM.experiment_id	= exp_ID
+			Group	By	clock, Backend_ID;
+
+	OPEN cur1;
+    
+	read_loop: LOOP
+    
+		FETCH cur1 INTO bkd_ID;
+    
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+    
+		Select	bkd_ID;
+    
+		Select	Case
+					When	ModBy	= 0	Then	PV.clock
+					Else						Mod(PV.clock, ModBy)	
+				End			As	Clock,
+				PV.VolumesCount,
+                PV.SLAViolationCount,
+                PV.TotalRequestedIOPS,
+                PV.Backend_ID,
+                PV.TotalAvailableIOPS,
+                PV.clock						As	Clock_No_Mod
+				
+			From	pinged_volumes		PV
+            Where	PV.Backend_ID	= bkd_ID
+            Order	By	PV.Clock	Asc;
+    
+	END LOOP;
+
+	CLOSE cur1;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `data_for_ML2` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `data_for_ML2`(
+	exp_ID			BigInt,
+    Lim				Int,
+    ModBy			int,
+    clockBiggerThan	int
+)
+BEGIN
+
+	DECLARE done INT DEFAULT FALSE;
+  
+	DECLARE bkd_ID	INT;
+  
+	DECLARE cur1 CURSOR FOR 
+		Select	b.ID			AS	backend_ID#,
+				#ex.ID			As	experiment_ID,
+				#ex.comment		As	experiment_description,
+				#b.description	As	backend_description
+			From	backend		b
+						Inner	Join
+					experiment	ex
+						On	b.experiment_id	= ex.id		And
+							ex.id			= exp_ID;
+                        
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+	DROP TEMPORARY TABLE IF EXISTS pinged_volumes;
+
+	CREATE	TEMPORARY	TABLE	pinged_volumes
+		(
+			clock				BigInt	NOT NULL,
+			Backend_ID			BigInt	NOT NULL,
+			VolumesCount		Int	Not	Null,#Int	Not	Null,
+			SLAViolationCount	Int	Not	Null,#Int	Not	Null,
+			TotalAvailableIOPS	Int	Not	Null,#Int	Not	Null,
+			TotalRequestedIOPS	Int	Not	Null#Int	Not	Null,
+			#,index (Clock, Backend_ID)
+		);
+        
+	Set	@VC = null;
+	Set @SVC = null;
+	Set @TAI = null;
+	Set @TRI = null;
+	Set @clock = null;
+	Set @rnk = null;
+	Set @rnk2 = null;
+
+	Insert	Into	pinged_volumes
+
+		Select	Clock,
+				Backend_ID,
+                VolumesCount,
+                SLAViolationCount,
+                TotalAvailableIOPS,
+                TotalRequestedIOPS
+                
+				From	(
+						Select	Clock																			As 	Clock,
+								Backend_ID																		As	Backend_ID,
+								@VC:= if(@clock = Clock, @VC + VolumesCount, VolumesCount)						As	VolumesCount,
+								@SVC := if(@clock = Clock, @SVC + SLAViolationCount, SLAViolationCount)			As	SLAViolationCount,
+								@TAI := if(@clock = Clock, @TAI + TotalAvailableIOPS, TotalAvailableIOPS)		As	TotalAvailableIOPS,
+								@TRI := if(@clock = Clock, @TRI + TotalRequestedIOPS, TotalRequestedIOPS)		As	TotalRequestedIOPS,
+								@clock:=Clock
+								
+							From	(
+										Select	clock									As	clock,
+												Backend_ID								As	Backend_ID,
+												count(*)								As	VolumesCount,
+												Sum(Is_SLA_Violation)					As	SLAViolationCount,
+												sum(Available_IOPS)						As	TotalAvailableIOPS,
+												sum(Volume_Requested_IOPS)				As	TotalRequestedIOPS
+											From	(
+														Select	VPM.clock																As	clock,
+																VPM.Backend_ID															As	Backend_ID,
+																VPM.SLA_violation														As	Is_SLA_Violation,
+																VPM.available_IOPS														As	Available_IOPS,
+																v.IOPS																	As	Volume_Requested_IOPS,
+																@rnk := if(@clock = VPM.clock, if(@rnk2 % 4 = 0, @rnk+1, @rnk+0), 1)	As 	Rank,
+																@rnk2 := if(@clock = VPM.clock, @rnk2 + 1, 1)							As 	Rank2,
+																@clock := VPM.clock
+																#,count(VPM.clock)					As	VolumesCount
+																#,Sum(VPM.SLA_violation)		As	SLAViolationCount,
+																#sum(VPM.available_IOPS)		As	TotalAvailableIOPS,
+																#sum(v.IOPS)					As	TotalRequestedIOPS
+																
+															From	volume_performance_meter		VPM
+																		Inner	Join
+																	volume							v
+																		On	VPM.volume_ID	= v.ID
+															Where	VPM.experiment_id	= exp_ID# and VPM.Backend_ID	= 427964
+																	#And
+                                                                    #VPM.clock			> clockBiggerThan
+															
+															Order	By	clock				Asc,
+																		VPM.Backend_ID		Asc
+													)	As inn1
+                                                    
+											Group	By	clock,
+														Backend_ID,
+                                                        Rank
+									)	As inn2
+						)	As	inn3
+			;
+
+	OPEN cur1;
+    
+	read_loop: LOOP
+    
+		FETCH cur1 INTO bkd_ID;
+    
+		IF done THEN
+			LEAVE read_loop;
+		END IF;
+    
+		Select	bkd_ID;
+       
+		set	@rnkOrder  = 0;
+       
+		IF	clockBiggerThan	= 0 THEN
+			
+            Select	Case
+						When	ModBy	= 0	Then	PV.clock
+						Else						Mod(PV.clock, ModBy)	
+					End									As	Clock,
+					PV.VolumesCount,
+					PV.SLAViolationCount,
+					PV.TotalRequestedIOPS,
+					PV.Backend_ID,
+					PV.TotalAvailableIOPS,
+					PV.clock							As	Clock_No_Mod
+					
+				From	pinged_volumes		PV
+				Where	PV.Backend_ID	= bkd_ID
+						
+				Order	By	PV.Clock	Asc;
+			
+        ELSE
+       
+			Select	*
+				From	(
+				
+							Select	*
+								From	(
+											Select	Case
+														When	ModBy	= 0	Then	PV.clock
+														Else						Mod(PV.clock, ModBy)	
+													End									As	Clock,
+													PV.VolumesCount,
+													PV.SLAViolationCount,
+													PV.TotalRequestedIOPS,
+													PV.Backend_ID,
+													PV.TotalAvailableIOPS,
+													PV.clock							As	Clock_No_Mod,
+													@rnkOrder := @rnkOrder + 1			As	RankOrder
+													
+												From	pinged_volumes		PV
+												Where	PV.Backend_ID	= bkd_ID
+														
+												Order	By	PV.Clock	Asc
+										)	As	Inn
+									Order	By	RankOrder	Desc
+									Limit	clockBiggerThan
+									#Where	Inn.RankOrder	> clockBiggerThan;
+						)	As	Inn2
+				Order	by	RankOrder	Asc;
+		END IF;
+    
+	END LOOP;
+
+	CLOSE cur1;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `data_for_ML4` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `data_for_ML4`(
+	exp_ID		BigInt,
+    Lim			Int,
+    ModBy		int		
+)
+BEGIN
+	
+Set	@VC = null;
+Set @SVC = null;
+Set @TAI = null;
+Set @TRI = null;
+Set @clock = null;
+Set @rnk = null;
+Set @rnk2 = null;
+	#Insert	Into	pinged_volumes
+
+		Select	Clock,
+				Backend_ID,
+                VolumesCount,
+                SLAViolationCount,
+                TotalAvailableIOPS,
+                TotalRequestedIOPS
+                
+				From	(
+						Select	Clock																			As 	Clock,
+								Backend_ID																		As	Backend_ID,
+								@VC:= if(@clock = Clock, @VC + VolumesCount, VolumesCount)						As	VolumesCount,
+								@SVC := if(@clock = Clock, @SVC + SLAViolationCount, SLAViolationCount)			As	SLAViolationCount,
+								@TAI := if(@clock = Clock, @TAI + TotalAvailableIOPS, TotalAvailableIOPS)		As	TotalAvailableIOPS,
+								@TRI := if(@clock = Clock, @TRI + TotalRequestedIOPS, TotalRequestedIOPS)		As	TotalRequestedIOPS,
+								@clock:=Clock
+								
+							From	(
+										Select	clock									As	clock,
+												Backend_ID								As	Backend_ID,
+												count(*)								As	VolumesCount,
+												Sum(Is_SLA_Violation)					As	SLAViolationCount,
+												sum(Available_IOPS)						As	TotalAvailableIOPS,
+												sum(Volume_Requested_IOPS)				As	TotalRequestedIOPS
+											From	(
+														Select	VPM.clock																As	clock,
+																VPM.Backend_ID															As	Backend_ID,
+																VPM.SLA_violation														As	Is_SLA_Violation,
+																VPM.available_IOPS														As	Available_IOPS,
+																v.IOPS																	As	Volume_Requested_IOPS,
+																@rnk := if(@clock = VPM.clock, if(@rnk2 % 4 = 0, @rnk+1, @rnk+0), 1)	As 	Rank,
+																@rnk2 := if(@clock = VPM.clock, @rnk2 + 1, 1)							As 	Rank2,
+																@clock := VPM.clock
+																#,count(VPM.clock)					As	VolumesCount
+																#,Sum(VPM.SLA_violation)		As	SLAViolationCount,
+																#sum(VPM.available_IOPS)		As	TotalAvailableIOPS,
+																#sum(v.IOPS)					As	TotalRequestedIOPS
+																
+															From	volume_performance_meter		VPM
+																		Inner	Join
+																	volume							v
+																		On	VPM.volume_ID	= v.ID
+															Where	VPM.experiment_id	= exp_ID# and VPM.Backend_ID	= 427964
+															
+															Order	By	clock				Asc,
+																		VPM.Backend_ID		Asc
+													)	As inn1
+											Group	By	clock, Backend_ID, Rank
+									)	As inn2
+						)	As	inn3
+			;
+
+	
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `data_for_ML5` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `data_for_ML5`(
+	exp_ID		BigInt,
+    Lim			Int,
+    ModBy		int		
+)
+BEGIN
+	
+Set	@VC = null;
+Set @SVC = null;
+Set @TAI = null;
+Set @TRI = null;
+Set @clock = null;
+Set @rnk = null;
+Set @rnk2 = null;
+	#Insert	Into	pinged_volumes
+
+		Select	Clock,
+				Backend_ID,
+                VolumesCount,
+                SLAViolationCount,
+                TotalAvailableIOPS,
+                TotalRequestedIOPS
+                
+				From	(
+						Select	Clock																			As 	Clock,
+								Backend_ID																		As	Backend_ID,
+								@VC:= if(@clock = Clock, @VC + VolumesCount, VolumesCount)						As	VolumesCount,
+								@SVC := if(@clock = Clock, @SVC + SLAViolationCount, SLAViolationCount)			As	SLAViolationCount,
+								@TAI := if(@clock = Clock, @TAI + TotalAvailableIOPS, TotalAvailableIOPS)		As	TotalAvailableIOPS,
+								@TRI := if(@clock = Clock, @TRI + TotalRequestedIOPS, TotalRequestedIOPS)		As	TotalRequestedIOPS,
+								@clock:=Clock
+								
+							From	(
+										Select	clock									As	clock,
+												Backend_ID								As	Backend_ID,
+												count(*)								As	VolumesCount,
+												Sum(Is_SLA_Violation)					As	SLAViolationCount,
+												sum(Available_IOPS)						As	TotalAvailableIOPS,
+												sum(Volume_Requested_IOPS)				As	TotalRequestedIOPS
+											From	(
+														Select	VPM.clock																As	clock,
+																VPM.Backend_ID															As	Backend_ID,
+																VPM.SLA_violation														As	Is_SLA_Violation,
+																VPM.available_IOPS														As	Available_IOPS,
+																v.IOPS																	As	Volume_Requested_IOPS,
+																@rnk := if(@clock = VPM.clock, if(@rnk2 % 4 = 0, @rnk+1, @rnk+0), 1)	As 	Rank,
+																@rnk2 := if(@clock = VPM.clock, @rnk2 + 1, 1)							As 	Rank2,
+																@clock := VPM.clock
+																#,count(VPM.clock)					As	VolumesCount
+																#,Sum(VPM.SLA_violation)		As	SLAViolationCount,
+																#sum(VPM.available_IOPS)		As	TotalAvailableIOPS,
+																#sum(v.IOPS)					As	TotalRequestedIOPS
+																
+															From	volume_performance_meter		VPM
+																		Inner	Join
+																	volume							v
+																		On	VPM.volume_ID	= v.ID
+															Where	VPM.experiment_id	= exp_ID# and VPM.Backend_ID	= 427964
+															
+															Order	By	clock				Asc,
+																		VPM.Backend_ID		Asc
+													)	As inn1
+											Group	By	clock, Backend_ID, Rank
+									)	As inn2
+						)	As	inn3
+			;
+
+	
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `data_for_ML6` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `data_for_ML6`(
+	exp_ID		BigInt,
+    Lim			Int,
+    ModBy		int		
+)
+BEGIN
+	
+	#Insert	Into	pinged_volumes
+
+		Select	Clock,
+				Backend_ID,
+                VolumesCount,
+                SLAViolationCount,
+                TotalAvailableIOPS,
+                TotalRequestedIOPS
+                
+				From	(
+						Select	Clock																			As 	Clock,
+								Backend_ID																		As	Backend_ID,
+								@VC:= if(@clock = Clock, @VC + VolumesCount, VolumesCount)						As	VolumesCount,
+								@SVC := if(@clock = Clock, @SVC + SLAViolationCount, SLAViolationCount)			As	SLAViolationCount,
+								@TAI := if(@clock = Clock, @TAI + TotalAvailableIOPS, TotalAvailableIOPS)		As	TotalAvailableIOPS,
+								@TRI := if(@clock = Clock, @TRI + TotalRequestedIOPS, TotalRequestedIOPS)		As	TotalRequestedIOPS,
+								@clock:=Clock
+								
+							From	(
+										Select	clock									As	clock,
+												Backend_ID								As	Backend_ID,
+												count(*)								As	VolumesCount,
+												Sum(Is_SLA_Violation)					As	SLAViolationCount,
+												sum(Available_IOPS)						As	TotalAvailableIOPS,
+												sum(Volume_Requested_IOPS)				As	TotalRequestedIOPS
+											From	(
+														Select	VPM.clock																As	clock,
+																VPM.Backend_ID															As	Backend_ID,
+																VPM.SLA_violation														As	Is_SLA_Violation,
+																VPM.available_IOPS														As	Available_IOPS,
+																v.IOPS																	As	Volume_Requested_IOPS,
+																@rnk := if(@clock = VPM.clock, if(@rnk2 % 4 = 0, @rnk+1, @rnk+0), 1)	As 	Rank,
+																@rnk2 := if(@clock = VPM.clock, @rnk2 + 1, 1)							As 	Rank2,
+																@clock := VPM.clock
+																#,count(VPM.clock)					As	VolumesCount
+																#,Sum(VPM.SLA_violation)		As	SLAViolationCount,
+																#sum(VPM.available_IOPS)		As	TotalAvailableIOPS,
+																#sum(v.IOPS)					As	TotalRequestedIOPS
+																
+															From	volume_performance_meter		VPM
+																		Inner	Join
+																	volume							v
+																		On	VPM.volume_ID	= v.ID
+															Where	VPM.experiment_id	= exp_ID# and VPM.Backend_ID	= 427964
+															
+															Order	By	clock				Asc,
+																		VPM.Backend_ID		Asc
+													)	As inn1
+											Group	By	clock, Backend_ID, Rank
+									)	As inn2
+						)	As	inn3
+			;
+
+	
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `experiment_report` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `experiment_report`(
+	exp_ID		bigint
+)
+BEGIN
+	Select	ROUND(all_backends_violation_rate(exp_ID), 6)				As	All_backends_QoS,
+    
+			Round((report.AllRequests - report.ScheduledVolumes) /
+            report.AllRequests, 4)										As	RejectionRate,
+            
+			report.AllRequests,
+			report.ScheduledVolumes,
+			report.AllRequests - report.ScheduledVolumes				As	RejectedVolumes,
+			report.DeletedNumber,
+			report.AVGCapacity,
+            report.IOPSRequesteAverage,
+            report.AvailableIOPSAverage,
+			report.DeleteAverageTime,
+			report.SLA_Violation_Count,
+			report.Count_Volume_Performance_meter,
+			report.Max_Clock,
+			report.Backend_Count
+            
+		From
+			(
+				Select
+					(
+					Select	Count(*)				AS	ScheduledVolumes
+						From	schedule_response		SR
+									Inner	Join
+								Volume					V
+									On	SR.Experiment_ID			= exp_ID	And
+										v.schedule_response_ID		= SR.ID
+					)		AS	ScheduledVolumes,
+					(
+					Select	Count(*)				As	AllRequests
+						From	schedule_response		SR
+									Where	SR.Experiment_ID			= exp_ID
+					)		As	AllRequests,
+					(
+					Select	Avg(VR.capacity)				As	AllRequests
+						From	schedule_response		SR
+									Inner	Join
+								volume_request			VR
+									On	SR.volume_request_ID	= VR.ID
+						Where	SR.Experiment_ID			= exp_ID
+					)		As	AVGCapacity,
+					(
+					Select	Count(*)				AS	ScheduledVolumes
+						From	schedule_response		SR
+									Inner	Join
+								Volume					V
+									On	SR.Experiment_ID			= exp_ID	And
+										v.schedule_response_ID		= SR.ID			And
+										v.is_deleted				= 1
+					)		AS	DeletedNumber,
+					(
+						Select	Avg(V.delete_clock - SR.clock)		As	DeleteAverageTime
+							From	schedule_response		SR
+										Inner	Join
+									Volume					V
+										On	V.is_deleted				= 1				And
+											SR.Experiment_ID			= exp_ID	And
+											v.schedule_response_ID		= SR.ID
+					)		As	DeleteAverageTime,
+					(
+						Select	count(*)
+							From	volume_performance_meter	VPM
+							Where	VPM.experiment_id		= exp_ID	And
+									VPM.SLA_violation		= 1
+					)		As	SLA_Violation_Count,
+					(
+						Select	count(*)
+							From	volume_performance_meter	VPM
+							Where	VPM.experiment_id		= exp_ID
+					)		As	Count_Volume_Performance_meter,
+					(
+						Select	max(VPM.clock)
+							From	volume_performance_meter	VPM
+							Where	VPM.experiment_id		= exp_ID
+					)		As	Max_Clock,
+					(
+						Select	Count(*)		As	Backend_Count
+								
+							From	backend		b
+										Inner	Join
+									experiment	ex
+										On	b.experiment_id	= ex.id		And
+											ex.id			= exp_ID
+					)		As	Backend_Count,
+                    (
+						Select	Avg(V.IOPS)		As	IOPSRequesteAverage
+							From	schedule_response		SR
+										Inner	Join
+									Volume					V
+										On	V.is_deleted				= 1				And
+											SR.Experiment_ID			= exp_ID	And
+											v.schedule_response_ID		= SR.ID
+					)		As	IOPSRequesteAverage,
+                    (
+						Select	avg(VPM.available_IOPS)		As	AvailableIOPSAverage
+							From	volume_performance_meter	VPM
+							Where	VPM.experiment_id		= exp_ID
+					)		As	AvailableIOPSAverage
+			)	As report;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `retrieve_workload` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retrieve_workload`(
+	wk_ID					bigint,
+	record_limit			int,
+    skip_n_first_records	int,
+    devide_delete_by		double,
+    mod_arrival_time		int
+)
+BEGIN
+	Set	@count = 0;
+
+	Select	*
+		From
+			(
+				Select	ID,
+						workload_ID,
+						capacity,
+						type,
+						IOPS,
+						Delete_Probability / devide_delete_by			AS	Delete_Probability,
+						if	(
+								mod_arrival_time = 0, 
+								Arrival_Time, 
+								mod(Arrival_Time, mod_arrival_time)
+							)											As	Arrival_Time,
+						@count := @count + 1							As	rank
+										
+					From	volume_request
+					Where	workload_ID		= wk_ID
+			)	As	in_q
+		Where	in_q.rank	> skip_n_first_records
+		Limit	record_limit;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2015-12-29 22:56:14

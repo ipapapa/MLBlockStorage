@@ -15,8 +15,10 @@ import java.util.*;
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.bayes.BayesNet;
+import weka.classifiers.bayes.net.estimate.BayesNetEstimator;
+import weka.classifiers.bayes.net.search.SearchAlgorithm;
 import weka.classifiers.evaluation.Evaluation;
-import weka.classifiers.meta.FilteredClassifier;
 import weka.classifiers.trees.J48;
 import weka.classifiers.trees.REPTree;
 import weka.core.Instances;
@@ -48,6 +50,8 @@ public abstract class Backend extends PersistentObject {
 
 	public weka.classifiers.trees.J48 j48;
 
+	public weka.classifiers.bayes.BayesNet bayesianNetwork;
+
 	public REPTree repTree;
 
 	public Evaluation classifierEvaluation;
@@ -74,6 +78,19 @@ public abstract class Backend extends PersistentObject {
 			// String params, String path, int classIndex, Instances train
 
 			return this.createJ48Tree(
+			// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+					null, // TODO fix this function inputs
+					null, //
+					0, //
+					instances//
+					// no feedback learning/update model
+					);
+
+		case BayesianNetwork:
+
+			// String params, String path, int classIndex, Instances train
+
+			return this.createBayesianNetwork(
 			// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
 					null, // TODO fix this function inputs
 					null, //
@@ -161,6 +178,81 @@ public abstract class Backend extends PersistentObject {
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		return 0;
+	}
+
+	@SuppressWarnings("unused")
+	public double createBayesianNetwork(String params, String path,
+			int classIndex, Instances train) {
+
+		if (true) {
+
+			try {
+
+				if (train == null) {
+
+					BufferedReader reader;
+
+					reader = new BufferedReader(new FileReader(path));
+
+					train = new Instances(reader);
+
+					reader.close();
+				}
+
+				// setting class attribute
+				train.setClassIndex(0);
+
+				// Scheme:weka.classifiers.bayes.BayesNet -D -Q
+				// weka.classifiers.bayes.net.search.local.K2 --
+				// -P 1 -S BAYES -E
+				// weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5
+//train.size()
+				this.bayesianNetwork = new BayesNet();
+				this.bayesianNetwork
+						.setOptions(weka.core.Utils
+								.splitOptions("-D -Q weka.classifiers.bayes.net.search.local.K2 -- -P 1 -S BAYES -E weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5"));
+
+				// BayesNetEstimator bayesNetEstimator = new Wek
+				// bayesNetEstimator.setAlpha(0.5);
+				//
+				// this.bayesianNetwork.setEstimator(bayesNetEstimator);
+				//
+				// SearchAlgorithm searchAlgorithm = new
+				// weka.classifiers.bayes.net.search.local.K2();
+				// searchAlgorithm.setOptions(
+				// weka.core.Utils.splitOptions("-P 1 -S BAYES -E"));
+				//
+				// this.bayesianNetwork.setSearchAlgorithm(searchAlgorithm);
+
+				this.bayesianNetwork.buildClassifier(train);
+
+				this.classifierEvaluation = new Evaluation(train);
+
+				Random rand = new Random(1); // using seed = 1
+
+				int folds = 10;
+
+				this.classifierEvaluation.crossValidateModel(this.bayesianNetwork, train,
+						folds, rand);
+
+				System.out.println(this.classifierEvaluation
+						.toClassDetailsString());
+
+				System.out.println("Accuracy: "
+						+ this.classifierEvaluation.pctCorrect()
+						+ " Sample Size: " + train.size() + " backendIndex: "
+						+ Experiment.backendList.indexOf(this));
+
+				return this.classifierEvaluation.pctCorrect();
+
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+
 				e.printStackTrace();
 			}
 		}
@@ -467,9 +559,10 @@ public abstract class Backend extends PersistentObject {
 	@Override
 	public String toString() {
 		return String
-				.format("ID: %s - Capacity: %d - IOPS: %d - IsOnline: %b - Latency: %d",
+				.format("ID: %s - Capacity: %d - stability: %f - IOPS: %d - IsOnline: %b - Latency: %d",
 						this.getID().toString(),
 						this.specifications.getCapacity(),
+						this.specifications.getStabilityPossessionMean(),
 						this.specifications.getIOPS(),
 						this.specifications.getIsOnline(),
 						this.specifications.getLatency());

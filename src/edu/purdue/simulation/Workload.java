@@ -231,7 +231,7 @@ public class Workload extends PersistentObject {
 
 				statement.addBatch(request.getSaveQuery());
 
-				if (i % 5000 == 0) {
+				if (true && i % 5000 == 0) {
 
 					statement.executeBatch();
 
@@ -410,18 +410,24 @@ public class Workload extends PersistentObject {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
-				.prepareStatement("Select	ID, workload_ID, capacity, type, IOPS, Delete_Probability / "
-						+ Workload.devideDeleteFactorBy + ", Arrival_Time"
-						/*
-						 * Delete_Probability is deleteFactor
-						 */
-						+ " From	volume_request	Where	workload_ID		= ?" //
-						+ " And	ID	> ?" //
-						+ " Limit	" + Scheduler.maxRequest + ";");
+				.prepareCall("{call retrieve_workload(?, ?, ?, ?, ?)}");
 
-		statement.setBigDecimal(1, this.getID());
+		statement.setBigDecimal(1, this.getID()); // workload_ID
 
-		statement.setBigDecimal(2, IDBiggerThan);
+		statement.setInt(2, Scheduler.maxRequest); // record_limit
+
+		// dont use training dataset for experiment
+		if (Scheduler.isTraining)
+
+			statement.setInt(3, 0);
+
+		else
+			// dont use training dataset for experiment
+			statement.setInt(3, Scheduler.startTestDatasetFromRecordRank); // skip_n_first_records
+
+		statement.setDouble(4, Workload.devideDeleteFactorBy); // devide_delete_by
+
+		statement.setInt(5, Scheduler.modClockBy); // mod_arrival_time
 
 		ResultSet rs = statement.executeQuery();
 
