@@ -17,7 +17,7 @@ public class Database {
 	private static Connection CurrentConnection;
 
 	public static ResultSet executeQuery(String query, Object... args)
-			throws SQLException {
+			throws SQLException, Exception {
 		Connection connection = getConnection();
 
 		PreparedStatement statement = connection.prepareStatement(query,
@@ -41,7 +41,7 @@ public class Database {
 	private static int compareSize = 1000;
 
 	public static void executeBatchQuery(ArrayList<String> queries,
-			boolean forceSave) throws SQLException {
+			boolean forceSave) throws SQLException, Exception {
 
 		int queriesSize = queries.size();
 
@@ -97,32 +97,18 @@ public class Database {
 		queries.clear();
 	}
 
-	public static Connection getConnection() throws SQLException {
+	public static Connection getConnection() throws SQLException, Exception {
 
 		if (CurrentConnection != null && !CurrentConnection.isClosed())
 
 			return CurrentConnection;
 
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		Class.forName("com.mysql.jdbc.Driver");
 
-		// try {
 		CurrentConnection = DriverManager
 				.getConnection(
 						"jdbc:mysql://localhost/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true",
 						"root", "1234");
-		// + "user=root&password=1234");
-
-		// } catch (SQLException ex) {
-		// handle any errors
-		// System.out.println("SQLException: " + ex.getMessage());
-		// System.out.println("SQLState: " + ex.getSQLState());
-		// System.out.println("VendorError: " + ex.getErrorCode());
-		// }
 
 		return CurrentConnection;
 	}

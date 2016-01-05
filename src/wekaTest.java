@@ -29,7 +29,7 @@ public class wekaTest {
 		//instance.setValue(2, 95); //vio
 		instance.setValue(3, 1400); // total
 
-		System.out.println(Arrays.toString(repTree
+		edu.purdue.simulation.BlockStorageSimulator.log(Arrays.toString(repTree
 				.distributionForInstance(instance)));
 
 		if (false) {
@@ -76,7 +76,7 @@ public class wekaTest {
 
 			
 			
-			System.out.println(Arrays.toString(repTree
+			edu.purdue.simulation.BlockStorageSimulator.log(Arrays.toString(repTree
 					.distributionForInstance(iExample)));
 
 			// repTree.distributionForInstance(instance)
@@ -109,10 +109,10 @@ public class wekaTest {
 
 			eval.crossValidateModel(repTree, train, 10, new Random(1));
 
-			System.out.println(eval.toSummaryString("\nResults\n=======\n",
+			edu.purdue.simulation.BlockStorageSimulator.log(eval.toSummaryString("\nResults\n=======\n",
 					true));
 
-			System.out.println(eval.fMeasure(1) + " " + eval.precision(1) + " "
+			edu.purdue.simulation.BlockStorageSimulator.log(eval.fMeasure(1) + " " + eval.precision(1) + " "
 					+ eval.recall(1));
 
 		}

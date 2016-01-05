@@ -2,6 +2,7 @@ package edu.purdue.simulation.blockstorage.stochastic;
 
 import java.sql.SQLException;
 import java.util.Random;
+
 import edu.purdue.simulation.blockstorage.backend.Backend;
 
 public class IncreaseCapacityEvent extends
@@ -34,7 +35,7 @@ public class IncreaseCapacityEvent extends
 	}
 
 	@Override
-	public void fire(Backend backend) throws SQLException {
+	public void fire(Backend backend) throws SQLException, Exception {
 		StochasticEvent.apply(this, backend, true);
 	}
 

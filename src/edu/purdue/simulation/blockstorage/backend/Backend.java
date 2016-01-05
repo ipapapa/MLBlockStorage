@@ -110,7 +110,7 @@ public abstract class Backend extends PersistentObject {
 
 	@SuppressWarnings("unused")
 	public double createJ48Tree(String params, String path, int classIndex,
-			Instances train) {
+			Instances train) throws Exception {
 
 		if (false) {
 			String arguments = params;
@@ -123,63 +123,56 @@ public abstract class Backend extends PersistentObject {
 
 		if (true) {
 
-			try {
+			if (train == null) {
 
-				if (train == null) {
+				BufferedReader reader;
 
-					BufferedReader reader;
+				reader = new BufferedReader(new FileReader(path));
 
-					reader = new BufferedReader(new FileReader(path));
+				train = new Instances(reader);
 
-					train = new Instances(reader);
-
-					reader.close();
-				}
-
-				// setting class attribute
-				train.setClassIndex(0);
-
-				this.j48 = new J48();
-
-				this.j48.setUnpruned(true);
-
-				this.j48.buildClassifier(train);
-
-				this.classifierEvaluation = new Evaluation(train);
-
-				Random rand = new Random(1); // using seed = 1
-
-				int folds = 10;
-
-				this.classifierEvaluation.crossValidateModel(this.j48, train,
-						folds, rand);
-
-				// train.size()
-				System.out.println(this.classifierEvaluation
-						.toClassDetailsString());
-
-				System.out.println("Accuracy: "
-						+ this.classifierEvaluation.pctCorrect()
-						+ " Sample Size: " + train.size() + " backendIndex: "
-						+ Experiment.backendList.indexOf(this));
-
-				return this.classifierEvaluation.pctCorrect();
-
-				// FilteredClassifier fc = new FilteredClassifier();
-
-				// fc.setFilter(rm);
-
-				// fc.setClassifier(j48);
-
-				// fc.buildClassifier(train);
-
-				// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3"
-
-			} catch (Exception e) {
-				System.out.println(e.getMessage());
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				reader.close();
 			}
+
+			// setting class attribute
+			train.setClassIndex(0);
+
+			this.j48 = new J48();
+
+			this.j48.setUnpruned(true);
+
+			this.j48.buildClassifier(train);
+
+			this.classifierEvaluation = new Evaluation(train);
+
+			Random rand = new Random(1); // using seed = 1
+
+			int folds = 10;
+
+			this.classifierEvaluation.crossValidateModel(this.j48, train,
+					folds, rand);
+
+			// train.size()
+			edu.purdue.simulation.BlockStorageSimulator
+					.log(this.classifierEvaluation.toClassDetailsString());
+
+			edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: "
+					+ this.classifierEvaluation.pctCorrect() + " Sample Size: "
+					+ train.size() + " backendIndex: "
+					+ Experiment.backendList.indexOf(this));
+
+			return this.classifierEvaluation.pctCorrect();
+
+			// FilteredClassifier fc = new FilteredClassifier();
+
+			// fc.setFilter(rm);
+
+			// fc.setClassifier(j48);
+
+			// fc.buildClassifier(train);
+
+			// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3"
+
 		}
 
 		return 0;
@@ -187,74 +180,67 @@ public abstract class Backend extends PersistentObject {
 
 	@SuppressWarnings("unused")
 	public double createBayesianNetwork(String params, String path,
-			int classIndex, Instances train) {
+			int classIndex, Instances train) throws Exception {
 
 		if (true) {
 
-			try {
+			if (train == null) {
 
-				if (train == null) {
+				BufferedReader reader;
 
-					BufferedReader reader;
+				reader = new BufferedReader(new FileReader(path));
 
-					reader = new BufferedReader(new FileReader(path));
+				train = new Instances(reader);
 
-					train = new Instances(reader);
-
-					reader.close();
-				}
-
-				// setting class attribute
-				train.setClassIndex(0);
-
-				// Scheme:weka.classifiers.bayes.BayesNet -D -Q
-				// weka.classifiers.bayes.net.search.local.K2 --
-				// -P 1 -S BAYES -E
-				// weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5
-//train.size()
-				this.bayesianNetwork = new BayesNet();
-				this.bayesianNetwork
-						.setOptions(weka.core.Utils
-								.splitOptions("-D -Q weka.classifiers.bayes.net.search.local.K2 -- -P 1 -S BAYES -E weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5"));
-
-				// BayesNetEstimator bayesNetEstimator = new Wek
-				// bayesNetEstimator.setAlpha(0.5);
-				//
-				// this.bayesianNetwork.setEstimator(bayesNetEstimator);
-				//
-				// SearchAlgorithm searchAlgorithm = new
-				// weka.classifiers.bayes.net.search.local.K2();
-				// searchAlgorithm.setOptions(
-				// weka.core.Utils.splitOptions("-P 1 -S BAYES -E"));
-				//
-				// this.bayesianNetwork.setSearchAlgorithm(searchAlgorithm);
-
-				this.bayesianNetwork.buildClassifier(train);
-
-				this.classifierEvaluation = new Evaluation(train);
-
-				Random rand = new Random(1); // using seed = 1
-
-				int folds = 10;
-
-				this.classifierEvaluation.crossValidateModel(this.bayesianNetwork, train,
-						folds, rand);
-
-				System.out.println(this.classifierEvaluation
-						.toClassDetailsString());
-
-				System.out.println("Accuracy: "
-						+ this.classifierEvaluation.pctCorrect()
-						+ " Sample Size: " + train.size() + " backendIndex: "
-						+ Experiment.backendList.indexOf(this));
-
-				return this.classifierEvaluation.pctCorrect();
-
-			} catch (Exception e) {
-				System.out.println(e.getMessage());
-
-				e.printStackTrace();
+				reader.close();
 			}
+
+			// setting class attribute
+			train.setClassIndex(0);
+
+			// Scheme:weka.classifiers.bayes.BayesNet -D -Q
+			// weka.classifiers.bayes.net.search.local.K2 --
+			// -P 1 -S BAYES -E
+			// weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5
+			// train.size()
+			this.bayesianNetwork = new BayesNet();
+			this.bayesianNetwork
+					.setOptions(weka.core.Utils
+							.splitOptions("-D -Q weka.classifiers.bayes.net.search.local.K2 -- -P 1 -S BAYES -E weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5"));
+
+			// BayesNetEstimator bayesNetEstimator = new Wek
+			// bayesNetEstimator.setAlpha(0.5);
+			//
+			// this.bayesianNetwork.setEstimator(bayesNetEstimator);
+			//
+			// SearchAlgorithm searchAlgorithm = new
+			// weka.classifiers.bayes.net.search.local.K2();
+			// searchAlgorithm.setOptions(
+			// weka.core.Utils.splitOptions("-P 1 -S BAYES -E"));
+			//
+			// this.bayesianNetwork.setSearchAlgorithm(searchAlgorithm);
+
+			this.bayesianNetwork.buildClassifier(train);
+
+			this.classifierEvaluation = new Evaluation(train);
+
+			Random rand = new Random(1); // using seed = 1
+
+			int folds = 10;
+
+			this.classifierEvaluation.crossValidateModel(this.bayesianNetwork,
+					train, folds, rand);
+
+			edu.purdue.simulation.BlockStorageSimulator
+					.log(this.classifierEvaluation.toClassDetailsString());
+
+			edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: "
+					+ this.classifierEvaluation.pctCorrect() + " Sample Size: "
+					+ train.size() + " backendIndex: "
+					+ Experiment.backendList.indexOf(this));
+
+			return this.classifierEvaluation.pctCorrect();
+
 		}
 
 		return 0;
@@ -290,32 +276,38 @@ public abstract class Backend extends PersistentObject {
 	// GroupSize = groupSize2;
 	// }
 
+	public int getAllocatedIOPS() {
+		int allocated_IOPS = 0;
+
+		for (Volume v : this.getVolumeList())
+
+			allocated_IOPS = allocated_IOPS + v.getSpecifications().getIOPS();
+
+		return allocated_IOPS;
+	}
+
 	public String getDescription() {
 
-		try {
-			String path = this.getSpecifications().getTrainingDataSetPath();
+		String path = this.getSpecifications().getTrainingDataSetPath();
 
-			String result = "";
+		String result = "";
 
-			// if (Scheduler.isTraining) {
-			//
-			// result = "_training_";
-			//
-			// if (path != null && path != "") {
-			// String[] pathParts = this.getSpecifications()
-			// .getTrainingDataSetPath().split("\\");
-			//
-			// if (pathParts.length > 0)
-			//
-			// result += pathParts[pathParts.length - 1];
-			// }
-			// }
+		// if (Scheduler.isTraining) {
+		//
+		// result = "_training_";
+		//
+		// if (path != null && path != "") {
+		// String[] pathParts = this.getSpecifications()
+		// .getTrainingDataSetPath().split("\\");
+		//
+		// if (pathParts.length > 0)
+		//
+		// result += pathParts[pathParts.length - 1];
+		// }
+		// }
 
-			return description + result + "_StabilityPossessionMean_"
-					+ this.getSpecifications().getStabilityPossessionMean();
-		} catch (Exception ex) {
-			return "NoDescription";
-		}
+		return description + result + "_StabilityPossessionMean_"
+				+ this.getSpecifications().getStabilityPossessionMean();
 	}
 
 	public void setDescription(String description) {
@@ -340,13 +332,13 @@ public abstract class Backend extends PersistentObject {
 		// + (10.05588 * (n ^ 2));
 		//
 		// if(c > 80){
-		// System.out.println(result2);
+		// edu.purdue.simulation.BlockStorageSimulator.log(result2);
 		// }
 
 		return (int) result;
 	}
 
-	public void createRegressionModel() throws SQLException {
+	public void createRegressionModel() throws Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -415,7 +407,7 @@ public abstract class Backend extends PersistentObject {
 	}
 
 	private BigDecimal doSave(boolean isUpdate, int operationID)
-			throws SQLException {
+			throws SQLException, Exception {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
@@ -488,7 +480,7 @@ public abstract class Backend extends PersistentObject {
 		return BigDecimal.valueOf(-1);
 	}
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 
 		return this.doSave(false, 1); // 1 is create
 	}
@@ -500,7 +492,7 @@ public abstract class Backend extends PersistentObject {
 	 *         this object ID.
 	 * @throws SQLException
 	 */
-	public BigDecimal saveCurrentState() throws SQLException {
+	public BigDecimal saveCurrentState() throws SQLException, Exception {
 
 		return this.doSave(true, 2); // 2 save current state
 	}

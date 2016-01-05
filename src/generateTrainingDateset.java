@@ -65,10 +65,10 @@ public class generateTrainingDateset {
 //					0 // dont iunclude SLA violation numbers
 //					);
 
-			System.out.println("DONE!");
+			edu.purdue.simulation.BlockStorageSimulator.log("DONE!");
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}

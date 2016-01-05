@@ -1,12 +1,10 @@
-import java.sql.SQLException;
-
 import edu.purdue.simulation.Workload;
 
 public class GenerateWorkload {
 	public static void main(String[] args) {
-		
-		//DONT USE THIS, just based on probability and posission
-		
+
+		// DONT USE THIS, just based on probability and posission
+
 		Workload workload = new Workload(
 				1 // generate method
 				,
@@ -14,8 +12,8 @@ public class GenerateWorkload {
 
 		try {
 			workload.GenerateWorkload2(120000);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
+
 			e.printStackTrace();
 		}
 	}

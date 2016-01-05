@@ -10,7 +10,7 @@ public abstract class PersistentObject {
 
 	}
 
-	public PersistentObject(BigDecimal id) throws SQLException {
+	public PersistentObject(BigDecimal id) throws SQLException, Exception {
 		this.retrieve(id);
 	}
 
@@ -34,24 +34,24 @@ public abstract class PersistentObject {
 		CreateTime = createTime;
 	}
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 		throw new UnsupportedOperationException("The method is not implimented");
 	}
 
-	protected boolean retrieve(BigDecimal ID) throws SQLException {
+	protected boolean retrieve(BigDecimal ID) throws SQLException, Exception {
 		throw new UnsupportedOperationException("The method is not implimented");
 	}
 
 	protected boolean retrieveProperties(ResultSet resulSet)
-			throws SQLException {
+			throws SQLException, Exception {
 		throw new UnsupportedOperationException("The method is not implimented");
 	}
 
 	protected void retrievePersistentProperties(ResultSet resulSet,
-			int createTimeIndex) throws SQLException {
+			int createTimeIndex) throws SQLException, Exception {
 
 		this.setID(resulSet.getBigDecimal(1));
 
-		//this.setCreateTime(resulSet.getTimestamp(createTimeIndex));
+		// this.setCreateTime(resulSet.getTimestamp(createTimeIndex));
 	}
 }

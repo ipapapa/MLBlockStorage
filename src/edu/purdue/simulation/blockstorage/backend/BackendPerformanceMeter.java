@@ -30,7 +30,7 @@ public class BackendPerformanceMeter extends PersistentObject {
 				+ this.backend.getID();
 	}
 
-	public BigDecimal Save(Volume pingVolume) throws SQLException {
+	public BigDecimal Save(Volume pingVolume) throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -65,7 +65,7 @@ public class BackendPerformanceMeter extends PersistentObject {
 
 			this.setID(rs.getBigDecimal(1));
 
-			System.out.println(this.toString() + " pingVolumeID = "
+			edu.purdue.simulation.BlockStorageSimulator.log(this.toString() + " pingVolumeID = "
 					+ pingVolume.getID() + " currentIOPS = " + currentIOPS
 					+ " availableCapacity = " + availableCapacity);
 

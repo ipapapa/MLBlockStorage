@@ -33,7 +33,7 @@ public class generateWorkloadFromMSRTraces {
 			// test();
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}
@@ -68,7 +68,7 @@ public class generateWorkloadFromMSRTraces {
 				date2 = printTime(csvRecord.get(0));
 
 				/*
-				 * System.out.println(newDate.getMillis() -
+				 * edu.purdue.simulation.BlockStorageSimulator.log(newDate.getMillis() -
 				 * previousDate.getMillis());
 				 */
 
@@ -76,7 +76,7 @@ public class generateWorkloadFromMSRTraces {
 
 				sum += diff;
 
-				System.out.println("delay: " + diff);
+				edu.purdue.simulation.BlockStorageSimulator.log("delay: " + diff);
 
 				date1 = date2;
 			}
@@ -90,7 +90,7 @@ public class generateWorkloadFromMSRTraces {
 
 		Long q = sum / i;
 
-		System.out.println("Average diff = " + q.toString());
+		edu.purdue.simulation.BlockStorageSimulator.log("Average diff = " + q.toString());
 	}
 
 	public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
@@ -101,7 +101,7 @@ public class generateWorkloadFromMSRTraces {
 	public static Date printTime(String time) {
 		long pwdLastSet = Long.parseLong(time);
 
-		// System.out.println("long value : " + pwdLastSet);
+		// edu.purdue.simulation.BlockStorageSimulator.log("long value : " + pwdLastSet);
 
 		// Filetime Epoch is JAN 01 1601
 		// java date Epoch is January 1, 1970
@@ -117,7 +117,7 @@ public class generateWorkloadFromMSRTraces {
 		// time known as "the epoch", namely January 1, 1970, 00:00:00 GMT.
 		Date theDate = new Date(javaTime);
 
-		// System.out.println("java DATE value : " + theDate);
+		// edu.purdue.simulation.BlockStorageSimulator.log("java DATE value : " + theDate);
 
 		SimpleDateFormat formatter = new SimpleDateFormat(
 				"MM/dd/yyyy HH:mm:ss.SSS aa zZ");
@@ -127,7 +127,7 @@ public class generateWorkloadFromMSRTraces {
 
 		String newDateString = formatter.format(theDate);
 
-		System.out.println("Date changed format :" + newDateString);
+		edu.purdue.simulation.BlockStorageSimulator.log("Date changed format :" + newDateString);
 
 		return theDate;
 	}

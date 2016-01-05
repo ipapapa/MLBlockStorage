@@ -51,7 +51,7 @@ public class ScheduleResponse {
 
 	public boolean isSuccessful;
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 

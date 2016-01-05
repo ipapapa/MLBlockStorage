@@ -52,6 +52,8 @@ public class Experiment extends PersistentObject {
 
 	public static String saveResultPath = "";
 
+	public static int workloadID = 0;
+
 	public String getSchedulerAlgorithm() {
 		return this.schedulerAlgorithm;
 	}
@@ -121,7 +123,7 @@ public class Experiment extends PersistentObject {
 		this.comment = comment;
 	}
 
-	public ArrayList<Backend> generateBackEnd() throws SQLException {
+	public ArrayList<Backend> generateBackEnd() throws SQLException, Exception {
 
 		if (this.getID() == null
 				|| !(this.getID().compareTo(BigDecimal.ZERO) > 0))
@@ -150,7 +152,7 @@ public class Experiment extends PersistentObject {
 	}
 
 	public static Experiment resumeExperiment(BigDecimal experimentID)
-			throws SQLException {
+			throws SQLException, Exception {
 
 		ResultSet experimentResultSet = Database.executeQuery(
 				"Select	*	From	experiment	Where	ID	= ?", experimentID);
@@ -365,7 +367,7 @@ public class Experiment extends PersistentObject {
 		return backEnd;
 	}
 
-	public void update() throws SQLException {
+	public void update() throws SQLException, Exception {
 		Connection connection = Database.getConnection();
 
 		PreparedStatement statement = connection
@@ -385,7 +387,7 @@ public class Experiment extends PersistentObject {
 	}
 
 	@Override
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -659,7 +661,7 @@ public class Experiment extends PersistentObject {
 			saver.writeBatch();
 			// Create the instance
 
-			// System.out.println(Arrays.toString(repTree
+			// edu.purdue.simulation.BlockStorageSimulator.log(Arrays.toString(repTree
 			// .distributionForInstance(iExample)));
 		}
 	}

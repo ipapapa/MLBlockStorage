@@ -14,7 +14,7 @@ import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
  */
 public class StatisticalGroupping extends Scheduler {
 	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment,
-			edu.purdue.simulation.Workload workload) {
+			edu.purdue.simulation.Workload workload) throws Exception {
 		super(experiment, workload);
 	}
 
@@ -172,7 +172,7 @@ public class StatisticalGroupping extends Scheduler {
 			// no backend turned on
 			schedulerResponse.backEndTurnedOn = null;
 
-			System.out.println("Failed to schedule ->" + request.toString());
+			edu.purdue.simulation.BlockStorageSimulator.log("Failed to schedule ->" + request.toString());
 		} else {
 
 			schedulerResponse.isSuccessful = true;

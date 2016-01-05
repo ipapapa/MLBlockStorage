@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
 
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
@@ -35,21 +37,51 @@ public class ResourceMonitor { // implements Runnable {
 
 	public static boolean recordVolumePerformanceForClocksWithNoVolume = false;
 
+	public static ArrayList<String> backendStat_queries = new ArrayList<String>();
+
 	public ResourceMonitor() {
 
 	}
 
-	//	private int clock = 0;
+	private static void SaveBackendStat(Backend backend) throws SQLException,
+			Exception {
+		Connection connection = Database.getConnection();
+
+		PreparedStatement statement = connection
+				.prepareStatement(
+						"INSERT INTO blockstoragesimulator.backend_stat"
+								+ "	(backend_ID, clock, available_IOPS, allocated_IOPS, volume_count)"
+								+ "		values" + "	(?, ?, ?, ?, ?);",
+						Statement.RETURN_GENERATED_KEYS);
+
+		statement.setBigDecimal(1, backend.getID());
+
+		statement.setBigDecimal(2, Experiment.clock);
+
+		statement.setInt(3, backend.getSpecifications().getIOPS()); // available_IOPS
+
+		statement.setInt(4, backend.getAllocatedIOPS());
+
+		statement.setInt(5, backend.getVolumeList().size());
+
+		ResourceMonitor.backendStat_queries.add(Database.getQuery(statement));
+	}
+
+	// private int clock = 0;
 
 	@SuppressWarnings("unused")
-	public void run() throws SQLException {
+	public void run() throws SQLException, Exception {
 		// while (true) {
 
-//		if (this.clock == ResourceMonitor.clockGapProbability)
-//
-//			this.clock = 0; // reset clock
-//
-//		this.clock++;
+		// if (this.clock == ResourceMonitor.clockGapProbability)
+		//
+		// this.clock = 0; // reset clock
+		//
+		// this.clock++;
+
+		for (Backend b : Experiment.backendList)
+
+			SaveBackendStat(b);
 
 		double d = Math.random();
 

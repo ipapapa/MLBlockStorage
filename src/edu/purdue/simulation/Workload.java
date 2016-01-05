@@ -33,7 +33,7 @@ public class Workload extends PersistentObject {
 		this.setVolumeRequestList(new ArrayList<VolumeRequest>());
 	}
 
-	public Workload(BigDecimal id) throws SQLException {
+	public Workload(BigDecimal id) throws SQLException, Exception {
 		super(id);
 
 		this.setVolumeRequestList(new ArrayList<VolumeRequest>());
@@ -146,8 +146,8 @@ public class Workload extends PersistentObject {
 
 				previousRecordDate = recordDate;
 
-				System.out.println("Very first record Time :"
-						+ recordDate.toString());
+				edu.purdue.simulation.BlockStorageSimulator
+						.log("Very first record Time :" + recordDate.toString());
 
 			} else {
 				i++;
@@ -172,22 +172,23 @@ public class Workload extends PersistentObject {
 
 				arrivalTime += diffInMillies;// Scheduler.getPoissonRandom(20);
 
-				System.out.println("Time :" + recordDate.toString()
-						+ "| dif(seconds)=" + diffInMillies + " | arr="
-						+ arrivalTime);
+				edu.purdue.simulation.BlockStorageSimulator.log("Time :"
+						+ recordDate.toString() + "| dif(seconds)="
+						+ diffInMillies + " | arr=" + arrivalTime);
 
-				// System.out.println("Time :" + formatter.format(recordDate)
+				// edu.purdue.simulation.BlockStorageSimulator.log("Time :" +
+				// formatter.format(recordDate)
 				// + "| dif Seconds="
 				// + getDateDiff(date1, recordDate, TimeUnit.SECONDS));
 
 				// if (diffInMillies == 0) {
-				// System.out.println("diffInMillies == 0 --> arrivalTime =  "
+				// edu.purdue.simulation.BlockStorageSimulator.log("diffInMillies == 0 --> arrivalTime =  "
 				// + arrivalTime);
 				// }
 				// new DateTime(date1).getMillisOfSecond();
 				// new DateTime(recordDate).getMillisOfSecond();
 				// if (date1.getTime() == recordDate.getTime()) {
-				// System.out.println(i
+				// edu.purdue.simulation.BlockStorageSimulator.log(i
 				// + " - date1.getTime() == recordDate.getTime()  ->"
 				// + recordDate.toString());
 				// }
@@ -195,16 +196,18 @@ public class Workload extends PersistentObject {
 				previousRecordDate = recordDate;
 
 				// if (time == previousTime) {
-				// System.out.println("time == previousTime  --> "
+				// edu.purdue.simulation.BlockStorageSimulator.log("time == previousTime  --> "
 				// + previousTime);
 				//
 				// Date d1 = convertWindowsTime(time);
-				// System.out.println("time --> " + d1);
+				// edu.purdue.simulation.BlockStorageSimulator.log("time --> " +
+				// d1);
 				// Date d2 = convertWindowsTime(previousTime);
-				// System.out.println("time --> " + d2);
+				// edu.purdue.simulation.BlockStorageSimulator.log("time --> " +
+				// d2);
 				//
 				// if (d1.getTime() == d2.getTime()) {
-				// System.out.println("d1.getTime() == d2.getTime()  ->");
+				// edu.purdue.simulation.BlockStorageSimulator.log("d1.getTime() == d2.getTime()  ->");
 				// }
 				//
 				// System.out
@@ -212,7 +215,7 @@ public class Workload extends PersistentObject {
 				// }
 				previousTime = time;
 				// if (arrivalTime == previousArrivalTime) {
-				// System.out.println("arrivalTime == previousArrivalTime  ->"
+				// edu.purdue.simulation.BlockStorageSimulator.log("arrivalTime == previousArrivalTime  ->"
 				// + arrivalTime);
 				// }
 				previousArrivalTime = arrivalTime;
@@ -237,7 +240,8 @@ public class Workload extends PersistentObject {
 
 				}
 
-				// System.out.println("current index: " + i);
+				// edu.purdue.simulation.BlockStorageSimulator.log("current index: "
+				// + i);
 
 				this.VolumeRequestList.add(request);
 			}
@@ -247,7 +251,8 @@ public class Workload extends PersistentObject {
 
 		statement.close();
 
-		System.out.println("workload ID: " + this.getID());
+		edu.purdue.simulation.BlockStorageSimulator.log("workload ID: "
+				+ this.getID());
 	}
 
 	public static DateTime convertWindowsTime(String time) {
@@ -256,7 +261,8 @@ public class Workload extends PersistentObject {
 
 	public static DateTime convertWindowsTime(long time) {
 
-		// System.out.println("long value : " + pwdLastSet);
+		// edu.purdue.simulation.BlockStorageSimulator.log("long value : " +
+		// pwdLastSet);
 
 		// Filetime Epoch is JAN 01 1601
 		// java date Epoch is January 1, 1970
@@ -272,7 +278,8 @@ public class Workload extends PersistentObject {
 		// time known as "the epoch", namely January 1, 1970, 00:00:00 GMT.
 		DateTime theDate = new DateTime(javaTime);
 		// new DateTime(javaTime)
-		// System.out.println("java DATE value : " + theDate);
+		// edu.purdue.simulation.BlockStorageSimulator.log("java DATE value : "
+		// + theDate);
 
 		// SimpleDateFormat formatter = new SimpleDateFormat(
 		// "MM/dd/yyyy HH:mm:ss.SSS aa zZ");
@@ -282,12 +289,14 @@ public class Workload extends PersistentObject {
 		//
 		// String newDateString = formatter.format(theDate);
 		//
-		// System.out.println("Date changed format :" + newDateString);
+		// edu.purdue.simulation.BlockStorageSimulator.log("Date changed format :"
+		// + newDateString);
 
 		return theDate;
 	}
 
-	public void GenerateWorkload2(int numberOfRequests) throws SQLException {
+	public void GenerateWorkload2(int numberOfRequests) throws SQLException,
+			Exception {
 
 		if (super.getID() == null
 				|| !(super.getID().compareTo(BigDecimal.ZERO) > 0))
@@ -335,7 +344,8 @@ public class Workload extends PersistentObject {
 				// statement.close();
 			}
 
-			System.out.println("current index: " + i);
+			edu.purdue.simulation.BlockStorageSimulator.log("current index: "
+					+ i);
 
 			this.VolumeRequestList.add(request);
 		}
@@ -344,10 +354,10 @@ public class Workload extends PersistentObject {
 
 		statement.close();
 
-		System.out.println(this.toString());
+		edu.purdue.simulation.BlockStorageSimulator.log(this.toString());
 	}
 
-	public BigDecimal Save() throws SQLException {
+	public BigDecimal Save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -375,7 +385,7 @@ public class Workload extends PersistentObject {
 	}
 
 	@Override
-	public boolean retrieve(BigDecimal ID) throws SQLException {
+	public boolean retrieve(BigDecimal ID) throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -399,13 +409,13 @@ public class Workload extends PersistentObject {
 		return true;
 	}
 
-	public boolean RetrieveVolumeRequests() throws SQLException {
+	public boolean RetrieveVolumeRequests() throws SQLException, Exception {
 
 		return this.RetrieveVolumeRequests(BigDecimal.valueOf(0));
 	}
 
 	public boolean RetrieveVolumeRequests(BigDecimal IDBiggerThan)
-			throws SQLException {
+			throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 

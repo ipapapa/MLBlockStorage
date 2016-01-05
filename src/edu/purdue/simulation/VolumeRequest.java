@@ -113,7 +113,7 @@ public class VolumeRequest extends Specifications {
 						this.getArrivalTime());
 	}
 
-	public BigDecimal Save() throws SQLException {
+	public BigDecimal Save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -151,7 +151,8 @@ public class VolumeRequest extends Specifications {
 	}
 
 	@Override
-	public boolean retrieveProperties(ResultSet resulSet) throws SQLException {
+	public boolean retrieveProperties(ResultSet resulSet) throws SQLException,
+			Exception {
 
 		if (this.getWorkload() == null) {
 			// retrieve workload from DB but IT IS NOT LOGICAL
@@ -182,6 +183,6 @@ public class VolumeRequest extends Specifications {
 				Experiment.clock.toString(),//
 				super.toString(), //
 				this.getID(), //
-				this.Type); 
+				this.Type);
 	}
 }

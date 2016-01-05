@@ -3,6 +3,7 @@ package edu.purdue.simulation.blockstorage.stochastic;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Random;
+
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.blockstorage.backend.Backend;
 
@@ -44,7 +45,7 @@ public class StochasticEventGenerator {// implements Runnable {
 
 	private int clock;
 
-	public void run() throws SQLException {
+	public void run() throws SQLException, Exception {
 
 		// while (true) {
 

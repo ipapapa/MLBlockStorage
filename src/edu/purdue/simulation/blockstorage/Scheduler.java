@@ -28,7 +28,7 @@ import weka.core.Instances;
 
 public abstract class Scheduler {
 
-	public Scheduler(Experiment experiment, Workload workload) {
+	public Scheduler(Experiment experiment, Workload workload) throws Exception {
 
 		this.setExperiment(experiment);
 
@@ -38,12 +38,7 @@ public abstract class Scheduler {
 				.setSchedulerAlgorithm((experiment.getSchedulerAlgorithm() + " ")
 						.trim() + this.getName());
 
-		try {
-			experiment.update();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		experiment.update();
 
 		// populate scheduler queue
 		this.setRequestQueue(new LinkedList<VolumeRequest>(this.Workload
@@ -115,9 +110,10 @@ public abstract class Scheduler {
 		this.requestQueue = requestQueue;
 	}
 
+	@SuppressWarnings("unused")
 	protected double validateWithClassifier(Backend backend,
 			VolumeSpecifications volumeSpecifications,
-			MachineLearningAlgorithm classifier) {
+			MachineLearningAlgorithm classifier) throws Exception {
 
 		DenseInstance instance = new DenseInstance(4);
 
@@ -125,22 +121,15 @@ public abstract class Scheduler {
 
 		int backend_VolumesCount = backend.getVolumeList().size();
 
-		int backend_totalRequestedIOPS = 0;
-
-		for (int i = 0; i < backend_VolumesCount; i++) {
-			backend_totalRequestedIOPS += backend.getVolumeList().get(i)
-					.getSpecifications().getIOPS();
-		}
-
 		// @attribute vio {v1,v2,v3,v4} //index 0
 		// @attribute clock numeric //index 1
 		// @attribute num numeric //index 2
-		// @attribute tot numeric //index 3
+		// @attribute tot numeric //index 3 // total allocated IOPS
 
 		instance.setValue(1, clock % Scheduler.modClockBy);
 		instance.setValue(2, backend_VolumesCount + 1);
 		instance.setValue(3,
-				backend_totalRequestedIOPS + volumeSpecifications.getIOPS());
+				backend.getAllocatedIOPS() + volumeSpecifications.getIOPS());
 
 		Instances ii = Experiment.createWekaDataset(0);
 
@@ -148,115 +137,124 @@ public abstract class Scheduler {
 
 		double result = 0;
 
-		try {
+		double[] predictors = null;
 
-			double[] predictors = null;
+		if (classifier == MachineLearningAlgorithm.J48)
 
-			if (classifier == MachineLearningAlgorithm.J48)
+			predictors = backend.j48.distributionForInstance(instance);
 
-				predictors = backend.j48.distributionForInstance(instance);
+		else if (classifier == MachineLearningAlgorithm.BayesianNetwork)
 
-			else if (classifier == MachineLearningAlgorithm.BayesianNetwork)
+			predictors = backend.bayesianNetwork
+					.distributionForInstance(instance);
 
-				predictors = backend.bayesianNetwork
-						.distributionForInstance(instance);
+		else
 
-			else
+			throw new Exception("cannot validate with this classifier: "
+					+ classifier);
 
-				throw new Exception("cannot validate with this classifier: "
-						+ classifier);
+		/*
+		 * predictors[0]: the probability of being in group V1
+		 */
 
-			/*
-			 * predictors[0]: the probability of being in group V1
-			 */
+		double[] compareTo;
 
-			double[] compareTo;
+		switch (Scheduler.assessmentPolicy) {
+		case StrictQoS:
 
-			switch (Scheduler.assessmentPolicy) {
-			case StrictQoS:
-
-				compareTo = new double[] { 0.98 };
-
-				if (BlockStorageSimulator.assessmentPolicyRules
-						.containsKey(AssessmentPolicy.StrictQoS) == false) {
-					BlockStorageSimulator.assessmentPolicyRules.put(
-							AssessmentPolicy.StrictQoS, "predictors[0] > "
-									+ compareTo[0]);
-				}
-
-				if (predictors[0] > compareTo[0])
-
-					result = predictors[0];
-
-				break;
-
-			case QoSFirst:
-
-				compareTo = new double[] { 0.1 };
-
-				if (BlockStorageSimulator.assessmentPolicyRules
-						.containsKey(AssessmentPolicy.QoSFirst) == false) {
-					BlockStorageSimulator.assessmentPolicyRules.put(
-							AssessmentPolicy.QoSFirst,
-							"predictors[0] + predictors[1] > " + compareTo[0]);
-				}
-
-				if (predictors[0] + predictors[1] > compareTo[0])
-
-					result = predictors[0] + predictors[1];
-
-				break;
-
-			case EfficiencyFirst:
-
-				compareTo = new double[] { 0.1, 1 };
-
-				if (BlockStorageSimulator.assessmentPolicyRules
-						.containsKey(AssessmentPolicy.EfficiencyFirst) == false) {
-					BlockStorageSimulator.assessmentPolicyRules.put(
-							AssessmentPolicy.EfficiencyFirst,
-							"predictors[0] + predictors[1] > " + compareTo[0]
-									+ " || predictors[2] == " + compareTo[1]);
-				}
-
-				if (predictors[0] + predictors[1] > compareTo[0]
-						|| predictors[2] == compareTo[1])
-
-					result = predictors[0] + predictors[1] + predictors[2];
-
-				break;
-
-			case MaxEfficiency:
-
-				compareTo = new double[] { 0.1, 1 };
-
-				if (BlockStorageSimulator.assessmentPolicyRules
-						.containsKey(AssessmentPolicy.MaxEfficiency) == false) {
-					BlockStorageSimulator.assessmentPolicyRules.put(
-							AssessmentPolicy.MaxEfficiency,
-							"predictors[0] + predictors[1] > " + compareTo[0]
-									+ " || predictors[3] != " + compareTo[1]);
-				}
-
-				if (predictors[0] + predictors[1] > compareTo[0]
-						|| predictors[3] != compareTo[1])
-
-					/*
-					 * predictors[2] must be used here because we are not
-					 * interested in the probability of having V4 (high
-					 * violations)
-					 */
-					result = predictors[0] + predictors[1] + predictors[2];
-
-				break;
+			compareTo = new double[] { 0.99, 0.95 };
+			// backend_VolumesCount
+			if (BlockStorageSimulator.assessmentPolicyRules
+					.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(
+						Scheduler.assessmentPolicy, "predictors[0] > "
+								+ compareTo[0] + " || predictors[1] > "
+								+ compareTo[1]);
 			}
 
-		} catch (Exception e) {
+			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]) {
 
-			System.out.println(e.getMessage());
+				result = predictors[0] + predictors[1];
+			} else {
+				int q2 = 1;
+			}
 
-			e.printStackTrace();
+			break;
 
+		case QoSFirst:
+
+			compareTo = new double[] { 0.99, 0.49 };
+
+			if (BlockStorageSimulator.assessmentPolicyRules
+					.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(
+						Scheduler.assessmentPolicy, "predictors[0] > "
+								+ compareTo[0] + " || predictors[1] > "
+								+ compareTo[1]//
+				);
+			}
+
+			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]) {
+
+				result = predictors[0] + predictors[1];
+
+			} else {
+
+				int v3 = 1;
+			}
+
+			break;
+
+		case EfficiencyFirst:
+
+			compareTo = new double[] { 0.95, 0.95, 0.98 };
+
+			if (BlockStorageSimulator.assessmentPolicyRules
+					.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(
+						Scheduler.assessmentPolicy, "predictors[0]>"
+								+ compareTo[0] + "||predictors[1]>"
+								+ compareTo[1] + "||predictors[2]>"
+								+ compareTo[2]);
+			}
+
+			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]
+					|| predictors[2] > compareTo[2]) {
+
+				result = predictors[0] + predictors[1] + predictors[2];
+
+			} else {
+				int v3 = 1;
+			}
+
+			break;
+
+		case MaxEfficiency:
+
+			compareTo = new double[] { 0.6, 0.6, 0.6 };
+
+			if (BlockStorageSimulator.assessmentPolicyRules
+					.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(
+						Scheduler.assessmentPolicy, "predictors[0]>"
+								+ compareTo[0] + "||predictors[1]>"
+								+ compareTo[1] + "||predictors[2]>"
+								+ compareTo[2]);
+			}
+
+			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]
+					|| predictors[2] > compareTo[2]) {
+				/*
+				 * predictors[2] must be used here because we are not interested
+				 * in the probability of having V4 (high violations)
+				 */
+				result = predictors[0] + predictors[1] + predictors[2];
+
+			} else {
+				int q5 = 1;
+			}
+
+			break;
 		}
 
 		return result;
@@ -447,21 +445,11 @@ public abstract class Scheduler {
 
 		ResourceMonitor resourceMonitor = new ResourceMonitor();
 
-		// @SuppressWarnings("unused")
-		// Thread eventGeneratorThread = new Thread(eventGenerator);
-
-		// eventGeneratorThread.start();
-
-		// @SuppressWarnings("unused")
-		// Thread ResourceMonitorThread = new Thread(resourceMonitor);
-
-		// ResourceMonitorThread.start();
-
 		BigDecimal numOne = new BigDecimal(1);
 
-		int requestNumber = 1; // first request number is 1
+		int requestNumber = 0;
 
-		int queueInitialSize = this.getRequestQueue().size();
+		// int queueInitialSize = this.getRequestQueue().size();
 
 		int clockIntValue = 0;
 
@@ -477,14 +465,34 @@ public abstract class Scheduler {
 
 			if (requestNumber >= Scheduler.maxRequest) {
 
-				if (Scheduler.minRequests == 0) {
+				break;
 
-					break;
-				} else if ((queueInitialSize - this.getRequestQueue().size()) >= Scheduler.minRequests) {
+				// if (Scheduler.minRequests == 0) {
+				//
+				// break;
+				// }
+				// else if ((queueInitialSize - this.getRequestQueue().size())
+				// >= Scheduler.minRequests) {
+				//
+				// break;
+				// }
+			}
 
-					break;
-
-				}
+			/*
+			 * having multiple requests at a same clock, which means a clock
+			 * will increase if there is no more requests for that clock. Most
+			 * functions must be done when the clock is increases. For example,
+			 * the resource evaluation process. The sequence of instructions in
+			 * this block of code is important.
+			 */
+			int nextRequestClock = this.getRequestQueue().peek()
+					.getArrivalTime();
+			boolean goToNextClock = nextRequestClock != (clockIntValue % Scheduler.modClockBy);
+			/*
+			 * first delete expired volumes before schedule a new request
+			 */
+			if (goToNextClock) {
+				this.deleteExpiredVolumes();
 			}
 
 			VolumeRequest volumeRequest = this.getRequestQueue().peek();
@@ -509,17 +517,7 @@ public abstract class Scheduler {
 				}
 			}
 
-			/*
-			 * having multiple requests at a same clock, which means a clock
-			 * will increase if there is no more requests for that clock. Most
-			 * functions must be done when the clock is increases. For example,
-			 * the resource evaluation process. The sequence of instructions in
-			 * this block of code is important.
-			 */
-			int nextRequestClock = this.getRequestQueue().peek()
-					.getArrivalTime();
-
-			if (nextRequestClock != clockIntValue % Scheduler.modClockBy) {
+			if (goToNextClock) {
 
 				eventGenerator.run();
 
@@ -530,6 +528,8 @@ public abstract class Scheduler {
 				/*
 				 * must save changes in db before feedback learning
 				 */
+				Database.executeBatchQuery(ResourceMonitor.backendStat_queries,
+						false);
 
 				Database.executeBatchQuery(VolumePerformanceMeter.queries,
 						false);
@@ -573,12 +573,12 @@ public abstract class Scheduler {
 						.add(numOne);
 
 				currentClockRequests = 0;
-			} else {
-				currentClockRequests = currentClockRequests;
 			}
 
 			currentClockRequests++;
 		}
+
+		Database.executeBatchQuery(ResourceMonitor.backendStat_queries, true);
 
 		Database.executeBatchQuery(StochasticEvent.queries, true);
 
@@ -610,17 +610,17 @@ public abstract class Scheduler {
 		// eventGeneratorThread.interrupt();
 		// ResourceMonitorThread.interrupt();
 		//
-		// System.out.println("DONE - with threads");
+		// edu.purdue.simulation.BlockStorageSimulator.log("DONE - with threads");
 	}
 
 	public static double sum = 0;
 
 	public static double randGeneratedNumbers = 0;
 
-	private void deleteExpiredVolumes() throws SQLException {
+	private void deleteExpiredVolumes() throws SQLException, Exception {
 		//
 		// if (Experiment.clock.intValue() > 450) {
-		// System.out.println();
+		// edu.purdue.simulation.BlockStorageSimulator.log();
 		//
 		// }
 
@@ -655,8 +655,11 @@ public abstract class Scheduler {
 				if (deleteFactor <= currentClock) {
 					volume.delete();
 
-					System.out.println("[DELETED VOLUME] "
-							+ volume.toString(deleteFactor));
+					edu.purdue.simulation.BlockStorageSimulator
+							.log("[DELETED VOLUME] vol_ID = "
+									+ volume.getID().toString()//
+									+ "del_prob = "//
+									+ deleteFactor);
 				}
 			}
 		}

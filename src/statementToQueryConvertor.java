@@ -10,7 +10,7 @@ import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 
 public class statementToQueryConvertor {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		try {
 			Connection connection = Database.getConnection();
 
@@ -34,10 +34,8 @@ public class statementToQueryConvertor {
 			statement.setBigDecimal(6, BigDecimal.valueOf(1));
 
 			statement.addBatch();
-			
-			
+
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

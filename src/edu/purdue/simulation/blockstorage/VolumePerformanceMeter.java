@@ -30,15 +30,23 @@ public class VolumePerformanceMeter extends PersistentObject {
 	public static ArrayList<String> queries = new ArrayList<String>();
 
 	public String toString(boolean SLAViolation) {
-		return "[VOLUME PERFORMANCE] clock = " + Experiment.clock
-				+ " exp_ID = " + this.backend.getExperiment().getID()
-				+ " SLAViolation = " + SLAViolation + " ID = " + this.getID()
+		// return "[VOLUME PERFORMANCE] clock = " + Experiment.clock
+		// + " exp_ID = " + this.backend.getExperiment().getID()
+		// + " SLAViolation = " + SLAViolation + " ID = " + this.getID()
+		// + " volume_ID = "
+		// + (this.volume == null ? " NULL " : this.volume.getID())
+		// + " backendID = " + this.backend.getID();
+
+		return "[VOLUME PERFORMANCE] clock = "
+				+ Experiment.clock //
+				+ " SLAViolation = "
+				+ SLAViolation //
 				+ " volume_ID = "
 				+ (this.volume == null ? " NULL " : this.volume.getID())
 				+ " backendID = " + this.backend.getID();
 	}
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -77,7 +85,8 @@ public class VolumePerformanceMeter extends PersistentObject {
 
 		VolumePerformanceMeter.queries.add(Database.getQuery(statement));
 
-		System.out.println(this.toString(SLAViolation));
+		edu.purdue.simulation.BlockStorageSimulator.log(this
+				.toString(SLAViolation));
 
 		// statement.executeUpdate();
 		//
@@ -87,7 +96,8 @@ public class VolumePerformanceMeter extends PersistentObject {
 		//
 		// this.setID(rs.getBigDecimal(1));
 		//
-		// System.out.println(this.toString(SLAViolation) + " currentIOPS = "
+		// edu.purdue.simulation.BlockStorageSimulator.log(this.toString(SLAViolation)
+		// + " currentIOPS = "
 		// + currentIOPS);
 		//
 		// return this.getID();
@@ -96,7 +106,7 @@ public class VolumePerformanceMeter extends PersistentObject {
 		return BigDecimal.valueOf(-1);
 	}
 
-	public String getSaveQuery() throws SQLException {
+	public String getSaveQuery() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 

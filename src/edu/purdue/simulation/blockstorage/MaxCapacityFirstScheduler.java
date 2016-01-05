@@ -19,7 +19,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 	public MaxCapacityFirstScheduler(
 			edu.purdue.simulation.Experiment experiment,
-			edu.purdue.simulation.Workload workload) {
+			edu.purdue.simulation.Workload workload) throws Exception {
 		super(experiment, workload);
 	}
 
@@ -150,37 +150,51 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				machineLearningAlgorithm));
 	}
 
-	private class WeighteningVector {
+	private class _Vector_Weightening {
 
-		public WeighteningVector(Backend backend, int availableCapacity,
+		public _Vector_Weightening(Backend backend, int availableCapacity,
 				double IOPS_ProbabilityThatSatisfyAssessmentPolicy) {
 			super();
 			this.backend = backend;
 			this.availableCapacity = availableCapacity;
 			this.IOPS_ProbabilityThatSatisfyAssessmentPolicy = IOPS_ProbabilityThatSatisfyAssessmentPolicy;
+
+			this.allocatedIOPS = backend.getAllocatedIOPS();
 		}
 
 		public Backend backend;
 
 		public int availableCapacity;
 
+		public int allocatedIOPS;
+
 		public double IOPS_ProbabilityThatSatisfyAssessmentPolicy;
 
 		@Override
 		public String toString() {
-			return this.backend.toString();
+			return "allocated IOPS: " //
+					+ this.allocatedIOPS //
+					+ "#vols: " //
+					+ this.backend.getVolumeList().size() //
+					+ " IOPS_Prob: " //
+					+ this.IOPS_ProbabilityThatSatisfyAssessmentPolicy //
+					+ " availableCapacity: " //
+					+ this.availableCapacity //
+					+ "~~Backend ->" + //
+					this.backend.toString();
 		}
 	}
 
-	private Backend filtering_Weightning_Backends(VolumeRequest volumeRequest) {
+	private Backend filtering_Weightning_Backends(VolumeRequest volumeRequest)
+			throws Exception {
 
-		ArrayList<WeighteningVector> candidateBackends = new ArrayList<WeighteningVector>();
+		ArrayList<_Vector_Weightening> candidateBackends = new ArrayList<_Vector_Weightening>();
 
 		VolumeSpecifications requestSpecifications = volumeRequest
 				.ToVolumeSpecifications();
 
 		for (Backend b : edu.purdue.simulation.Experiment.backendList) {
-			
+
 			boolean satisfy = true;
 
 			int availableCapacity = b.getState().getAvailableCapacity();
@@ -204,7 +218,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 			if (satisfy)
 
-				candidateBackends.add(new WeighteningVector(b,
+				candidateBackends.add(new _Vector_Weightening(b,
 						availableCapacity,
 						IOPS_ProbabilityThatSatisfyAssessmentPolicy));
 		}
@@ -213,17 +227,15 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		 * Weighting
 		 */
 		Collections.sort(candidateBackends,
-				new Comparator<WeighteningVector>() {
+				new Comparator<_Vector_Weightening>() {
 					@Override
-					public int compare(WeighteningVector vector1,
-							WeighteningVector vector2) {
+					public int compare(_Vector_Weightening vector1,
+							_Vector_Weightening vector2) {
 
 						int c;
 
-						c = Double
-								.compare(
-										vector2.IOPS_ProbabilityThatSatisfyAssessmentPolicy,
-										vector1.IOPS_ProbabilityThatSatisfyAssessmentPolicy);
+						c = Double.compare(vector1.allocatedIOPS,
+								vector2.allocatedIOPS);
 
 						if (c == 0)
 
@@ -283,17 +295,18 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 			schedulerResponse.backEndTurnedOn = null; // no backend turned on
 
-			System.out.println("[Failed to schedule] -> "
-					+ volumeRequest.toString());
+			edu.purdue.simulation.BlockStorageSimulator
+					.log("[Failed to schedule] -> " + volumeRequest.toString());
 		} else {
 
 			schedulerResponse.isSuccessful = true;
 
 			schedulerResponse.backEndScheduled = bestCandidateBackend;
 
-			System.out.println("[Successfully scheduled] ->"
-					+ volumeRequest.toString() + " backendID= "
-					+ schedulerResponse.backEndScheduled.getID());
+			edu.purdue.simulation.BlockStorageSimulator
+					.log("[Successfully scheduled] ->"
+							+ volumeRequest.toString() + " backendID= "
+							+ schedulerResponse.backEndScheduled.getID());
 		}
 
 		/*

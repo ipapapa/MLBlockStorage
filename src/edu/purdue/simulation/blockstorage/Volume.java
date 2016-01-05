@@ -79,7 +79,7 @@ public class Volume extends PersistentObject {
 		}
 	}
 
-	public BigDecimal save() throws SQLException {
+	public BigDecimal save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -117,7 +117,7 @@ public class Volume extends PersistentObject {
 		return BigDecimal.valueOf(-1);
 	}
 
-	public void delete() throws SQLException {
+	public void delete() throws SQLException, Exception {
 		this.getSpecifications().IsDeleted = true;
 
 		Connection connection = Database.getConnection();

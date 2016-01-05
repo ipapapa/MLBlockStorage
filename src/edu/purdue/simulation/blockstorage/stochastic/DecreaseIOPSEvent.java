@@ -35,7 +35,7 @@ public class DecreaseIOPSEvent extends
 	}
 
 	@Override
-	public void fire(Backend backend) throws SQLException {
+	public void fire(Backend backend) throws SQLException, Exception {
 		StochasticEvent.apply(this, backend, false);
 	}
 

@@ -26,7 +26,7 @@ public abstract class StochasticEvent {
 
 	public abstract int getEventType();
 
-	public abstract void fire(Backend backend) throws SQLException;
+	public abstract void fire(Backend backend) throws SQLException, Exception;
 
 	public String toString(boolean isApplied) {
 		return "[StochasticEvent]"
@@ -35,7 +35,7 @@ public abstract class StochasticEvent {
 	}
 
 	protected static void apply(StochasticEvent event, Backend backend,
-			boolean applyToCapacity) throws SQLException {
+			boolean applyToCapacity) throws SQLException, Exception {
 		int backendSize = Experiment.backendList.size();
 
 		if (backendSize == 0)
@@ -117,14 +117,14 @@ public abstract class StochasticEvent {
 			}
 		}
 
-		System.out.println(event.toString(isEventApplied) + " intVal1 = "
+		edu.purdue.simulation.BlockStorageSimulator.log(event.toString(isEventApplied) + " intVal1 = "
 				+ sumBy + " StringVal1 = NULL " + " GeneratedNumber = "
 				+ possessionGeneratedNumber + " possessionMean = "
 				+ possessionMean);
 	}
 
 	protected BigDecimal save(BigDecimal backendID, Integer intVal1,
-			String stringVal1, boolean isApplied) throws SQLException {
+			String stringVal1, boolean isApplied) throws SQLException, Exception {
 
 		if (StochasticEvent.saveStochasticEvents == false)
 
