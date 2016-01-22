@@ -34,6 +34,10 @@ import edu.purdue.simulation.blockstorage.*;
 
 public abstract class Backend extends PersistentObject {
 
+	public Backend(BigDecimal ID) {
+		this.setID(ID);
+	}
+
 	public Backend(Experiment experiment, String desciption,
 			BackEndSpecifications specifications) {
 
@@ -257,11 +261,20 @@ public abstract class Backend extends PersistentObject {
 	private List<Volume> volumeList;
 
 	public Experiment getExperiment() {
-		return experiment;
+		return this.experiment;
+	}
+
+	public void setExperiment(Experiment experiment) {
+		this.experiment = experiment;
+
 	}
 
 	public BackEndSpecifications getSpecifications() {
-		return specifications;
+		return this.specifications;
+	}
+
+	public void setSpecifications(BackEndSpecifications backEndSpecifications) {
+		this.specifications = backEndSpecifications;
 	}
 
 	// I cant understand why VolumeRequestCategories is needed here ?!!
@@ -288,7 +301,7 @@ public abstract class Backend extends PersistentObject {
 
 	public String getDescription() {
 
-		String path = this.getSpecifications().getTrainingDataSetPath();
+		// String path = this.getSpecifications().getTrainingDataSetPath();
 
 		String result = "";
 
@@ -413,9 +426,9 @@ public abstract class Backend extends PersistentObject {
 		PreparedStatement statement = connection
 				.prepareStatement(
 						"insert into backend"
-								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description, stability_possession_mean)"
+								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description, stability_possession_mean, Save_Path)"
 								+ "		Values"
-								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
 						Statement.RETURN_GENERATED_KEYS);
 
 		statement.setBigDecimal(1, this.experiment.getID());
@@ -424,11 +437,16 @@ public abstract class Backend extends PersistentObject {
 
 		statement.setInt(3, this.specifications.getIOPS());
 
-		statement.setBoolean(4, this.specifications.getIsOnline());
+		statement.setBoolean(4, true);// this.specifications.getIsOnline());
 
 		statement.setBigDecimal(5, edu.purdue.simulation.Experiment.clock);
 
 		statement.setInt(10, operationID);
+
+		if (isUpdate)
+
+			throw new Exception(
+					"Backend.save --> isUpdate is not supported. We dont get track of stochastic events anymore");
 
 		if (isUpdate) {
 
@@ -457,6 +475,9 @@ public abstract class Backend extends PersistentObject {
 
 			statement.setDouble(12,
 					this.specifications.getStabilityPossessionMean());
+
+			statement.setString(13, this.getSpecifications()
+					.getTrainingWorkloadPath());
 		}
 
 		statement.executeUpdate();
@@ -551,12 +572,12 @@ public abstract class Backend extends PersistentObject {
 	@Override
 	public String toString() {
 		return String
-				.format("ID: %s - Capacity: %d - stability: %f - IOPS: %d - IsOnline: %b - Latency: %d",
-						this.getID().toString(),
-						this.specifications.getCapacity(),
+				.format("ID: %s - volCount: %d - Capacity: %d - stability: %f - IOPS: %d - IsOnline: %b - Latency: %d",
+						this.getID().toString(), //
+						this.getVolumeList().size(), //
+						this.specifications.getCapacity(), //
 						this.specifications.getStabilityPossessionMean(),
-						this.specifications.getIOPS(),
-						this.specifications.getIsOnline(),
+						this.specifications.getIOPS(), true, // this.specifications.getIsOnline(),
 						this.specifications.getLatency());
 	}
 

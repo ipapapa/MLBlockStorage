@@ -49,6 +49,10 @@ public class StochasticEventGenerator {// implements Runnable {
 
 		// while (true) {
 
+		if (StochasticEventGenerator.clockGapProbability == -1)
+
+			return;
+
 		if (this.clock == StochasticEventGenerator.clockGapProbability) {
 
 			this.clock = 1;
@@ -64,19 +68,19 @@ public class StochasticEventGenerator {// implements Runnable {
 					event.fire(backend);
 
 				}
-
-			} else {
-
-				// bad code
-
-				Backend target = this.selectRandomBackEnd();
-
-				StochasticEvent event = this.events.get(this.eventRandom
-						.nextInt(this.events.size()));
-
-				event.fire(target);
-
 			}
+			// else {
+			//
+			// // bad code
+			//
+			// Backend target = this.selectRandomBackEnd();
+			//
+			// StochasticEvent event = this.events.get(this.eventRandom
+			// .nextInt(this.events.size()));
+			//
+			// event.fire(target);
+			//
+			// }
 		}
 
 		this.clock++;

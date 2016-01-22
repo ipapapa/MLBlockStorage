@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -26,6 +27,10 @@ import edu.purdue.simulation.blockstorage.stochastic.StochasticEventGenerator;
 
 @SuppressWarnings("deprecation")
 public class Experiment extends PersistentObject {
+
+	public Experiment(BigDecimal ID) {
+		this.setID(ID);
+	}
 
 	public Experiment(Workload workload, String comment,
 			String schedulerAlgorithm) {
@@ -627,6 +632,8 @@ public class Experiment extends PersistentObject {
 				return;
 			}
 
+			Scheduler.execute_AllBatchQueries(true);
+
 			double accuracy = backend.updateModel(trainingInstances);
 
 			Object[][] backendAccuracy = BlockStorageSimulator.feedbackAccuracy
@@ -679,7 +686,7 @@ public class Experiment extends PersistentObject {
 	 *            violation label
 	 * @throws Exception
 	 */
-	public void createUpdateTrainingData(
+	public void createUpdateWorkload(
 			int numberOfRecords,
 			Experiment experiment,//
 			String path,//
@@ -697,19 +704,25 @@ public class Experiment extends PersistentObject {
 		CallableStatement cStmt = connection
 				.prepareCall("{call data_for_ML2(?, ?, ?, ?)}");
 
-		cStmt.setBigDecimal(1, experiment.getID());
+		cStmt.setBigDecimal(1, experiment.getID()); //exp_ID
 
-		cStmt.setInt(2, numberOfRecords);
+		cStmt.setInt(2, numberOfRecords); // lim
 
 		if (includeViolationsNumber == 0)
 
-			cStmt.setInt(3, Scheduler.modClockBy);
+			cStmt.setInt(3, Scheduler.modClockBy); // modby
 
 		else
 
-			cStmt.setInt(3, 0);
+			cStmt.setInt(3, 0); // modby
 
-		cStmt.setInt(4, Scheduler.updateLearning_MaxNumberOfRecords);
+		if (Scheduler.feedBackLearning == true)
+
+			cStmt.setInt(4, Scheduler.updateLearning_MaxNumberOfRecords); //lastNumOfRecords
+
+		else
+
+			cStmt.setInt(4, 0); // lastNumOfRecords
 
 		cStmt.execute();
 

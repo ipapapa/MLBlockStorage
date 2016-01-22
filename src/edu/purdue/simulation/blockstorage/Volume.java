@@ -45,7 +45,7 @@ public class Volume extends PersistentObject {
 	}
 
 	@SuppressWarnings("unused")
-	public int getCurrentIOPS() {
+	public int getAvailableIOPS_ForEachVolume() {
 		int backEndVolumesTotalRequestedIOPS = 0;
 
 		int numberOfVolumes = this.backend.getVolumeList().size();
@@ -55,7 +55,28 @@ public class Volume extends PersistentObject {
 
 		if (true) {
 
-			return Math.round(backendCurrentAvailableIOPS / numberOfVolumes);
+			double normalizer = 0;
+
+			if (numberOfVolumes >= 3) {
+
+				int temp = (numberOfVolumes - 3);
+
+				// normalizer = temp * 2; //avali in bood Ex 120 - vio rate:
+				// 0.8769220113754272
+
+				// if (temp % 2 != 0)
+				//
+				// temp++;
+				//
+				// normalizer = temp / 2.0;
+
+				// normalizer = temp / 1.5; // 123 0.9065758585929871
+
+				//
+				normalizer = numberOfVolumes / 2.0; // ex 124 0.9065694212913513
+			}
+
+			return (int) (backendCurrentAvailableIOPS / ((double) numberOfVolumes + normalizer));
 
 		} else { // lazmem nisst sakhtesh koni
 			for (int i = 0; i < numberOfVolumes; i++) {
@@ -148,7 +169,7 @@ public class Volume extends PersistentObject {
 
 			result += " scheduleResponseID= " + this.ScheduleResponse.ID;
 
-		return result;
+		return result + this.getSpecifications().toString();
 	}
 
 }

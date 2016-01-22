@@ -55,20 +55,26 @@ public class BlockStorageSimulator {
 
 		Date startTime = new Date();
 
-		Scheduler.isTraining = false;
+		Scheduler.isTraining = true;
 
-		Scheduler.trainingExperimentID = 12;
-		Scheduler.assessmentPolicy = AssessmentPolicy.QoSFirst;
+		Scheduler.trainingExperimentID = 144;
+		Scheduler.assessmentPolicy = AssessmentPolicy.MaxEfficiency;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
 		Scheduler.feedBackLearning = true;
-		Scheduler.feedbackLearningInterval = 200;
-		Scheduler.updateLearning_MinNumberOfRecords = 300;
-		Scheduler.updateLearning_MaxNumberOfRecords = 900;
+		Scheduler.feedbackLearningInterval = 180; /**/
+		Scheduler.updateLearning_MinNumberOfRecords = 500; // 300
+		Scheduler.updateLearning_MaxNumberOfRecords = 700;// 900;
 
 		Scheduler.modClockBy = 300; // every 300 minutes
-		StochasticEventGenerator.clockGapProbability = 250;
-		ResourceMonitor.clockGapProbability = 0.5;
+		StochasticEventGenerator.clockGapProbability = 140; /**/
+		ResourceMonitor.clockGapProbability = 1.1; /**/
+
+		if (// Scheduler.feedBackLearning == false ||
+		Scheduler.isTraining)
+
+			StochasticEventGenerator.clockGapProbability = -1; // no stochastic
+																// event
 
 		Experiment.workloadID = 161; // training workload
 		Workload.devideDeleteFactorBy = 2.5;
@@ -130,7 +136,8 @@ public class BlockStorageSimulator {
 		try {
 			applyCommandArguments(args);
 
-			if (Scheduler.isTraining == true)
+			if (Scheduler.isTraining == true
+					|| Scheduler.assessmentPolicy == AssessmentPolicy.MaxEfficiency)
 
 				Scheduler.feedBackLearning = false;
 

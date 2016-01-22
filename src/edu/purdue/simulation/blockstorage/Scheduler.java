@@ -49,7 +49,7 @@ public abstract class Scheduler {
 
 	public static Integer trainingExperimentID;
 
-	public static int modClockBy = 1140;
+	public static int modClockBy = 300;
 
 	public static String violationGroups;
 
@@ -70,9 +70,9 @@ public abstract class Scheduler {
 	// interval to recreate classifiers
 	public static int feedbackLearningInterval = 200;
 
-	public static int updateLearning_MinNumberOfRecords = 1000;
+	public static int updateLearning_MinNumberOfRecords = 450;
 
-	public static int updateLearning_MaxNumberOfRecords = 2000;
+	public static int updateLearning_MaxNumberOfRecords = 600;
 
 	public static AssessmentPolicy assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
 
@@ -162,22 +162,58 @@ public abstract class Scheduler {
 		switch (Scheduler.assessmentPolicy) {
 		case StrictQoS:
 
-			compareTo = new double[] { 0.99, 0.95 };
+			compareTo = new double[] { 0.999, 0.99 };
 			// backend_VolumesCount
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
 						Scheduler.assessmentPolicy, "predictors[0] > "
-								+ compareTo[0] + " || predictors[1] > "
-								+ compareTo[1]);
+								+ compareTo[0]
+				// + " && (predictors[0] + predictors[1]) > "
+				// + compareTo[1]//
+						);
 			}
 
-			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]) {
+			/*
+			 * for debug
+			 */
+			int totAlloc = backend.getAllocatedIOPS();
+			int backendIOPS = backend.getSpecifications().getIOPS();
+			int volNum = backend.getVolumeList().size();// backend.getSpecifications().getIOPS()
+			int clock2 = Experiment.clock.intValue();
+			// int availIOPS_EachVol =
+			// this.volume.getAvailableIOPS_ForEachVolume();
+			if (backend_VolumesCount > 5) {
+				int gg = 1;
+			}
+
+			if (volNum == 0 || predictors[0] > compareTo[0]) {
+				// if (volNum == 0
+				// || (predictors[0] > compareTo[0] && (predictors[0]
+				// + predictors[1] > compareTo[1]))) {
+
+				if (backend.getVolumeList().size() > 2) {
+					int q2 = 1;
+				}
 
 				result = predictors[0] + predictors[1];
+
+				if (totAlloc > backendIOPS) {
+					int z1 = 1;
+				}
+
+				if (volNum > 3) {
+					int q2 = 1;
+				}
+
 			} else {
-				int q2 = 1;
+				int z = 1;
+
+				if (volNum > 3) {
+					int q2 = 1;
+				}
 			}
+			// }
 
 			break;
 
@@ -236,23 +272,28 @@ public abstract class Scheduler {
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, "predictors[0]>"
-								+ compareTo[0] + "||predictors[1]>"
-								+ compareTo[1] + "||predictors[2]>"
-								+ compareTo[2]);
+						Scheduler.assessmentPolicy, //
+						"returns 1"
+				// "predictors[0]>"
+				// + compareTo[0] //
+				// + "||predictors[1]>" + compareTo[1]
+				// + "||predictors[2]>" + compareTo[2]//
+						);
 			}
 
-			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]
-					|| predictors[2] > compareTo[2]) {
-				/*
-				 * predictors[2] must be used here because we are not interested
-				 * in the probability of having V4 (high violations)
-				 */
-				result = predictors[0] + predictors[1] + predictors[2];
+			result = 1;
 
-			} else {
-				int q5 = 1;
-			}
+			// if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]
+			// || predictors[2] > compareTo[2]) {
+			// /*
+			// * predictors[2] must be used here because we are not interested
+			// * in the probability of having V4 (high violations)
+			// */
+			// result = predictors[0] + predictors[1] + predictors[2];
+			//
+			// } else {
+			// int q5 = 1;
+			// }
 
 			break;
 		}
@@ -441,7 +482,7 @@ public abstract class Scheduler {
 
 		this.preRun();
 
-		StochasticEventGenerator eventGenerator = new StochasticEventGenerator();
+		StochasticEventGenerator stochasticEventGenerator = new StochasticEventGenerator();
 
 		ResourceMonitor resourceMonitor = new ResourceMonitor();
 
@@ -519,22 +560,13 @@ public abstract class Scheduler {
 
 			if (goToNextClock) {
 
-				eventGenerator.run();
+				stochasticEventGenerator.run();
 
 				this.deleteExpiredVolumes();
 
 				resourceMonitor.run();
 
-				/*
-				 * must save changes in db before feedback learning
-				 */
-				Database.executeBatchQuery(ResourceMonitor.backendStat_queries,
-						false);
-
-				Database.executeBatchQuery(VolumePerformanceMeter.queries,
-						false);
-
-				Database.executeBatchQuery(StochasticEvent.queries, false);
+				Scheduler.execute_AllBatchQueries(false);
 
 				/*
 				 * applies feedback learning
@@ -555,7 +587,7 @@ public abstract class Scheduler {
 								clockIntValue,
 								new Object[Experiment.backendList.size()][2]);
 
-						this.experiment.createUpdateTrainingData(
+						this.experiment.createUpdateWorkload(
 						//
 								0, // numberOfRecords
 								this.getExperiment(), // experiment
@@ -578,11 +610,7 @@ public abstract class Scheduler {
 			currentClockRequests++;
 		}
 
-		Database.executeBatchQuery(ResourceMonitor.backendStat_queries, true);
-
-		Database.executeBatchQuery(StochasticEvent.queries, true);
-
-		Database.executeBatchQuery(VolumePerformanceMeter.queries, true);
+		Scheduler.execute_AllBatchQueries(true);
 
 		// for (i = 0; i < Experiment.backendList.size(); i++) {
 		//
@@ -593,15 +621,15 @@ public abstract class Scheduler {
 
 		if (Scheduler.isTraining)
 
-			this.experiment.createUpdateTrainingData(0, this.getExperiment(),
-					null, 0, //
+			this.experiment.createUpdateWorkload(0, this.getExperiment(), null,
+					0, //
 					0 // no feedback learning/update model
 					);
 
 		else
 
-			this.experiment.createUpdateTrainingData(0, this.getExperiment(),
-					null, 1, //
+			this.experiment.createUpdateWorkload(0, this.getExperiment(), null,
+					1, //
 					0 // no feedback learning/update model
 					); // include all values
 
@@ -611,6 +639,17 @@ public abstract class Scheduler {
 		// ResourceMonitorThread.interrupt();
 		//
 		// edu.purdue.simulation.BlockStorageSimulator.log("DONE - with threads");
+	}
+
+	public static void execute_AllBatchQueries(boolean forceSave)
+			throws SQLException, Exception {
+
+		Database.executeBatchQuery(ResourceMonitor.backendStat_queries,
+				forceSave);
+
+		Database.executeBatchQuery(StochasticEvent.queries, forceSave);
+
+		Database.executeBatchQuery(VolumePerformanceMeter.queries, forceSave);
 	}
 
 	public static double sum = 0;

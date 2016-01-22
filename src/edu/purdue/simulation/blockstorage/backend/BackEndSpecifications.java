@@ -12,8 +12,7 @@ public class BackEndSpecifications extends Specifications {
 
 	public BackEndSpecifications(int capacity, int maxCapacity,
 			int minCapacity, int IOPS, int maxIOPS, int minIOPS, int latency,
-			boolean isOnline, double stabilityPossessionMean,
-			String trainingDataSetPath,
+			boolean isOnline, double stabilityPossessionMean, String trainingWorkloadPath,
 			MachineLearningAlgorithm machineLearningAlgorithm) {
 		super(capacity, IOPS, latency);
 
@@ -27,14 +26,14 @@ public class BackEndSpecifications extends Specifications {
 
 		this.setStabilityPossessionMean(stabilityPossessionMean);
 
-		this.setTrainingDataSetPath(trainingDataSetPath);
+		this.setTrainingWorkloadPath(trainingWorkloadPath);
 
 		this.setMachineLearningAlgorithm(machineLearningAlgorithm);
 	}
 
 	private double stabilityPossessionMean;
 
-	private boolean isOnline;
+	//private boolean isOnline;
 
 	private int maxIOPS;
 
@@ -44,16 +43,20 @@ public class BackEndSpecifications extends Specifications {
 
 	private int minCapacity;
 
-	private String trainingDataSetPath;
+	private String trainingWorkloadPath;
 
 	private MachineLearningAlgorithm machineLearningAlgorithm;
 
 	public String getTrainingDataSetPath() {
-		return trainingDataSetPath;
+		return trainingWorkloadPath;
 	}
 
-	public void setTrainingDataSetPath(String setTrainingDataSetPath) {
-		this.trainingDataSetPath = setTrainingDataSetPath;
+	public void setTrainingWorkloadPath(String path) {
+		this.trainingWorkloadPath = path;
+	}
+
+	public String getTrainingWorkloadPath() {
+		return this.trainingWorkloadPath;
 	}
 
 	public MachineLearningAlgorithm getMachineLearningAlgorithm() {
@@ -73,13 +76,13 @@ public class BackEndSpecifications extends Specifications {
 		this.stabilityPossessionMean = stabilityPossessionMean;
 	}
 
-	public boolean getIsOnline() {
-		return this.isOnline;
-	}
-
-	public void setIsOnline(boolean isOnline) {
-		this.isOnline = isOnline;
-	}
+	// public boolean getIsOnline() {
+	// return this.isOnline;
+	// }
+	//
+	// public void setIsOnline(boolean isOnline) {
+	// this.isOnline = isOnline;
+	// }
 
 	public int getMaxIOPS() {
 		return maxIOPS;

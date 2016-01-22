@@ -17,12 +17,9 @@ import edu.purdue.simulation.blockstorage.backend.Backend;
 import edu.purdue.simulation.blockstorage.backend.BackendPerformanceMeter;
 
 /**
- * @author ravandi this class keeps calculating the current state of each volume
- *         also adds a new voume to the backends in order to calculate available
- *         IOPS for the backends the data will be stored based on time in order
- *         to use machine learning later on to classify the backend system for
- *         now all I can think is recognizing (classifying) when a backend have
- *         harddrives removed or added
+ * ping each volume and save backend stat for each clock
+ * 
+ * @author ravandi
  */
 public class ResourceMonitor { // implements Runnable {
 

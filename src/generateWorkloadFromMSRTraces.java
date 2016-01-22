@@ -25,7 +25,7 @@ public class generateWorkloadFromMSRTraces {
 					100000, // numberOfRequests
 					"D:\\Dropbox\\Research\\MLScheduler\\Workload\\MSR Cambridge Traces\\CAMRESWMSA03-lvm0.csv",
 					50,// deleteFractorPoissionMean
-					new int[] { 100, 500, 1000 }, // potentialVolumeCapacity
+					new int[] { 450, 1000, 2000 }, // potentialVolumeCapacity
 					new int[] { 200, 350, 450 }, // potentialIOPS
 					100000 //start from
 			);

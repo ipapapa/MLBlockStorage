@@ -47,7 +47,7 @@ public class BackendPerformanceMeter extends PersistentObject {
 
 		statement.setBigDecimal(3, Experiment.clock);
 
-		int currentIOPS = pingVolume.getCurrentIOPS();
+		int currentIOPS = pingVolume.getAvailableIOPS_ForEachVolume();
 
 		statement.setInt(4, currentIOPS);
 

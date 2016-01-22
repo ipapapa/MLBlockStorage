@@ -34,27 +34,27 @@ public abstract class Specifications extends PersistentObject {
 	private int Latency;
 
 	public int getCapacity() {
-		return Capacity;
+		return this.Capacity;
 	}
 
 	public void setCapacity(int capacity) {
-		Capacity = capacity;
+		this.Capacity = capacity;
 	}
 
 	public int getIOPS() {
-		return IOPS;
+		return this.IOPS;
 	}
 
 	public void setIOPS(int iOPS) {
-		IOPS = iOPS;
+		this.IOPS = iOPS;
 	}
 
 	public int getLatency() {
-		return Latency;
+		return this.Latency;
 	}
 
 	public void setLatency(int latency) {
-		Latency = latency;
+		this.Latency = latency;
 	}
 
 	@Override

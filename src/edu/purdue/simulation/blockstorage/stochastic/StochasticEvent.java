@@ -36,6 +36,9 @@ public abstract class StochasticEvent {
 
 	protected static void apply(StochasticEvent event, Backend backend,
 			boolean applyToCapacity) throws SQLException, Exception {
+
+		applyToCapacity = false;// no stochastic event for capacity
+
 		int backendSize = Experiment.backendList.size();
 
 		if (backendSize == 0)
@@ -55,8 +58,8 @@ public abstract class StochasticEvent {
 				.getStabilityPossessionMean();
 
 		// TODO organize this part
-		int possessionGeneratedNumber = Scheduler
-				.getPoissonRandom(possessionMean);
+		int possessionGeneratedNumber = (int) possessionMean;
+		// Scheduler.getPoissonRandom(possessionMean);
 
 		int sumBy = possessionGeneratedNumber * event.getSizes()[0]; // multiply
 																		// by
@@ -91,7 +94,7 @@ public abstract class StochasticEvent {
 
 			} else {
 				backend.getSpecifications().setIOPS(newIOPS);
-
+				// backend.getSpecifications().getIOPS()
 				isEventApplied = true;
 			}
 		}
@@ -117,14 +120,20 @@ public abstract class StochasticEvent {
 			}
 		}
 
-		edu.purdue.simulation.BlockStorageSimulator.log(event.toString(isEventApplied) + " intVal1 = "
-				+ sumBy + " StringVal1 = NULL " + " GeneratedNumber = "
-				+ possessionGeneratedNumber + " possessionMean = "
+		edu.purdue.simulation.BlockStorageSimulator.log(event
+				.toString(isEventApplied)
+				+ " intVal1 = "
+				+ sumBy
+				+ " StringVal1 = NULL "
+				+ " GeneratedNumber = "
+				+ possessionGeneratedNumber
+				+ " possessionMean = "
 				+ possessionMean);
 	}
 
 	protected BigDecimal save(BigDecimal backendID, Integer intVal1,
-			String stringVal1, boolean isApplied) throws SQLException, Exception {
+			String stringVal1, boolean isApplied) throws SQLException,
+			Exception {
 
 		if (StochasticEvent.saveStochasticEvents == false)
 

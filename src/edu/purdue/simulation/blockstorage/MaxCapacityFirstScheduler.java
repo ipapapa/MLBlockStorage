@@ -29,16 +29,19 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		 * Each node contains 18 * 2TB 7.2K Serial Attached SCSI (SAS) within a
 		 * Redundant Array of Independent Disk (RAID)
 		 */
-		int capacity = 36000;
+
+		int harddriveCount = 7;
+
+		int capacity = harddriveCount * 2000; // =14000
 
 		/*
-		 * Each hard drive can achieve up to 190 IOPS throughput.
+		 * Each hard drive can achieve up to 190 IOPS throughput.    3 * 450 = 1350
 		 */
-		int bandwidth = 2280;
+		int bandwidth = harddriveCount * 200; // = 1400 
 
-		int maxBandwidth = 2800;
+		int maxBandwidth = 2300;
 
-		int minBandwidth = 1200;
+		int minBandwidth = 700;
 
 		MachineLearningAlgorithm machineLearningAlgorithm = Scheduler.machineLearningAlgorithm;
 
@@ -54,7 +57,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 		File[] listOfFiles = folder.listFiles();
 
-		String[] backends = new String[6];
+		String[] trainingWorkloadPath = new String[6];
 
 		int j = 0;
 
@@ -64,12 +67,15 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 				if (fileName.startsWith("TRN_"
 						+ Scheduler.trainingExperimentID.toString())) {
-					backends[j] = path + fileName;
+					trainingWorkloadPath[j] = path + fileName;
 
 					j++;
 				}
 			}
 		}
+
+		double[] stabilityPMean = new double[] {//
+		350, 300, 450, 200, 500, 600 };
 
 		super.getExperiment().addBackEnd("B1", new BackEndSpecifications(//
 				capacity, // Capacity
@@ -80,8 +86,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				200, // stabilityPossessionMean
-				backends[0],//
+				stabilityPMean[0], // stabilityPossessionMean
+				trainingWorkloadPath[0],// traing path
 				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B2", new BackEndSpecifications(//
@@ -93,8 +99,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				300, // stabilityPossessionMean
-				backends[1],//
+				stabilityPMean[1], // stabilityPossessionMean
+				trainingWorkloadPath[1],//
 				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B3", new BackEndSpecifications(//
@@ -106,8 +112,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				400, // stabilityPossessionMean
-				backends[2],//
+				stabilityPMean[2], // stabilityPossessionMean
+				trainingWorkloadPath[2],//
 				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B4", new BackEndSpecifications(//
@@ -119,8 +125,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				500, // stabilityPossessionMean
-				backends[3],//
+				stabilityPMean[3], // stabilityPossessionMean
+				trainingWorkloadPath[3],//
 				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B5", new BackEndSpecifications(//
@@ -132,8 +138,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				100, // stabilityPossessionMean
-				backends[4],//
+				stabilityPMean[4], // stabilityPossessionMean
+				trainingWorkloadPath[4],//
 				machineLearningAlgorithm));
 
 		super.getExperiment().addBackEnd("B6", new BackEndSpecifications(//
@@ -145,8 +151,8 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 				minBandwidth, // Min IOPS
 				0, // Latency
 				true, // is online
-				600, // stabilityPossessionMean
-				backends[5], //
+				stabilityPMean[5], // stabilityPossessionMean
+				trainingWorkloadPath[5], //
 				machineLearningAlgorithm));
 	}
 
@@ -185,6 +191,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private Backend filtering_Weightning_Backends(VolumeRequest volumeRequest)
 			throws Exception {
 
@@ -193,15 +200,26 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		VolumeSpecifications requestSpecifications = volumeRequest
 				.ToVolumeSpecifications();
 
+		if (Experiment.clock.intValue() >= 222) {
+			int q1 = 1;
+		}
+
 		for (Backend b : edu.purdue.simulation.Experiment.backendList) {
+
+			int baackend_vol_count = b.getVolumeList().size();
 
 			boolean satisfy = true;
 
 			int availableCapacity = b.getState().getAvailableCapacity();
 
-			if (!(availableCapacity > volumeRequest.getCapacity()))
+			if (!(availableCapacity > volumeRequest.getCapacity())) {
 
 				satisfy = satisfy && false;
+
+				if (baackend_vol_count == 0) {
+					int q2 = 1;
+				}
+			}
 
 			double IOPS_ProbabilityThatSatisfyAssessmentPolicy = 0;
 
@@ -211,9 +229,14 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 						.validateWithClassifier(b, requestSpecifications,
 								machineLearningAlgorithm);
 
-				if (!(IOPS_ProbabilityThatSatisfyAssessmentPolicy > 0))
+				if (!(IOPS_ProbabilityThatSatisfyAssessmentPolicy > 0)) {
 
 					satisfy = satisfy && false;
+
+					if (baackend_vol_count == 0) {
+						int q2 = 1;
+					}
+				}
 			}
 
 			if (satisfy)
@@ -222,7 +245,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 						availableCapacity,
 						IOPS_ProbabilityThatSatisfyAssessmentPolicy));
 		}
-
+		// candidateBackends.get(0).backend.getVolumeList().size()
 		/*
 		 * Weighting
 		 */
@@ -250,7 +273,13 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 
 			return null;
 
-		return candidateBackends.get(0).backend;
+		Backend result = candidateBackends.get(0).backend;
+
+		if (result.getVolumeList().size() > 2) {
+			int ww = result.getVolumeList().size();
+		}// Experiment.clock
+			// Experiment.backendList
+		return result;
 	}
 
 	public void schedule(VolumeRequest volumeRequest)

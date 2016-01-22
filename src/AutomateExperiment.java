@@ -61,7 +61,7 @@ public class AutomateExperiment {
 	}
 
 	public static String baseCommand = //
-	"-isTraining false -trainingExperimentID 12 -assessmentPolicy QoSFirst "
+	"-isTraining false -trainingExperimentID 124 -assessmentPolicy QoSFirst "
 			+ "-machineLearningAlgorithm BayesianNetwork -feedBackLearning false "
 			+ "-feedbackLearningInterval 200 -modClockBy 300 "
 			+ "-StochasticEventGenerator.clockGapProbability 250 -workloadID 161 "

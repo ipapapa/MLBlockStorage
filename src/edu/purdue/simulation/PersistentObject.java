@@ -19,19 +19,19 @@ public abstract class PersistentObject {
 	private java.sql.Timestamp CreateTime;
 
 	public BigDecimal getID() {
-		return ID;
+		return this.ID;
 	}
 
 	public void setID(BigDecimal iD) {
-		ID = iD;
+		this.ID = iD;
 	}
 
 	public java.sql.Timestamp getCreateTime() {
-		return CreateTime;
+		return this.CreateTime;
 	}
 
 	public void setCreateTime(java.sql.Timestamp createTime) {
-		CreateTime = createTime;
+		this.CreateTime = createTime;
 	}
 
 	public BigDecimal save() throws SQLException, Exception {
