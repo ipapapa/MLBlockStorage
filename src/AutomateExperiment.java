@@ -1,5 +1,8 @@
+import java.io.Console;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.tools.ant.types.Commandline;
+
 import edu.purdue.simulation.blockstorage.AssessmentPolicy;
 import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 
@@ -46,9 +49,13 @@ public class AutomateExperiment {
 			}
 
 			try {
+				counter++;
+
+				System.out.println("Counter: " + counter + "-" + runCommand);
+
 				Runtime.getRuntime().exec(runCommand);
 
-				TimeUnit.SECONDS.sleep(120);
+				TimeUnit.MINUTES.sleep(5);
 
 			} catch (Exception e) {
 
@@ -60,16 +67,21 @@ public class AutomateExperiment {
 		}
 	}
 
+	public static int counter = 0;
+
 	public static String baseCommand = //
-	"-isTraining false -trainingExperimentID 124 -assessmentPolicy QoSFirst "
-			+ "-machineLearningAlgorithm BayesianNetwork -feedBackLearning false "
-			+ "-feedbackLearningInterval 200 -modClockBy 300 "
-			+ "-StochasticEventGenerator.clockGapProbability 250 -workloadID 161 "
-			+ "-devideDeleteFactorBy 2.5 -maxRequest 10000 -startTestDatasetFromRecordRank 10000";
+	"-isTraining false -trainingExperimentID 400 -assessmentPolicy xx "
+			+ "-machineLearningAlgorithm xx -feedBackLearning xx "
+	// + "-feedbackLearningInterval 180 -modClockBy 300 "
+	// + "-StochasticEventGenerator.clockGapProbability 140 -workloadID 161 "
+	// +
+	// "-devideDeleteFactorBy 2.5 -maxRequest 10000 -startTestDatasetFromRecordRank 10000"
+	;
 
 	public static void runForAllAssessmentPolicies(
 			MachineLearningAlgorithm alg, boolean feedBackLearning) {
 		// AutomateExperiment.experimentDesign q;
+
 		new experimentDesign(baseCommand,//
 				new String[] {//
 				"assessmentPolicy",//
@@ -106,30 +118,33 @@ public class AutomateExperiment {
 				//
 				}).run();
 
-		new experimentDesign(baseCommand,//
-				new String[] {//
-				"assessmentPolicy",//
-						AssessmentPolicy.MaxEfficiency.toString(),
-						//
-						"machineLearningAlgorithm",//
-						alg.toString(),
-						//
-						"feedBackLearning", String.valueOf(feedBackLearning)
-				//
-				}).run();
+		// new experimentDesign(baseCommand,//
+		// new String[] {//
+		// "assessmentPolicy",//
+		// AssessmentPolicy.MaxEfficiency.toString(),
+		// //
+		// "machineLearningAlgorithm",//
+		// alg.toString(),
+		// //
+		// "feedBackLearning", String.valueOf(feedBackLearning)
+		// //
+		// }).run();
 	}
 
 	public static void main(String[] args) {
 
-		runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
+		for (int i = 0; i < 10; i++) {
 
-		runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork,
-				true);
+			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
 
-		runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
+			runForAllAssessmentPolicies(
+					MachineLearningAlgorithm.BayesianNetwork, true);
 
-		runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork,
-				false);
+			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
+
+			runForAllAssessmentPolicies(
+					MachineLearningAlgorithm.BayesianNetwork, false);
+		}
 
 	}
 }

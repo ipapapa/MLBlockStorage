@@ -53,7 +53,7 @@ public abstract class Scheduler {
 
 	public static String violationGroups;
 
-	public static int maxRequest = 0;
+	public static int maxRequest = 10000;
 
 	/*
 	 * it is very important to not use the training/validate dataset for
@@ -68,11 +68,11 @@ public abstract class Scheduler {
 	public static boolean feedBackLearning = false;
 
 	// interval to recreate classifiers
-	public static int feedbackLearningInterval = 200;
+	public static int feedbackLearningInterval = 180;
 
-	public static int updateLearning_MinNumberOfRecords = 450;
+	public static int updateLearning_MinNumberOfRecords = 500;
 
-	public static int updateLearning_MaxNumberOfRecords = 600;
+	public static int updateLearning_MaxNumberOfRecords = 1000;
 
 	public static AssessmentPolicy assessmentPolicy = AssessmentPolicy.EfficiencyFirst;
 
@@ -159,10 +159,12 @@ public abstract class Scheduler {
 
 		double[] compareTo;
 
+		int volNum = backend.getVolumeList().size();
+
 		switch (Scheduler.assessmentPolicy) {
 		case StrictQoS:
 
-			compareTo = new double[] { 0.999, 0.99 };
+			compareTo = new double[] { 0.99, 0.99 };
 			// backend_VolumesCount
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
@@ -179,7 +181,8 @@ public abstract class Scheduler {
 			 */
 			int totAlloc = backend.getAllocatedIOPS();
 			int backendIOPS = backend.getSpecifications().getIOPS();
-			int volNum = backend.getVolumeList().size();// backend.getSpecifications().getIOPS()
+			// backend.getSpecifications().getIOPS()
+			// int volNum = backend.getVolumeList().size();
 			int clock2 = Experiment.clock.intValue();
 			// int availIOPS_EachVol =
 			// this.volume.getAvailableIOPS_ForEachVolume();
@@ -219,20 +222,23 @@ public abstract class Scheduler {
 
 		case QoSFirst:
 
-			compareTo = new double[] { 0.99, 0.49 };
+			compareTo = new double[] { 0.90, 0.49 };
 
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, "predictors[0] > "
-								+ compareTo[0] + " || predictors[1] > "
-								+ compareTo[1]//
-				);
+						Scheduler.assessmentPolicy,//
+						"predictors[0] > " + compareTo[0]
+				// + " || predictors[1] > "
+				// + compareTo[1]//
+						);
 			}
 
-			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]) {
+			if (volNum == 0 || predictors[0] > compareTo[0]
+			// || predictors[1] > compareTo[1]
+			) {
 
-				result = predictors[0] + predictors[1];
+				result = predictors[0];// + predictors[1];
 
 			} else {
 
@@ -243,7 +249,7 @@ public abstract class Scheduler {
 
 		case EfficiencyFirst:
 
-			compareTo = new double[] { 0.95, 0.95, 0.98 };
+			compareTo = new double[] { 0.8, 0.95, 0.98 };
 
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
@@ -254,10 +260,11 @@ public abstract class Scheduler {
 								+ compareTo[2]);
 			}
 
-			if (predictors[0] > compareTo[0] || predictors[1] > compareTo[1]
-					|| predictors[2] > compareTo[2]) {
+			if (volNum == 0 || predictors[0] > compareTo[0]
+			// || predictors[1] > compareTo[1] || predictors[2] > compareTo[2]
+			) {
 
-				result = predictors[0] + predictors[1] + predictors[2];
+				result = predictors[0];// + predictors[1] + predictors[2];
 
 			} else {
 				int v3 = 1;

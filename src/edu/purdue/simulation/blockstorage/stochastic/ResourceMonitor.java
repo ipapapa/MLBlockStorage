@@ -24,7 +24,7 @@ import edu.purdue.simulation.blockstorage.backend.BackendPerformanceMeter;
 public class ResourceMonitor { // implements Runnable {
 
 	// every 2 times measure
-	public static double clockGapProbability = 0.5;
+	public static double clockGapProbability = 1.1;
 
 	public static boolean enableBackendPerformanceMeter = false;
 

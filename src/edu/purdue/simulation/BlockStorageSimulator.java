@@ -55,20 +55,20 @@ public class BlockStorageSimulator {
 
 		Date startTime = new Date();
 
-		Scheduler.isTraining = true;
+		Scheduler.isTraining = false;
 
-		Scheduler.trainingExperimentID = 144;
-		Scheduler.assessmentPolicy = AssessmentPolicy.MaxEfficiency;
+		Scheduler.trainingExperimentID = 400;
+		Scheduler.assessmentPolicy = AssessmentPolicy.StrictQoS;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
-		Scheduler.feedBackLearning = true;
-		Scheduler.feedbackLearningInterval = 180; /**/
-		Scheduler.updateLearning_MinNumberOfRecords = 500; // 300
-		Scheduler.updateLearning_MaxNumberOfRecords = 700;// 900;
+		Scheduler.modClockBy = 100; // every 300 minutes
+		ResourceMonitor.clockGapProbability = 0.25; /**/
 
-		Scheduler.modClockBy = 300; // every 300 minutes
-		StochasticEventGenerator.clockGapProbability = 140; /**/
-		ResourceMonitor.clockGapProbability = 1.1; /**/
+		StochasticEventGenerator.clockGapProbability = Scheduler.modClockBy * 15; /* 1500*/
+		Scheduler.feedBackLearning = false;
+		Scheduler.feedbackLearningInterval = (int)(Scheduler.modClockBy * 2.5); /* 300 */
+		Scheduler.updateLearning_MinNumberOfRecords = Scheduler.modClockBy * 6; // 700
+		Scheduler.updateLearning_MaxNumberOfRecords = Scheduler.modClockBy * 16;// 1500;
 
 		if (// Scheduler.feedBackLearning == false ||
 		Scheduler.isTraining)
@@ -471,7 +471,7 @@ public class BlockStorageSimulator {
 				+ "Scheduler_modClockBy, Scheduler_Feedback_Learning_Interval, "
 				+ "Stochastic_Event_Generator_clockGap_probability,"
 				+ "update_Learning_Min_Number_Of_Records, update_Learning_Max_Number_Of_Records, "
-				+ "simulation_duration) VALUES ( " //
+				+ "simulation_duration, all_backend_QoS_No_Rejected) VALUES ( " //
 				+ "?," // Experiment_ID
 				+ "?," // Is_Feedback_Learning
 				+ "?," // Is_Training
@@ -501,7 +501,8 @@ public class BlockStorageSimulator {
 				+ "?," // Stochastic_Event_Generator_clockGap_probability
 				+ "?," // update_Learning_Min_Number_Of_Records
 				+ "?," // update_Learning_Max_Number_Of_Records
-				+ "? " // simulation_duration
+				+ "?," // simulation_duration
+				+ "? " //all_backend_QoS_No_Rejected
 				+ ");";
 
 		PreparedStatement statement = connection.prepareStatement(query);
@@ -557,6 +558,8 @@ public class BlockStorageSimulator {
 		statement.setInt(29, Scheduler.updateLearning_MaxNumberOfRecords);
 
 		statement.setLong(30, simulation_duration); // simulation_duration
+		
+		statement.setFloat(31, rs.getFloat(15)); // all_backend_QoS//all_backend_QoS_No_Rejected
 
 		statement.execute();
 	}

@@ -39,7 +39,7 @@ public class StochasticEventGenerator {// implements Runnable {
 	 * The gap to apply the stochastic events. No probability is used, its a
 	 * counter.
 	 */
-	public static double clockGapProbability = 400;
+	public static double clockGapProbability = 140;
 
 	public static boolean applyToAllBackends = true;
 

@@ -34,7 +34,7 @@ public class generateData_FeedbackComparison {
 			String temp = String.format("%d	%d	%f", //
 					rs.getInt(1), // feedback
 					rs.getLong(2), // clock
-					rs.getFloat(3) // alloc percent		rs.getDouble(3)
+					rs.getFloat(3) // alloc percent rs.getDouble(3)
 					);
 
 			feedbackCompare.println(temp);
@@ -45,23 +45,29 @@ public class generateData_FeedbackComparison {
 
 	public static void main(String args[]) {
 
-		long experiment_ID = 52;
+		long experiment_ID = 329;
 
-		long feedback_experiment_ID = 44;
+		long feedback_experiment_ID = 372;
+
+		String name = "EfficiencyFirst_BayesianNetwork";
 
 		try {
 			generateData_FeedbackComparison.feedbackCompare = new PrintWriter(
 					"D:\\Dropbox\\Research\\MLScheduler\\SAS\\Data\\"
 							+ experiment_ID + "_" + feedback_experiment_ID
-							+ ".txt", "UTF-8");
+							+ "_" + name + ".txt", "UTF-8");
 
 			feedbackCompare.println("feedback	clock	alloc_percent");
 
-			IOPS_Allocation_Report(feedback_experiment_ID, 0, 220);
-			
-			IOPS_Allocation_Report(experiment_ID, 1, 220);
+			IOPS_Allocation_Report(feedback_experiment_ID,//
+					0, // is feedback
+					188// ClockMinte
+			);
 
-			
+			IOPS_Allocation_Report(experiment_ID,//
+					1, // is feedback
+					196// ClockMinte
+			);
 
 			generateData_FeedbackComparison.feedbackCompare.close();
 		} catch (Exception e) {

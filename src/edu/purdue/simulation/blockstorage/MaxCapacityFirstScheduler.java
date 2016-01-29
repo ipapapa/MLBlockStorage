@@ -35,13 +35,13 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		int capacity = harddriveCount * 2000; // =14000
 
 		/*
-		 * Each hard drive can achieve up to 190 IOPS throughput.    3 * 450 = 1350
+		 * Each hard drive can achieve up to 190 IOPS throughput. 3 * 450 = 1350
 		 */
-		int bandwidth = harddriveCount * 200; // = 1400 
+		int bandwidth = harddriveCount * 200; // = 1400
 
-		int maxBandwidth = 2300;
+		int maxBandwidth = 2500;
 
-		int minBandwidth = 700;
+		int minBandwidth = 500;
 
 		MachineLearningAlgorithm machineLearningAlgorithm = Scheduler.machineLearningAlgorithm;
 
@@ -75,7 +75,7 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		}
 
 		double[] stabilityPMean = new double[] {//
-		350, 300, 450, 200, 500, 600 };
+		500, 450, 600, 350, 650, 750 };
 
 		super.getExperiment().addBackEnd("B1", new BackEndSpecifications(//
 				capacity, // Capacity
