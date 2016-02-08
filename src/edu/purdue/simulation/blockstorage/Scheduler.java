@@ -169,7 +169,7 @@ public abstract class Scheduler {
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, "predictors[0] > "
+						Scheduler.assessmentPolicy, "volNum == 0 || predictors[0] > "
 								+ compareTo[0]
 				// + " && (predictors[0] + predictors[1]) > "
 				// + compareTo[1]//
@@ -228,7 +228,7 @@ public abstract class Scheduler {
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
 						Scheduler.assessmentPolicy,//
-						"predictors[0] > " + compareTo[0]
+						"volNum == 0  || predictors[0] > " + compareTo[0]
 				// + " || predictors[1] > "
 				// + compareTo[1]//
 						);
@@ -254,10 +254,12 @@ public abstract class Scheduler {
 			if (BlockStorageSimulator.assessmentPolicyRules
 					.containsKey(Scheduler.assessmentPolicy) == false) {
 				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, "predictors[0]>"
-								+ compareTo[0] + "||predictors[1]>"
-								+ compareTo[1] + "||predictors[2]>"
-								+ compareTo[2]);
+						Scheduler.assessmentPolicy,
+						"volNum == 0 || predictors[0] > " + compareTo[0]
+				// + "||predictors[1]>"
+						// + compareTo[1] + "||predictors[2]>"
+						// + compareTo[2]
+						);
 			}
 
 			if (volNum == 0 || predictors[0] > compareTo[0]

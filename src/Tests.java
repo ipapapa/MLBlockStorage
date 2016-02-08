@@ -35,7 +35,8 @@ public class Tests {
 	}
 
 	public static void main(String[] args) throws Exception {
-		playSound();
+		//playSound();
+		Runtime.getRuntime().exec("cmd.exe /c start ping 4.2.2.4");
 	}
 
 	public static void egenrateTrainingWorkload() throws SQLException, Exception {

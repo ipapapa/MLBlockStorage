@@ -107,7 +107,7 @@ public class Database {
 
 		CurrentConnection = DriverManager
 				.getConnection(
-						"jdbc:mysql://localhost/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true",
+						"jdbc:mysql://10.0.0.150/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true",
 						"root", "1234");
 
 		return CurrentConnection;

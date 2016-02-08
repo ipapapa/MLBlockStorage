@@ -9,7 +9,7 @@ import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 public class AutomateExperiment {
 
 	public static String buildPath = //
-	"java -cp \"D:\\Dropbox\\WorkSpaceLuna\\MLBlockStorage\\target\\classes"
+	" java -d64 -Xms512m -cp \"D:\\Dropbox\\WorkSpaceLuna\\MLBlockStorage\\target\\classes"
 			+ ";" + "D:\\Dropbox\\Research\\MLScheduler\\jar\\libs\\*\" "
 			+ "edu.purdue.simulation.BlockStorageSimulator ";
 
@@ -53,9 +53,17 @@ public class AutomateExperiment {
 
 				System.out.println("Counter: " + counter + "-" + runCommand);
 
-				Runtime.getRuntime().exec(runCommand);
+				//TimeUnit.MINUTES.sleep(5);
+				
+				Runtime rt = Runtime.getRuntime();
+				
+				rt.exec("cmd.exe /c start " + runCommand, null, null); /*cmd.exe /c start */
+//				Runtime.getRuntime().exec("cmd.exe /c" +runCommand);
+				
+//				Runtime.getRuntime().exec("cmd.exe /c ping 4.2.2.4");
+				//Runtime.getRuntime().exec("cmd");
 
-				TimeUnit.MINUTES.sleep(5);
+				
 
 			} catch (Exception e) {
 
@@ -133,18 +141,23 @@ public class AutomateExperiment {
 
 	public static void main(String[] args) {
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 1; i++) {
 
 			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
 
-			runForAllAssessmentPolicies(
-					MachineLearningAlgorithm.BayesianNetwork, true);
+//			runForAllAssessmentPolicies(
+//					MachineLearningAlgorithm.BayesianNetwork, true);
 
-			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
-
-			runForAllAssessmentPolicies(
-					MachineLearningAlgorithm.BayesianNetwork, false);
 		}
+		
+		
+//		for (int i = 0; i < 10; i++) {
+//
+//			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
+//
+//			runForAllAssessmentPolicies(
+//					MachineLearningAlgorithm.BayesianNetwork, false);
+//		}
 
 	}
 }
