@@ -52,7 +52,7 @@ public class BlockStorageSimulator {
 	private static Boolean hasCommandArgs = false;
 
 	public static void main(String[] args) {
-
+		
 		Date startTime = new Date();
 
 		Scheduler.isTraining = false;

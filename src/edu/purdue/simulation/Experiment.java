@@ -1,6 +1,7 @@
 package edu.purdue.simulation;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
@@ -285,17 +286,19 @@ public class Experiment extends PersistentObject {
 
 	public Backend addBackEnd(String description,
 			BackEndSpecifications backEndSpecifications) throws Exception {
-
+		
 		Backend backEnd = new LVM(this, description, backEndSpecifications);
 
 		if (Scheduler.isTraining == false
 		// && backEndSpecifications.getMachineLearningAlgorithm() ==
 		// MachineLearningAlgorithm.RepTree
 		) {
-
+			
 			BufferedReader reader = new BufferedReader(new FileReader(
 					backEndSpecifications.getTrainingDataSetPath()));
-
+				
+			
+				
 			Instances data = new Instances(reader);
 
 			int j = -1;
