@@ -34,8 +34,7 @@ public class BlockStorageSimulator {
 		// randomly generate requests
 	}
 
-	public static void retrieveExperiment(BigDecimal experimentID)
-			throws SQLException {
+	public static void retrieveExperiment(BigDecimal experimentID) throws SQLException {
 
 		// Experiment experiment = Experiment.resumeExperiment(experimentID);
 
@@ -50,9 +49,13 @@ public class BlockStorageSimulator {
 	private static PrintWriter logWrite;
 
 	private static Boolean hasCommandArgs = false;
+	
+	public static Boolean validateLearningModels = false;
 
 	public static void main(String[] args) {
-		
+
+		System.out.println("START" + DateTime.now());
+
 		Date startTime = new Date();
 
 		Scheduler.isTraining = false;
@@ -61,12 +64,12 @@ public class BlockStorageSimulator {
 		Scheduler.assessmentPolicy = AssessmentPolicy.StrictQoS;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
-		Scheduler.modClockBy = 100; // every 300 minutes
+		Scheduler.modClockBy = 100; // every 100 minutes
 		ResourceMonitor.clockGapProbability = 0.25; /**/
 
-		StochasticEventGenerator.clockGapProbability = Scheduler.modClockBy * 15; /* 1500*/
-		Scheduler.feedBackLearning = false;
-		Scheduler.feedbackLearningInterval = (int)(Scheduler.modClockBy * 2.5); /* 300 */
+		StochasticEventGenerator.clockGapProbability = Scheduler.modClockBy * 15; /* 1500 */
+		Scheduler.feedBackLearning = true;
+		Scheduler.feedbackLearningInterval = (int) (Scheduler.modClockBy * 2.5); /* 300 */
 		Scheduler.updateLearning_MinNumberOfRecords = Scheduler.modClockBy * 6; // 700
 		Scheduler.updateLearning_MaxNumberOfRecords = Scheduler.modClockBy * 16;// 1500;
 
@@ -136,8 +139,7 @@ public class BlockStorageSimulator {
 		try {
 			applyCommandArguments(args);
 
-			if (Scheduler.isTraining == true
-					|| Scheduler.assessmentPolicy == AssessmentPolicy.MaxEfficiency)
+			if (Scheduler.isTraining == true || Scheduler.assessmentPolicy == AssessmentPolicy.MaxEfficiency)
 
 				Scheduler.feedBackLearning = false;
 
@@ -149,14 +151,14 @@ public class BlockStorageSimulator {
 
 			experiment.save();
 
+			System.out.println("Experiment save" + " - " + DateTime.now());
+
 			BlockStorageSimulator.logWrite = new PrintWriter(
-					BlockStorageSimulator.logPath
-							+ experiment.getID().toString() + ".txt", "UTF-8");
+					BlockStorageSimulator.logPath + experiment.getID().toString() + ".txt", "UTF-8");
 
 			BlockStorageSimulator.log("start " + startTime.toString());
 
-			scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(
-					experiment, workload);
+			scheduler = new edu.purdue.simulation.blockstorage.MaxCapacityFirstScheduler(experiment, workload);
 
 			scheduler.run();
 
@@ -165,19 +167,19 @@ public class BlockStorageSimulator {
 
 			edu.purdue.simulation.BlockStorageSimulator.log(ex, "main");
 
+			System.exit(0);
+
 		} finally {
 
 			try {
 				long simulation_duration = BlockStorageSimulator.getDateDiff(//
-						startTime,//
-						new Date(),//
+						startTime, //
+						new Date(), //
 						TimeUnit.SECONDS);
 
-				BlockStorageSimulator.recordReport(experiment,
-						simulation_duration);
+				BlockStorageSimulator.recordReport(experiment, simulation_duration);
 
-				edu.purdue.simulation.BlockStorageSimulator.log(experiment
-						.toString() + "\n");
+				edu.purdue.simulation.BlockStorageSimulator.log(experiment.toString() + "\n");
 
 				double sumClassifierEvaluation = 0;
 
@@ -190,65 +192,53 @@ public class BlockStorageSimulator {
 
 					if (backend.classifierEvaluation != null) {
 
-						sumClassifierEvaluation += backend.classifierEvaluation
-								.pctCorrect();
+						sumClassifierEvaluation += backend.classifierEvaluation.pctCorrect();
 
-						classifierEvalString = " Classifier Accuracy: "
-								+ backend.classifierEvaluation.pctCorrect();
+						classifierEvalString = " Classifier Accuracy: " + backend.classifierEvaluation.pctCorrect();
 					}
 
 					edu.purdue.simulation.BlockStorageSimulator
-							.log("Backend ID = " + backend.getID()
-									+ classifierEvalString);
+							.log("Backend ID = " + backend.getID() + classifierEvalString);
 				}
 
-				edu.purdue.simulation.BlockStorageSimulator
-						.log("simulation done, experiment ID ="
-								+ experiment.getID()
-								+ "\nAverage Backends Classifiers Accuracy: "
-								+ (sumClassifierEvaluation / Experiment.backendList
-										.size()) + "assessmentPolicy: "
-								+ Scheduler.assessmentPolicy);
+				edu.purdue.simulation.BlockStorageSimulator.log("simulation done, experiment ID =" + experiment.getID()
+						+ "\nAverage Backends Classifiers Accuracy: "
+						+ (sumClassifierEvaluation / Experiment.backendList.size()) + "assessmentPolicy: "
+						+ Scheduler.assessmentPolicy);
 
 				double count_accuracyRecords = 0;
 				double total_accuracy = 0;
 
 				if (Scheduler.feedBackLearning) {
 
-					for (Integer key : BlockStorageSimulator.feedbackAccuracy
-							.keySet()) {
+					for (Integer key : BlockStorageSimulator.feedbackAccuracy.keySet()) {
 
 						System.out.print("clock: " + key + " - ");
 
-						for (Object[] accuracyRecord : BlockStorageSimulator.feedbackAccuracy
-								.get(key)) {
+						for (Object[] accuracyRecord : BlockStorageSimulator.feedbackAccuracy.get(key)) {
 							count_accuracyRecords++;
 
 							if (accuracyRecord[1] == null) {
 								accuracyRecord[1] = (double) 0.0;
 							}
 
-							total_accuracy = total_accuracy
-									+ (double) accuracyRecord[1];
+							total_accuracy = total_accuracy + (double) accuracyRecord[1];
 
-							System.out.print(Math
-									.round((double) accuracyRecord[1]) + "%, ");
+							System.out.print(Math.round((double) accuracyRecord[1]) + "%, ");
 						}
 
 						edu.purdue.simulation.BlockStorageSimulator.log("");
 					}
 
-					System.out.println("\nFeedback learning average acuracy :"
-							+ (total_accuracy / count_accuracyRecords)
-							+ ", #created models: "
-							+ BlockStorageSimulator.feedbackAccuracy.size()
-							+ ", # accuracy records: " + count_accuracyRecords);
+					System.out
+							.println("\nFeedback learning average acuracy :" + (total_accuracy / count_accuracyRecords)
+									+ ", #created models: " + BlockStorageSimulator.feedbackAccuracy.size()
+									+ ", # accuracy records: " + count_accuracyRecords);
 				}
 
 				if (Scheduler.isTraining == false)
 
-					System.out.println("training dataset from experiment exp#"
-							+ Scheduler.trainingExperimentID);
+					System.out.println("training dataset from experiment exp#" + Scheduler.trainingExperimentID);
 				/*
 				 * edu.purdue.simulation.BlockStorageSimulator.log("sum: " +
 				 * Scheduler.sum + " randGeneratedNumbers " +
@@ -256,20 +246,18 @@ public class BlockStorageSimulator {
 				 * Scheduler.randGeneratedNumbers));
 				 */
 
-				edu.purdue.simulation.BlockStorageSimulator.log("Clock: "
-						+ Experiment.clock);
+				edu.purdue.simulation.BlockStorageSimulator.log("Clock: " + Experiment.clock);
 
 				// duration
 
-				edu.purdue.simulation.BlockStorageSimulator.log("End "
-						+ DateTime.now() + " duration: " + simulation_duration //
-						+ " seconds");
+				edu.purdue.simulation.BlockStorageSimulator
+						.log("End " + DateTime.now() + " duration: " + simulation_duration //
+								+ " seconds");
 
 				BlockStorageSimulator.logWrite.close();
 
 			} catch (Exception ex) {
-				edu.purdue.simulation.BlockStorageSimulator.log(ex,
-						"main-finally");
+				edu.purdue.simulation.BlockStorageSimulator.log(ex, "main-finally");
 			}
 		}
 	}
@@ -294,49 +282,42 @@ public class BlockStorageSimulator {
 
 				case "-trainingExperimentID":
 
-					Scheduler.trainingExperimentID = Integer
-							.parseInt(commandValue);
+					Scheduler.trainingExperimentID = Integer.parseInt(commandValue);
 
 					break;
 
 				case "-assessmentPolicy":
-					Scheduler.assessmentPolicy = AssessmentPolicy
-							.parse(commandValue);
+					Scheduler.assessmentPolicy = AssessmentPolicy.parse(commandValue);
 
 					break;
 
 				case "-machineLearningAlgorithm":
 
-					Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm
-							.parse(commandValue);
+					Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.parse(commandValue);
 
 					break;
 
 				case "-feedBackLearning":
 
-					Scheduler.feedBackLearning = Boolean
-							.parseBoolean(commandValue);
+					Scheduler.feedBackLearning = Boolean.parseBoolean(commandValue);
 
 					break;
 
 				case "-feedbackLearningInterval":
 
-					Scheduler.feedbackLearningInterval = Integer
-							.parseInt(commandValue);
+					Scheduler.feedbackLearningInterval = Integer.parseInt(commandValue);
 
 					break;
 
 				case "-updateLearning_MinNumberOfRecords":
 
-					Scheduler.updateLearning_MinNumberOfRecords = Integer
-							.parseInt(commandValue);
+					Scheduler.updateLearning_MinNumberOfRecords = Integer.parseInt(commandValue);
 
 					break;
 
 				case "-updateLearning_MaxNumberOfRecords":
 
-					Scheduler.updateLearning_MaxNumberOfRecords = Integer
-							.parseInt(commandValue);
+					Scheduler.updateLearning_MaxNumberOfRecords = Integer.parseInt(commandValue);
 
 					break;
 
@@ -348,15 +329,13 @@ public class BlockStorageSimulator {
 
 				case "-StochasticEventGenerator.clockGapProbability":
 
-					StochasticEventGenerator.clockGapProbability = Integer
-							.parseInt(commandValue);
+					StochasticEventGenerator.clockGapProbability = Integer.parseInt(commandValue);
 
 					break;
 
 				case "-ResourceMonitor.clockGapProbability":
 
-					ResourceMonitor.clockGapProbability = Double
-							.parseDouble(commandValue);
+					ResourceMonitor.clockGapProbability = Double.parseDouble(commandValue);
 
 					break;
 
@@ -368,8 +347,7 @@ public class BlockStorageSimulator {
 
 				case "-devideDeleteFactorBy":
 
-					Workload.devideDeleteFactorBy = Double
-							.parseDouble(commandValue);
+					Workload.devideDeleteFactorBy = Double.parseDouble(commandValue);
 
 					break;
 
@@ -381,8 +359,7 @@ public class BlockStorageSimulator {
 
 				case "-startTestDatasetFromRecordRank":
 
-					Scheduler.startTestDatasetFromRecordRank = Integer
-							.parseInt(commandValue);
+					Scheduler.startTestDatasetFromRecordRank = Integer.parseInt(commandValue);
 
 					break;
 
@@ -394,8 +371,7 @@ public class BlockStorageSimulator {
 
 				case "-enableVolumePerformanceMeter":
 
-					ResourceMonitor.enableVolumePerformanceMeter = Boolean
-							.parseBoolean(commandValue);
+					ResourceMonitor.enableVolumePerformanceMeter = Boolean.parseBoolean(commandValue);
 
 					break;
 
@@ -413,8 +389,7 @@ public class BlockStorageSimulator {
 
 				case "-recordVolumePerformanceForClocksWithNoVolume":
 
-					ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = Boolean
-							.parseBoolean(commandValue);
+					ResourceMonitor.recordVolumePerformanceForClocksWithNoVolume = Boolean.parseBoolean(commandValue);
 
 					break;
 
@@ -428,17 +403,20 @@ public class BlockStorageSimulator {
 
 	public static void log(String input) {
 
-		if (input.startsWith("["))
+		if (input.startsWith("[")) {
+
+			System.out.println(input);
 
 			return;
+		}
 
 		// if(BlockStorageSimulator.logWrite != null)
 
 		BlockStorageSimulator.logWrite.println(input);
 
-		if (!BlockStorageSimulator.hasCommandArgs)
+		// if (!BlockStorageSimulator.hasCommandArgs)
 
-			System.out.println(input);
+		System.out.println(input);
 	}
 
 	public static void log(Exception ex, String blockName) {
@@ -449,15 +427,12 @@ public class BlockStorageSimulator {
 
 		BlockStorageSimulator.log("\n    ~~~ Stack Trace~~~~:");
 
-		BlockStorageSimulator
-				.log(org.apache.commons.lang3.exception.ExceptionUtils
-						.getStackTrace(ex));
+		BlockStorageSimulator.log(org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace(ex));
 
 		BlockStorageSimulator.log("***END-ERROR[" + blockName + "]***");
 	}
 
-	public static void recordReport(Experiment ex, long simulation_duration)
-			throws Exception {
+	public static void recordReport(Experiment ex, long simulation_duration) throws Exception {
 
 		Connection connection = Database.getConnection();
 
@@ -502,70 +477,70 @@ public class BlockStorageSimulator {
 				+ "?," // update_Learning_Min_Number_Of_Records
 				+ "?," // update_Learning_Max_Number_Of_Records
 				+ "?," // simulation_duration
-				+ "? " //all_backend_QoS_No_Rejected
+				+ "? " // all_backend_QoS_No_Rejected
 				+ ");";
 
-		PreparedStatement statement = connection.prepareStatement(query);
+		try (PreparedStatement statement = connection.prepareStatement(query)) {
 
-		PreparedStatement report = connection
-				.prepareCall("{call experiment_report(?)}");
+			try (PreparedStatement report = connection.prepareCall("{call experiment_report(?)}")) {
 
-		report.setBigDecimal(1, ex.getID());
-		report.execute();
-		ResultSet rs = report.getResultSet();
-		rs.next();
+				report.setBigDecimal(1, ex.getID());
+				report.execute();
+				try (ResultSet rs = report.getResultSet()) {
+					rs.next();
 
-		statement.setBigDecimal(1, ex.getID()); // Experiment_ID
-		statement.setBoolean(2, Scheduler.feedBackLearning); // Is_Feedback_Learning
-		statement.setBoolean(3, Scheduler.isTraining);// Is_Training
+					statement.setBigDecimal(1, ex.getID()); // Experiment_ID
+					statement.setBoolean(2, Scheduler.feedBackLearning); // Is_Feedback_Learning
+					statement.setBoolean(3, Scheduler.isTraining);// Is_Training
 
-		statement.setFloat(4, rs.getFloat(1)); // all_backend_QoS
-		statement.setFloat(5, rs.getFloat(2)); // rejection_rate
-		statement.setInt(6, rs.getInt(3)); // requests_count
-		statement.setInt(7, rs.getInt(4)); // scheduled_vol_count
-		statement.setInt(8, rs.getInt(5)); // rejected_vol_count
-		statement.setInt(9, rs.getInt(6)); // deleted_vol_count
-		statement.setFloat(10, rs.getFloat(7)); // avg_requested_capacity
-		statement.setFloat(11, rs.getFloat(8)); // avg_IOPS_requested
-		statement.setFloat(12, rs.getFloat(9)); // avg_available_IOPS
-		statement.setFloat(13, rs.getFloat(10)); // avg_deletion_time
-		statement.setInt(14, rs.getInt(11)); // SLA_vio_count
-		statement.setInt(15, rs.getInt(12)); // vol_performance_meter_count
-		statement.setInt(16, rs.getInt(13)); // max_clock
-		statement.setInt(17, rs.getInt(14)); // backend_count
+					statement.setFloat(4, rs.getFloat(1)); // all_backend_QoS
+					statement.setFloat(5, rs.getFloat(2)); // rejection_rate
+					statement.setInt(6, rs.getInt(3)); // requests_count
+					statement.setInt(7, rs.getInt(4)); // scheduled_vol_count
+					statement.setInt(8, rs.getInt(5)); // rejected_vol_count
+					statement.setInt(9, rs.getInt(6)); // deleted_vol_count
+					statement.setFloat(10, rs.getFloat(7)); // avg_requested_capacity
+					statement.setFloat(11, rs.getFloat(8)); // avg_IOPS_requested
+					statement.setFloat(12, rs.getFloat(9)); // avg_available_IOPS
+					statement.setFloat(13, rs.getFloat(10)); // avg_deletion_time
+					statement.setInt(14, rs.getInt(11)); // SLA_vio_count
+					statement.setInt(15, rs.getInt(12)); // vol_performance_meter_count
+					statement.setInt(16, rs.getInt(13)); // max_clock
+					statement.setInt(17, rs.getInt(14)); // backend_count
 
-		String predictionRule = BlockStorageSimulator.assessmentPolicyRules
-				.get(Scheduler.assessmentPolicy);
-		if (predictionRule == null)
-			predictionRule = "";
+					String predictionRule = BlockStorageSimulator.assessmentPolicyRules.get(Scheduler.assessmentPolicy);
+					if (predictionRule == null)
+						predictionRule = "";
 
-		statement.setString(18, predictionRule); // predictors_rules
+					statement.setString(18, predictionRule); // predictors_rules
 
-		statement.setString(19, Scheduler.violationGroups); // vio_groups
-		statement.setString(20, Scheduler.machineLearningAlgorithm.toString()); // ML_algorithm
-		statement.setString(21, ""); // clock_unit
+					statement.setString(19, Scheduler.violationGroups); // vio_groups
+					statement.setString(20, Scheduler.machineLearningAlgorithm.toString()); // ML_algorithm
+					statement.setString(21, ""); // clock_unit
 
-		statement.setString(22, Scheduler.assessmentPolicy.toString()); // Assessment_Policy
-		statement.setInt(23, Scheduler.trainingExperimentID); // training_experiment_ID
-		statement.setDouble(24, ResourceMonitor.clockGapProbability); // Resource_Monitor_clockGap_probability
-		statement.setInt(25, Scheduler.modClockBy); // Scheduler_modClockBy
-		statement.setInt(26, Scheduler.feedbackLearningInterval);// Scheduler_Feedback_Learning_Interval
-		// Stochastic_Event_Generator_clockGap_probabilityDouble
-		statement.setDouble(27, StochasticEventGenerator.clockGapProbability);
-		// update_Learning_Min_Number_Of_Records
-		statement.setInt(28, Scheduler.updateLearning_MinNumberOfRecords);
-		// update_Learning_Max_Number_Of_Records
-		statement.setInt(29, Scheduler.updateLearning_MaxNumberOfRecords);
+					statement.setString(22, Scheduler.assessmentPolicy.toString()); // Assessment_Policy
+					statement.setInt(23, Scheduler.trainingExperimentID); // training_experiment_ID
+					statement.setDouble(24, ResourceMonitor.clockGapProbability); // Resource_Monitor_clockGap_probability
+					statement.setInt(25, Scheduler.modClockBy); // Scheduler_modClockBy
+					statement.setInt(26, Scheduler.feedbackLearningInterval);// Scheduler_Feedback_Learning_Interval
+					// Stochastic_Event_Generator_clockGap_probabilityDouble
+					statement.setDouble(27, StochasticEventGenerator.clockGapProbability);
+					// update_Learning_Min_Number_Of_Records
+					statement.setInt(28, Scheduler.updateLearning_MinNumberOfRecords);
+					// update_Learning_Max_Number_Of_Records
+					statement.setInt(29, Scheduler.updateLearning_MaxNumberOfRecords);
 
-		statement.setLong(30, simulation_duration); // simulation_duration
-		
-		statement.setFloat(31, rs.getFloat(15)); // all_backend_QoS//all_backend_QoS_No_Rejected
+					statement.setLong(30, simulation_duration); // simulation_duration
 
-		statement.execute();
+					statement.setFloat(31, rs.getFloat(15)); // all_backend_QoS//all_backend_QoS_No_Rejected
+
+					statement.execute();
+				}
+			}
+		}
 	}
 
-	public static void copyFile(File sourceFile, File destFile)
-			throws IOException {
+	public static void copyFile(File sourceFile, File destFile) throws IOException {
 
 		if (!destFile.exists()) {
 			destFile.createNewFile();

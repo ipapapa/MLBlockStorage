@@ -19,6 +19,7 @@ import java.io.File;
 import java.math.BigDecimal;
 
 import org.apache.commons.math3.analysis.function.Exp;
+import org.joda.time.DateTime;
 
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -34,15 +35,12 @@ public abstract class Scheduler {
 
 		this.setWorkload(workload);
 
-		experiment
-				.setSchedulerAlgorithm((experiment.getSchedulerAlgorithm() + " ")
-						.trim() + this.getName());
+		experiment.setSchedulerAlgorithm((experiment.getSchedulerAlgorithm() + " ").trim() + this.getName());
 
 		experiment.update();
 
 		// populate scheduler queue
-		this.setRequestQueue(new LinkedList<VolumeRequest>(this.Workload
-				.getVolumeRequestList()));
+		this.setRequestQueue(new LinkedList<VolumeRequest>(this.Workload.getVolumeRequestList()));
 	}
 
 	public static MachineLearningAlgorithm machineLearningAlgorithm = MachineLearningAlgorithm.J48;
@@ -111,8 +109,7 @@ public abstract class Scheduler {
 	}
 
 	@SuppressWarnings("unused")
-	protected double validateWithClassifier(Backend backend,
-			VolumeSpecifications volumeSpecifications,
+	protected double validateWithClassifier(Backend backend, VolumeSpecifications volumeSpecifications,
 			MachineLearningAlgorithm classifier) throws Exception {
 
 		DenseInstance instance = new DenseInstance(4);
@@ -128,8 +125,7 @@ public abstract class Scheduler {
 
 		instance.setValue(1, clock % Scheduler.modClockBy);
 		instance.setValue(2, backend_VolumesCount + 1);
-		instance.setValue(3,
-				backend.getAllocatedIOPS() + volumeSpecifications.getIOPS());
+		instance.setValue(3, backend.getAllocatedIOPS() + volumeSpecifications.getIOPS());
 
 		Instances ii = Experiment.createWekaDataset(0);
 
@@ -145,13 +141,11 @@ public abstract class Scheduler {
 
 		else if (classifier == MachineLearningAlgorithm.BayesianNetwork)
 
-			predictors = backend.bayesianNetwork
-					.distributionForInstance(instance);
+			predictors = backend.bayesianNetwork.distributionForInstance(instance);
 
 		else
 
-			throw new Exception("cannot validate with this classifier: "
-					+ classifier);
+			throw new Exception("cannot validate with this classifier: " + classifier);
 
 		/*
 		 * predictors[0]: the probability of being in group V1
@@ -166,14 +160,12 @@ public abstract class Scheduler {
 
 			compareTo = new double[] { 0.99, 0.99 };
 			// backend_VolumesCount
-			if (BlockStorageSimulator.assessmentPolicyRules
-					.containsKey(Scheduler.assessmentPolicy) == false) {
-				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, "volNum == 0 || predictors[0] > "
-								+ compareTo[0]
+			if (BlockStorageSimulator.assessmentPolicyRules.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(Scheduler.assessmentPolicy,
+						"volNum == 0 || predictors[0] > " + compareTo[0]
 				// + " && (predictors[0] + predictors[1]) > "
 				// + compareTo[1]//
-						);
+				);
 			}
 
 			/*
@@ -224,14 +216,12 @@ public abstract class Scheduler {
 
 			compareTo = new double[] { 0.90, 0.49 };
 
-			if (BlockStorageSimulator.assessmentPolicyRules
-					.containsKey(Scheduler.assessmentPolicy) == false) {
-				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy,//
+			if (BlockStorageSimulator.assessmentPolicyRules.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(Scheduler.assessmentPolicy, //
 						"volNum == 0  || predictors[0] > " + compareTo[0]
 				// + " || predictors[1] > "
 				// + compareTo[1]//
-						);
+				);
 			}
 
 			if (volNum == 0 || predictors[0] > compareTo[0]
@@ -251,15 +241,13 @@ public abstract class Scheduler {
 
 			compareTo = new double[] { 0.8, 0.95, 0.98 };
 
-			if (BlockStorageSimulator.assessmentPolicyRules
-					.containsKey(Scheduler.assessmentPolicy) == false) {
-				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy,
+			if (BlockStorageSimulator.assessmentPolicyRules.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(Scheduler.assessmentPolicy,
 						"volNum == 0 || predictors[0] > " + compareTo[0]
 				// + "||predictors[1]>"
-						// + compareTo[1] + "||predictors[2]>"
-						// + compareTo[2]
-						);
+				// + compareTo[1] + "||predictors[2]>"
+				// + compareTo[2]
+				);
 			}
 
 			if (volNum == 0 || predictors[0] > compareTo[0]
@@ -278,16 +266,14 @@ public abstract class Scheduler {
 
 			compareTo = new double[] { 0.6, 0.6, 0.6 };
 
-			if (BlockStorageSimulator.assessmentPolicyRules
-					.containsKey(Scheduler.assessmentPolicy) == false) {
-				BlockStorageSimulator.assessmentPolicyRules.put(
-						Scheduler.assessmentPolicy, //
+			if (BlockStorageSimulator.assessmentPolicyRules.containsKey(Scheduler.assessmentPolicy) == false) {
+				BlockStorageSimulator.assessmentPolicyRules.put(Scheduler.assessmentPolicy, //
 						"returns 1"
 				// "predictors[0]>"
 				// + compareTo[0] //
 				// + "||predictors[1]>" + compareTo[1]
 				// + "||predictors[2]>" + compareTo[2]//
-						);
+				);
 			}
 
 			result = 1;
@@ -311,23 +297,21 @@ public abstract class Scheduler {
 	}
 
 	protected void sortBackendListBaseOnAvailableCapacity() {
-		Collections.sort(edu.purdue.simulation.Experiment.backendList,
-				new Comparator<Backend>() {
-					@Override
-					public int compare(Backend backEnd1, Backend backEnd2) {
-						return Integer.compare(backEnd2.getState()
-								.getAvailableCapacity(), backEnd1.getState()
-								.getAvailableCapacity());
-					}
-				});
+		Collections.sort(edu.purdue.simulation.Experiment.backendList, new Comparator<Backend>() {
+			@Override
+			public int compare(Backend backEnd1, Backend backEnd2) {
+				return Integer.compare(backEnd2.getState().getAvailableCapacity(),
+						backEnd1.getState().getAvailableCapacity());
+			}
+		});
 	}
 
 	/*
 	 * bad function delete it. not used and broken
 	 */
-	protected ScheduleResponse.RejectionReason validateResources(
-			Backend backend, VolumeSpecifications volumeRequestSpecifications,
-			MachineLearningAlgorithm machineLearningAlgorithm) throws Exception {
+	protected ScheduleResponse.RejectionReason validateResources(Backend backend,
+			VolumeSpecifications volumeRequestSpecifications, MachineLearningAlgorithm machineLearningAlgorithm)
+					throws Exception {
 
 		ScheduleResponse.RejectionReason result = ScheduleResponse.RejectionReason.none;
 
@@ -342,14 +326,12 @@ public abstract class Scheduler {
 		} else {
 
 			// validateIOPS =
-			this.validateWithClassifier(backend, volumeRequestSpecifications,
-					machineLearningAlgorithm);
+			this.validateWithClassifier(backend, volumeRequestSpecifications, machineLearningAlgorithm);
 		}
 
 		boolean validateCapacity = true;
 
-		if (backend.getState().getAvailableCapacity() < volumeRequestSpecifications
-				.getCapacity()) {
+		if (backend.getState().getAvailableCapacity() < volumeRequestSpecifications.getCapacity()) {
 
 			validateCapacity = false;
 		}
@@ -384,8 +366,7 @@ public abstract class Scheduler {
 		throw new UnsupportedOperationException();
 	}
 
-	protected BackEndSpecifications currentExpectedSpecifications_Regression(
-			Backend backend) {
+	protected BackEndSpecifications currentExpectedSpecifications_Regression(Backend backend) {
 
 		// TODO call the database and do regression on current clock
 		BackEndSpecifications result = new BackEndSpecifications();
@@ -404,8 +385,7 @@ public abstract class Scheduler {
 
 	protected int getExpectedIOPSBasedOnBackendStability(Backend backend) {
 
-		BackEndSpecifications specifications = this
-				.currentExpectedSpecifications_Regression(backend);
+		BackEndSpecifications specifications = this.currentExpectedSpecifications_Regression(backend);
 
 		// Remmeber you have to automate category by looking at mean and std of
 		// backend
@@ -463,8 +443,7 @@ public abstract class Scheduler {
 
 		if (folder.exists() == false)
 
-			result.add("Experiment.saveResultPath - path does not exists - "
-					+ Experiment.saveResultPath);
+			result.add("Experiment.saveResultPath - path does not exists - " + Experiment.saveResultPath);
 
 		return result;
 	}
@@ -472,11 +451,9 @@ public abstract class Scheduler {
 	public void run() throws Exception {
 
 		// #1: initialize the clock to the first request arrival time
-		edu.purdue.simulation.Experiment.clock = new BigDecimal(this
-				.getRequestQueue().peek().getArrivalTime());
+		edu.purdue.simulation.Experiment.clock = new BigDecimal(this.getRequestQueue().peek().getArrivalTime());
 
-		LinkedList<String> validationResult = this
-				.validateConfigurationParameres();
+		LinkedList<String> validationResult = this.validateConfigurationParameres();
 
 		if (validationResult.size() > 0) {
 
@@ -509,6 +486,8 @@ public abstract class Scheduler {
 
 			clockIntValue = edu.purdue.simulation.Experiment.clock.intValue();
 
+			System.out.println("while (true) - clockIntValue: " + clockIntValue);
+
 			if (this.getRequestQueue().size() == 0)
 
 				break;
@@ -535,8 +514,7 @@ public abstract class Scheduler {
 			 * the resource evaluation process. The sequence of instructions in
 			 * this block of code is important.
 			 */
-			int nextRequestClock = this.getRequestQueue().peek()
-					.getArrivalTime();
+			int nextRequestClock = this.getRequestQueue().peek().getArrivalTime();
 			boolean goToNextClock = nextRequestClock != (clockIntValue % Scheduler.modClockBy);
 			/*
 			 * first delete expired volumes before schedule a new request
@@ -569,6 +547,10 @@ public abstract class Scheduler {
 
 			if (goToNextClock) {
 
+				if (clockIntValue % 10 == 0)
+
+					System.gc();
+
 				stochasticEventGenerator.run();
 
 				this.deleteExpiredVolumes();
@@ -580,8 +562,7 @@ public abstract class Scheduler {
 				/*
 				 * applies feedback learning
 				 */
-				if (Scheduler.feedBackLearning
-						&& clockIntValue > 0
+				if (Scheduler.feedBackLearning && clockIntValue > 0
 						&& (clockIntValue % Scheduler.feedbackLearningInterval == 0)) {
 
 					/*
@@ -589,15 +570,13 @@ public abstract class Scheduler {
 					 * models multiple times. I prefer to make the model based
 					 * on the first request of each click
 					 */
-					if (BlockStorageSimulator.feedbackAccuracy
-							.containsKey(clockIntValue) == false) {
+					if (BlockStorageSimulator.feedbackAccuracy.containsKey(clockIntValue) == false) {
 
-						BlockStorageSimulator.feedbackAccuracy.put(
-								clockIntValue,
+						BlockStorageSimulator.feedbackAccuracy.put(clockIntValue,
 								new Object[Experiment.backendList.size()][2]);
 
 						this.experiment.createUpdateWorkload(
-						//
+								//
 								0, // numberOfRecords
 								this.getExperiment(), // experiment
 								null, // path
@@ -610,8 +589,7 @@ public abstract class Scheduler {
 				 * clock must be increased after all statements/processes are
 				 * done
 				 */
-				edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock
-						.add(numOne);
+				edu.purdue.simulation.Experiment.clock = edu.purdue.simulation.Experiment.clock.add(numOne);
 
 				currentClockRequests = 0;
 			}
@@ -630,35 +608,39 @@ public abstract class Scheduler {
 
 		if (Scheduler.isTraining)
 
-			this.experiment.createUpdateWorkload(0, this.getExperiment(), null,
-					0, //
+			this.experiment.createUpdateWorkload(0, this.getExperiment(), null, 0, //
 					0 // no feedback learning/update model
-					);
+			);
 
 		else
 
-			this.experiment.createUpdateWorkload(0, this.getExperiment(), null,
-					1, //
+			this.experiment.createUpdateWorkload(0, this.getExperiment(), null, 1, //
 					0 // no feedback learning/update model
-					); // include all values
+			); // include all values
 
 		// }
 
 		// eventGeneratorThread.interrupt();
 		// ResourceMonitorThread.interrupt();
 		//
-		// edu.purdue.simulation.BlockStorageSimulator.log("DONE - with threads");
+		// edu.purdue.simulation.BlockStorageSimulator.log("DONE - with
+		// threads");
 	}
 
-	public static void execute_AllBatchQueries(boolean forceSave)
-			throws SQLException, Exception {
+	@SuppressWarnings("unused")
+	public static void execute_AllBatchQueries(boolean forceSave) throws SQLException, Exception {
 
-		Database.executeBatchQuery(ResourceMonitor.backendStat_queries,
-				forceSave);
+		Database.executeBatchQuery(ResourceMonitor.backendStat_queries, forceSave);
 
 		Database.executeBatchQuery(StochasticEvent.queries, forceSave);
 
 		Database.executeBatchQuery(VolumePerformanceMeter.queries, forceSave);
+
+		// if(ScheduleResponse.queries.size() >= 1){
+		// Database.executeBatchQuery(ScheduleResponse.queries, true);
+		// }
+
+		Database.executeBatchQuery(ScheduleResponse.queries, forceSave);
 	}
 
 	public static double sum = 0;
@@ -675,8 +657,7 @@ public abstract class Scheduler {
 		int currentClock = Experiment.clock.intValue();
 
 		for (int i = 0; i < edu.purdue.simulation.Experiment.backendList.size(); i++) {
-			Backend backend = edu.purdue.simulation.Experiment.backendList
-					.get(i);
+			Backend backend = edu.purdue.simulation.Experiment.backendList.get(i);
 
 			for (int j = 0; j < backend.getVolumeList().size(); j++) {
 				Volume volume = backend.getVolumeList().get(j);
@@ -704,8 +685,7 @@ public abstract class Scheduler {
 					volume.delete();
 
 					edu.purdue.simulation.BlockStorageSimulator
-							.log("[DELETED VOLUME] vol_ID = "
-									+ volume.getID().toString()//
+							.log("[DELETED VOLUME] vol_ID = " + volume.getID().toString()//
 									+ "del_prob = "//
 									+ deleteFactor);
 				}

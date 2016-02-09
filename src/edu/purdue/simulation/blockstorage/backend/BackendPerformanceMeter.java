@@ -25,8 +25,7 @@ public class BackendPerformanceMeter extends PersistentObject {
 	public int availableCapacity;
 
 	public String toString() {
-		return "[BackendPerformanceMeter] clock = " + Experiment.clock
-				+ " ID = " + this.getID() + " backendID = "
+		return "[BackendPerformanceMeter] clock = " + Experiment.clock + " ID = " + this.getID() + " backendID = "
 				+ this.backend.getID();
 	}
 
@@ -34,42 +33,42 @@ public class BackendPerformanceMeter extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"Insert Into BlockStorageSimulator.backend_performance_meter"
-								+ "	(backend_ID, volume_ID, clock, available_IOPS, available_capacity, volumes_count)"
-								+ "		values" + "	(?, ?, ?, ?, ?, ?);",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection
+				.prepareStatement("Insert Into BlockStorageSimulator.backend_performance_meter"
+						+ "	(backend_ID, volume_ID, clock, available_IOPS, available_capacity, volumes_count)"
+						+ "		values" + "	(?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, this.backend.getID());
+			statement.setBigDecimal(1, this.backend.getID());
 
-		statement.setBigDecimal(2, pingVolume.getID());
+			statement.setBigDecimal(2, pingVolume.getID());
 
-		statement.setBigDecimal(3, Experiment.clock);
+			statement.setBigDecimal(3, Experiment.clock);
 
-		int currentIOPS = pingVolume.getAvailableIOPS_ForEachVolume();
+			int currentIOPS = pingVolume.getAvailableIOPS_ForEachVolume();
 
-		statement.setInt(4, currentIOPS);
+			statement.setInt(4, currentIOPS);
 
-		int availableCapacity = backend.getState().getAvailableCapacity();
+			int availableCapacity = backend.getState().getAvailableCapacity();
 
-		statement.setInt(5, availableCapacity);
+			statement.setInt(5, availableCapacity);
 
-		statement.setInt(6, this.backend.getVolumeList().size());
+			statement.setInt(6, this.backend.getVolumeList().size());
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		ResultSet rs = statement.getGeneratedKeys();
+			try (ResultSet rs = statement.getGeneratedKeys()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			this.setID(rs.getBigDecimal(1));
+					this.setID(rs.getBigDecimal(1));
 
-			edu.purdue.simulation.BlockStorageSimulator.log(this.toString() + " pingVolumeID = "
-					+ pingVolume.getID() + " currentIOPS = " + currentIOPS
-					+ " availableCapacity = " + availableCapacity);
+					edu.purdue.simulation.BlockStorageSimulator
+							.log(this.toString() + " pingVolumeID = " + pingVolume.getID() + " currentIOPS = "
+									+ currentIOPS + " availableCapacity = " + availableCapacity);
 
-			return this.getID();
+					return this.getID();
+				}
+			}
 		}
 
 		return BigDecimal.valueOf(-1);

@@ -22,6 +22,7 @@ import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.trees.J48;
 import weka.classifiers.trees.REPTree;
 import weka.core.Instances;
+import edu.purdue.simulation.BlockStorageSimulator;
 import edu.purdue.simulation.Database;
 import edu.purdue.simulation.Experiment;
 import edu.purdue.simulation.PersistentObject;
@@ -38,8 +39,7 @@ public abstract class Backend extends PersistentObject {
 		this.setID(ID);
 	}
 
-	public Backend(Experiment experiment, String desciption,
-			BackEndSpecifications specifications) {
+	public Backend(Experiment experiment, String desciption, BackEndSpecifications specifications) {
 
 		this.volumeList = new ArrayList<Volume>();
 
@@ -82,39 +82,37 @@ public abstract class Backend extends PersistentObject {
 			// String params, String path, int classIndex, Instances train
 
 			return this.createJ48Tree(
-			// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+					// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
 					null, // TODO fix this function inputs
 					null, //
 					0, //
 					instances//
-					// no feedback learning/update model
-					);
+			// no feedback learning/update model
+			);
 
 		case BayesianNetwork:
 
 			// String params, String path, int classIndex, Instances train
 
 			return this.createBayesianNetwork(
-			// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+					// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
 					null, // TODO fix this function inputs
 					null, //
 					0, //
 					instances//
-					// no feedback learning/update model
-					);
+			// no feedback learning/update model
+			);
 
 		default:
 
-			throw new Exception(
-					"specifies machine learning algorithm is not implemented");
+			throw new Exception("specifies machine learning algorithm is not implemented");
 		}
 
 		return 0;
 	}
 
 	@SuppressWarnings("unused")
-	public double createJ48Tree(String params, String path, int classIndex,
-			Instances train) throws Exception {
+	public double createJ48Tree(String params, String path, int classIndex, Instances train) throws Exception {
 
 		if (false) {
 			String arguments = params;
@@ -141,32 +139,33 @@ public abstract class Backend extends PersistentObject {
 			// setting class attribute
 			train.setClassIndex(0);
 
+			this.j48 = null;
+			System.gc();
+
 			this.j48 = new J48();
 
 			this.j48.setUnpruned(true);
 
 			this.j48.buildClassifier(train);
 
-			this.classifierEvaluation = new Evaluation(train);
+			if (BlockStorageSimulator.validateLearningModels) {
 
-			Random rand = new Random(1); // using seed = 1
+				this.classifierEvaluation = new Evaluation(train);
 
-			int folds = 10;
+				Random rand = new Random(1); // using seed = 1
 
-			this.classifierEvaluation.crossValidateModel(this.j48, train,
-					folds, rand);
+				int folds = 10;
 
-			// train.size()
-			edu.purdue.simulation.BlockStorageSimulator
-					.log(this.classifierEvaluation.toClassDetailsString());
+				this.classifierEvaluation.crossValidateModel(this.j48, train, folds, rand);
 
-			edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: "
-					+ this.classifierEvaluation.pctCorrect() + " Sample Size: "
-					+ train.size() + " backendIndex: "
-					+ Experiment.backendList.indexOf(this));
+				// train.size()
+				edu.purdue.simulation.BlockStorageSimulator.log(this.classifierEvaluation.toClassDetailsString());
 
-			return this.classifierEvaluation.pctCorrect();
+				edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: " + this.classifierEvaluation.pctCorrect()
+						+ " Sample Size: " + train.size() + " backendIndex: " + Experiment.backendList.indexOf(this));
 
+				return this.classifierEvaluation.pctCorrect();
+			}
 			// FilteredClassifier fc = new FilteredClassifier();
 
 			// fc.setFilter(rm);
@@ -175,7 +174,8 @@ public abstract class Backend extends PersistentObject {
 
 			// fc.buildClassifier(train);
 
-			// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c 3"
+			// "-t D:\\SAS\\2\\514Cat_g3.arff -M 2 -V 0.001 -N 3 -S 1 -L -1 -c
+			// 3"
 
 		}
 
@@ -183,8 +183,7 @@ public abstract class Backend extends PersistentObject {
 	}
 
 	@SuppressWarnings("unused")
-	public double createBayesianNetwork(String params, String path,
-			int classIndex, Instances train) throws Exception {
+	public double createBayesianNetwork(String params, String path, int classIndex, Instances train) throws Exception {
 
 		if (true) {
 
@@ -207,10 +206,13 @@ public abstract class Backend extends PersistentObject {
 			// -P 1 -S BAYES -E
 			// weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5
 			// train.size()
+
+			this.bayesianNetwork = null;
+			System.gc();
+
 			this.bayesianNetwork = new BayesNet();
-			this.bayesianNetwork
-					.setOptions(weka.core.Utils
-							.splitOptions("-D -Q weka.classifiers.bayes.net.search.local.K2 -- -P 1 -S BAYES -E weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5"));
+			this.bayesianNetwork.setOptions(weka.core.Utils.splitOptions(
+					"-D -Q weka.classifiers.bayes.net.search.local.K2 -- -P 1 -S BAYES -E weka.classifiers.bayes.net.estimate.SimpleEstimator -- -A 0.5"));
 
 			// BayesNetEstimator bayesNetEstimator = new Wek
 			// bayesNetEstimator.setAlpha(0.5);
@@ -226,25 +228,23 @@ public abstract class Backend extends PersistentObject {
 
 			this.bayesianNetwork.buildClassifier(train);
 
-			this.classifierEvaluation = new Evaluation(train);
+			if (BlockStorageSimulator.validateLearningModels) {
 
-			Random rand = new Random(1); // using seed = 1
+				this.classifierEvaluation = new Evaluation(train);
 
-			int folds = 10;
+				Random rand = new Random(1); // using seed = 1
 
-			this.classifierEvaluation.crossValidateModel(this.bayesianNetwork,
-					train, folds, rand);
+				int folds = 10;
 
-			edu.purdue.simulation.BlockStorageSimulator
-					.log(this.classifierEvaluation.toClassDetailsString());
+				this.classifierEvaluation.crossValidateModel(this.bayesianNetwork, train, folds, rand);
 
-			edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: "
-					+ this.classifierEvaluation.pctCorrect() + " Sample Size: "
-					+ train.size() + " backendIndex: "
-					+ Experiment.backendList.indexOf(this));
+				edu.purdue.simulation.BlockStorageSimulator.log(this.classifierEvaluation.toClassDetailsString());
 
-			return this.classifierEvaluation.pctCorrect();
+				edu.purdue.simulation.BlockStorageSimulator.log("Accuracy: " + this.classifierEvaluation.pctCorrect()
+						+ " Sample Size: " + train.size() + " backendIndex: " + Experiment.backendList.indexOf(this));
 
+				return this.classifierEvaluation.pctCorrect();
+			}
 		}
 
 		return 0;
@@ -336,8 +336,7 @@ public abstract class Backend extends PersistentObject {
 
 		int c = Experiment.clock.intValue() % Scheduler.modClockBy;
 
-		double result = 403.78735 + (0.30922 * c) - (115.01801 * n)
-				+ (10.05588 * (n ^ 2));
+		double result = 403.78735 + (0.30922 * c) - (115.01801 * n) + (10.05588 * (n ^ 2));
 
 		c = Experiment.clock.intValue();
 
@@ -355,8 +354,7 @@ public abstract class Backend extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		CallableStatement statement = connection
-				.prepareCall("{Call data_for_regression(?, ?, ?)}");
+		CallableStatement statement = connection.prepareCall("{Call data_for_regression(?, ?, ?)}");
 
 		statement.setBigDecimal(1, this.experiment.getID());
 
@@ -364,137 +362,134 @@ public abstract class Backend extends PersistentObject {
 
 		statement.setInt(3, 0);
 
-		ResultSet resultset = statement.executeQuery();
+		try (ResultSet resultset = statement.executeQuery()) {
 
-		int rowcount = 0;
+			int rowcount = 0;
 
-		if (resultset.last()) {
-			rowcount = resultset.getRow();
+			if (resultset.last()) {
+				rowcount = resultset.getRow();
 
-			resultset.beforeFirst();
+				resultset.beforeFirst();
+			}
+
+			double[] y = new double[rowcount];
+
+			double[][] x = new double[rowcount][3];
+
+			int i = 0;
+
+			while (resultset.next()) {
+
+				x[i][0] = resultset.getDouble(1) % Scheduler.modClockBy; // clock
+				x[i][1] = resultset.getDouble(2); // num
+				x[i][2] = x[i][1] * x[i][1]; // num ^ 2
+
+				y[i] = resultset.getDouble(3);
+
+				i++;
+			}
+
+			final OLSMultipleLinearRegression reg = new OLSMultipleLinearRegression();
+
+			reg.newSampleData(y, x);
+
+			double[] beta = reg.estimateRegressionParameters();
+
+			double r2 = reg.calculateRSquared();
+
+			try (PreparedStatement statement2 = connection.prepareStatement("insert into backend_regression"
+					+ "	(backend_ID, clock, R2, Description)" + "		Values" + "	(?, ?, ?, ?);",
+					Statement.RETURN_GENERATED_KEYS)) {
+
+				statement2.setBigDecimal(1, this.getID());
+
+				statement2.setBigDecimal(2, Experiment.clock);
+
+				statement2.setDouble(3, r2);
+
+				String description = String.format("y = %f + (%f * clock) + (%f * num) + (%f * num2)", beta[0], beta[1],
+						beta[2], beta[3]);
+
+				statement2.setString(4, description);
+
+				statement2.executeUpdate();
+			}
 		}
-
-		double[] y = new double[rowcount];
-
-		double[][] x = new double[rowcount][3];
-
-		int i = 0;
-
-		while (resultset.next()) {
-
-			x[i][0] = resultset.getDouble(1) % Scheduler.modClockBy; // clock
-			x[i][1] = resultset.getDouble(2); // num
-			x[i][2] = x[i][1] * x[i][1]; // num ^ 2
-
-			y[i] = resultset.getDouble(3);
-
-			i++;
-		}
-
-		final OLSMultipleLinearRegression reg = new OLSMultipleLinearRegression();
-
-		reg.newSampleData(y, x);
-
-		double[] beta = reg.estimateRegressionParameters();
-
-		double r2 = reg.calculateRSquared();
-
-		PreparedStatement statement2 = connection.prepareStatement(
-				"insert into backend_regression"
-						+ "	(backend_ID, clock, R2, Description)" + "		Values"
-						+ "	(?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS);
-
-		statement2.setBigDecimal(1, this.getID());
-
-		statement2.setBigDecimal(2, Experiment.clock);
-
-		statement2.setDouble(3, r2);
-
-		String description = String.format(
-				"y = %f + (%f * clock) + (%f * num) + (%f * num2)", beta[0],
-				beta[1], beta[2], beta[3]);
-
-		statement2.setString(4, description);
-
-		statement2.executeUpdate();
 	}
 
-	private BigDecimal doSave(boolean isUpdate, int operationID)
-			throws SQLException, Exception {
+	private BigDecimal doSave(boolean isUpdate, int operationID) throws SQLException, Exception {
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"insert into backend"
-								+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description, stability_possession_mean, Save_Path)"
-								+ "		Values"
-								+ "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement(
+				"insert into backend"
+						+ "	(experiment_id, capacity, IOPS, is_online, clock, MaxCapacity, MinCapacity, MaxIOPS, MinIOPS, operation_ID, Description, stability_possession_mean, Save_Path)"
+						+ "		Values" + "	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+				Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, this.experiment.getID());
+			statement.setBigDecimal(1, this.experiment.getID());
 
-		statement.setInt(2, this.specifications.getCapacity());
+			statement.setInt(2, this.specifications.getCapacity());
 
-		statement.setInt(3, this.specifications.getIOPS());
+			statement.setInt(3, this.specifications.getIOPS());
 
-		statement.setBoolean(4, true);// this.specifications.getIsOnline());
+			statement.setBoolean(4, true);// this.specifications.getIsOnline());
 
-		statement.setBigDecimal(5, edu.purdue.simulation.Experiment.clock);
+			statement.setBigDecimal(5, edu.purdue.simulation.Experiment.clock);
 
-		statement.setInt(10, operationID);
+			statement.setInt(10, operationID);
 
-		if (isUpdate)
+			if (isUpdate)
 
-			throw new Exception(
-					"Backend.save --> isUpdate is not supported. We dont get track of stochastic events anymore");
+				throw new Exception(
+						"Backend.save --> isUpdate is not supported. We dont get track of stochastic events anymore");
 
-		if (isUpdate) {
-
-			statement.setNull(6, java.sql.Types.INTEGER);
-
-			statement.setNull(7, java.sql.Types.INTEGER);
-
-			statement.setNull(8, java.sql.Types.INTEGER);
-
-			statement.setNull(9, java.sql.Types.INTEGER);
-
-			statement.setString(11, null);
-
-			statement.setNull(12, java.sql.Types.DOUBLE);
-
-		} else {
-			statement.setInt(6, this.specifications.getMaxCapacity());
-
-			statement.setInt(7, this.specifications.getMinCapacity());
-
-			statement.setInt(8, this.specifications.getMaxIOPS());
-
-			statement.setInt(9, this.specifications.getMinIOPS());
-
-			statement.setString(11, this.getDescription());
-
-			statement.setDouble(12,
-					this.specifications.getStabilityPossessionMean());
-
-			statement.setString(13, this.getSpecifications()
-					.getTrainingWorkloadPath());
-		}
-
-		statement.executeUpdate();
-
-		ResultSet rs = statement.getGeneratedKeys();
-
-		if (rs.next()) {
-
-			// Don't screw current IF
 			if (isUpdate) {
 
-				return rs.getBigDecimal(1);
+				statement.setNull(6, java.sql.Types.INTEGER);
+
+				statement.setNull(7, java.sql.Types.INTEGER);
+
+				statement.setNull(8, java.sql.Types.INTEGER);
+
+				statement.setNull(9, java.sql.Types.INTEGER);
+
+				statement.setString(11, null);
+
+				statement.setNull(12, java.sql.Types.DOUBLE);
 
 			} else {
-				this.setID(rs.getBigDecimal(1));
+				statement.setInt(6, this.specifications.getMaxCapacity());
 
-				return this.getID();
+				statement.setInt(7, this.specifications.getMinCapacity());
+
+				statement.setInt(8, this.specifications.getMaxIOPS());
+
+				statement.setInt(9, this.specifications.getMinIOPS());
+
+				statement.setString(11, this.getDescription());
+
+				statement.setDouble(12, this.specifications.getStabilityPossessionMean());
+
+				statement.setString(13, this.getSpecifications().getTrainingWorkloadPath());
+			}
+
+			statement.executeUpdate();
+
+			try (ResultSet rs = statement.getGeneratedKeys()) {
+
+				if (rs.next()) {
+
+					// Don't screw current IF
+					if (isUpdate) {
+
+						return rs.getBigDecimal(1);
+
+					} else {
+						this.setID(rs.getBigDecimal(1));
+
+						return this.getID();
+					}
+				}
 			}
 		}
 
@@ -530,22 +525,18 @@ public abstract class Backend extends PersistentObject {
 		return true;
 	}
 
-	public Volume createVolumeThenAdd(
-			VolumeSpecifications volumeSpecifications,
-			ScheduleResponse scheduleResponse, boolean isPingVolume)
-			throws SQLException {
+	public Volume createVolumeThenAdd(VolumeSpecifications volumeSpecifications, ScheduleResponse scheduleResponse,
+			boolean isPingVolume) throws SQLException {
 
 		if (isPingVolume) {
 
 			// TODO actually implement delete volume which update the field
 			// is_deleted
-			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1,
-					Experiment.clock.intValue());
+			volumeSpecifications = new VolumeSpecifications(0, 0, 0, true, -1, Experiment.clock.intValue());
 
 			scheduleResponse = null;
 
-		} else if (this.getState().getAvailableCapacity() < volumeSpecifications
-				.getCapacity()) {
+		} else if (this.getState().getAvailableCapacity() < volumeSpecifications.getCapacity()) {
 			return null;
 		}
 
@@ -561,24 +552,21 @@ public abstract class Backend extends PersistentObject {
 		return this.createVolumeThenAdd(null, null, true);
 	}
 
-	public Volume createVolumeThenAdd(
-			VolumeSpecifications volumeSpecifications,
-			ScheduleResponse scheduleResponse) throws SQLException {
+	public Volume createVolumeThenAdd(VolumeSpecifications volumeSpecifications, ScheduleResponse scheduleResponse)
+			throws SQLException {
 
-		return this.createVolumeThenAdd(volumeSpecifications, scheduleResponse,
-				false);
+		return this.createVolumeThenAdd(volumeSpecifications, scheduleResponse, false);
 	}
 
 	@Override
 	public String toString() {
-		return String
-				.format("ID: %s - volCount: %d - Capacity: %d - stability: %f - IOPS: %d - IsOnline: %b - Latency: %d",
-						this.getID().toString(), //
-						this.getVolumeList().size(), //
-						this.specifications.getCapacity(), //
-						this.specifications.getStabilityPossessionMean(),
-						this.specifications.getIOPS(), true, // this.specifications.getIsOnline(),
-						this.specifications.getLatency());
+		return String.format(
+				"ID: %s - volCount: %d - Capacity: %d - stability: %f - IOPS: %d - IsOnline: %b - Latency: %d",
+				this.getID().toString(), //
+				this.getVolumeList().size(), //
+				this.specifications.getCapacity(), //
+				this.specifications.getStabilityPossessionMean(), this.specifications.getIOPS(), true, // this.specifications.getIsOnline(),
+				this.specifications.getLatency());
 	}
 
 }

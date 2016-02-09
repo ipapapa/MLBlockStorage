@@ -21,8 +21,7 @@ public class VolumeRequest extends Specifications {
 
 	}
 
-	public VolumeRequest(Workload workload, int type, int capacity, int IOPS,
-			double deleteFactor, int arrivalTime) {
+	public VolumeRequest(Workload workload, int type, int capacity, int IOPS, double deleteFactor, int arrivalTime) {
 		super();
 
 		this.setWorkload(workload);
@@ -89,8 +88,7 @@ public class VolumeRequest extends Specifications {
 	}
 
 	public VolumeSpecifications ToVolumeSpecifications() {
-		VolumeSpecifications result = new VolumeSpecifications(
-				this.getCapacity(), //
+		VolumeSpecifications result = new VolumeSpecifications(this.getCapacity(), //
 				this.getIOPS(), //
 				this.getLatency(), //
 				false, //
@@ -101,58 +99,55 @@ public class VolumeRequest extends Specifications {
 	}
 
 	public String getSaveQuery() {
-		return String
-				.format("insert into volume_request\n"
-						+ "(workload_id,capacity,type,IOPS,Delete_Probability,Arrival_Time)\n"
-						+ "Values(%d, %d, %d, %d, %f, %d)\n",//
-						this.Workload.getID().intValue(),//
-						this.getCapacity(), //
-						this.getType(), //
-						this.getIOPS(), //
-						this.getDeleteFactor(), //
-						this.getArrivalTime());
+		return String.format(
+				"insert into volume_request\n" + "(workload_id,capacity,type,IOPS,Delete_Probability,Arrival_Time)\n"
+						+ "Values(%d, %d, %d, %d, %f, %d)\n", //
+				this.Workload.getID().intValue(), //
+				this.getCapacity(), //
+				this.getType(), //
+				this.getIOPS(), //
+				this.getDeleteFactor(), //
+				this.getArrivalTime());
 	}
 
 	public BigDecimal Save() throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"insert into volume_request"
-								+ "	(workload_id, capacity, type, IOPS, Delete_Probability, Arrival_Time)"
-								+ "		Values" + "	(?, ?, ?, ?, ?, ?);",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement("insert into volume_request"
+				+ "	(workload_id, capacity, type, IOPS, Delete_Probability, Arrival_Time)" + "		Values"
+				+ "	(?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, this.Workload.getID());
+			statement.setBigDecimal(1, this.Workload.getID());
 
-		statement.setInt(2, this.getCapacity());
+			statement.setInt(2, this.getCapacity());
 
-		statement.setInt(3, this.getType());
+			statement.setInt(3, this.getType());
 
-		statement.setInt(4, this.getIOPS());
+			statement.setInt(4, this.getIOPS());
 
-		statement.setDouble(5, this.getDeleteFactor());
+			statement.setDouble(5, this.getDeleteFactor());
 
-		statement.setInt(6, this.getArrivalTime());
+			statement.setInt(6, this.getArrivalTime());
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		ResultSet rs = statement.getGeneratedKeys();
+			try (ResultSet rs = statement.getGeneratedKeys()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			this.setID(rs.getBigDecimal(1));
+					this.setID(rs.getBigDecimal(1));
 
-			return this.getID();
+					return this.getID();
+				}
+			}
 		}
 
 		return BigDecimal.valueOf(-1);
 	}
 
 	@Override
-	public boolean retrieveProperties(ResultSet resulSet) throws SQLException,
-			Exception {
+	public boolean retrieveProperties(ResultSet resulSet) throws SQLException, Exception {
 
 		if (this.getWorkload() == null) {
 			// retrieve workload from DB but IT IS NOT LOGICAL
@@ -180,7 +175,7 @@ public class VolumeRequest extends Specifications {
 	@Override
 	public String toString() {
 		return String.format("Clock = %s - %s ID: %s - Type: %d", //
-				Experiment.clock.toString(),//
+				Experiment.clock.toString(), //
 				super.toString(), //
 				this.getID(), //
 				this.Type);

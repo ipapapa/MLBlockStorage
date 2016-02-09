@@ -1,4 +1,7 @@
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.InputStreamReader;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tools.ant.types.Commandline;
@@ -9,8 +12,9 @@ import edu.purdue.simulation.blockstorage.MachineLearningAlgorithm;
 
 public class AutomateExperiment {
 
-	public static String buildPath = // -Xms512M -Xmx1024M
-	" java -d64 -Xms1024M -Xmx1024M -cp \"D:\\Dropbox\\WorkSpaceMars\\MLBlockStorage\\target\\classes" + ";"
+	public static String buildPath = // -Xms512M -Xmx1024M -d64 -Xms1024M
+										// -Xmx1024M
+	" java -d64 -Xmx1024M -Xms1024M -cp \"D:\\Dropbox\\WorkSpaceMars\\MLBlockStorage\\target\\classes" + ";"
 			+ "D:\\Dropbox\\Research\\MLScheduler\\jar\\libs\\*\" " + "edu.purdue.simulation.BlockStorageSimulator ";
 
 	private static class experimentDesign {
@@ -49,27 +53,25 @@ public class AutomateExperiment {
 			}
 
 			try {
-				counter++;
+				mainCounter++;
 
-				System.out.println("Counter: " + counter + "-" + DateTime.now() + " - " + runCommand);
+				runCommand = "cmd.exe /C start " + runCommand;
 
-				// TimeUnit.MINUTES.sleep(5);
+				System.out.println("Counter: " + mainCounter + "-" + DateTime.now() + " - " + runCommand);
 
-				// Runtime rt = Runtime.getRuntime();
+				int currentNumberOfJavaProc = getNumberOfCurrentJavaProcesses();
 
-				// rt.exec("cmd.exe /c start " + runCommand, null, null);
-				// /*cmd.exe /c start */
+				while (currentNumberOfJavaProc > 10) {
+
+					TimeUnit.SECONDS.sleep(5);
+					
+					currentNumberOfJavaProc = getNumberOfCurrentJavaProcesses();
+
+				}
 
 				Process p = Runtime.getRuntime().exec(runCommand);
 
-				p.waitFor();
-
-				System.out.println("Done ! " + counter + "-" + DateTime.now());
-
-				// Runtime.getRuntime().exec("cmd.exe /c" +runCommand);
-
-				// Runtime.getRuntime().exec("cmd.exe /c ping 4.2.2.4");
-				// Runtime.getRuntime().exec("cmd");
+				TimeUnit.SECONDS.sleep(2);
 
 			} catch (Exception e) {
 
@@ -81,7 +83,33 @@ public class AutomateExperiment {
 		}
 	}
 
-	public static int counter = 0;
+	public static int getNumberOfCurrentJavaProcesses() {
+		int result = 0;
+
+		try {
+			String line;
+
+			Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
+
+			BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+			while ((line = input.readLine()) != null) {
+
+				if (line.startsWith("java"))
+
+					result++;
+			}
+
+			input.close();
+
+		} catch (Exception err) {
+			err.printStackTrace();
+		}
+
+		return result;
+	}
+
+	public static int mainCounter = 0;
 
 	public static String baseCommand = //
 	"-isTraining false -trainingExperimentID 400 -assessmentPolicy xx "
@@ -100,7 +128,7 @@ public class AutomateExperiment {
 		new experimentDesign(baseCommand, //
 				new String[] { //
 						"assessmentPolicy", //
-						AssessmentPolicy.StrictQoS.toString(),
+						AssessmentPolicy.EfficiencyFirst.toString(),
 						//
 						"machineLearningAlgorithm", //
 						alg.toString(),
@@ -124,7 +152,7 @@ public class AutomateExperiment {
 		new experimentDesign(baseCommand, //
 				new String[] { //
 						"assessmentPolicy", //
-						AssessmentPolicy.EfficiencyFirst.toString(),
+						AssessmentPolicy.StrictQoS.toString(),
 						//
 						"machineLearningAlgorithm", //
 						alg.toString(),
@@ -148,21 +176,26 @@ public class AutomateExperiment {
 
 	public static void main(String[] args) {
 
-		for (int i = 0; i < 10; i++) {
+		// for (int i = 0; i < 10; i++) {
+		//
+		// runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
+		//
+		// runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork,
+		// true);
+		//
+		// }
 
-			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
+		for (int i = 0; i < 50; i++) {
+
+			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
 
 			runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork, true);
 
-		}
+			runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork, false);
 
-		// for (int i = 0; i < 10; i++) {
-		//
-		// runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
-		//
-		// runForAllAssessmentPolicies(MachineLearningAlgorithm.BayesianNetwork,
-		// false);
-		// }
+			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, true);
+
+		}
 
 	}
 }

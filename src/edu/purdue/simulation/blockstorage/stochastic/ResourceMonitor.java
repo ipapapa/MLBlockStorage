@@ -40,28 +40,25 @@ public class ResourceMonitor { // implements Runnable {
 
 	}
 
-	private static void SaveBackendStat(Backend backend) throws SQLException,
-			Exception {
+	private static void SaveBackendStat(Backend backend) throws SQLException, Exception {
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"INSERT INTO blockstoragesimulator.backend_stat"
-								+ "	(backend_ID, clock, available_IOPS, allocated_IOPS, volume_count)"
-								+ "		values" + "	(?, ?, ?, ?, ?);",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement("INSERT INTO blockstoragesimulator.backend_stat"
+				+ "	(backend_ID, clock, available_IOPS, allocated_IOPS, volume_count)" + "		values"
+				+ "	(?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, backend.getID());
+			statement.setBigDecimal(1, backend.getID());
 
-		statement.setBigDecimal(2, Experiment.clock);
+			statement.setBigDecimal(2, Experiment.clock);
 
-		statement.setInt(3, backend.getSpecifications().getIOPS()); // available_IOPS
+			statement.setInt(3, backend.getSpecifications().getIOPS()); // available_IOPS
 
-		statement.setInt(4, backend.getAllocatedIOPS());
+			statement.setInt(4, backend.getAllocatedIOPS());
 
-		statement.setInt(5, backend.getVolumeList().size());
+			statement.setInt(5, backend.getVolumeList().size());
 
-		ResourceMonitor.backendStat_queries.add(Database.getQuery(statement));
+			ResourceMonitor.backendStat_queries.add(Database.getQuery(statement));
+		}
 	}
 
 	// private int clock = 0;
@@ -97,8 +94,7 @@ public class ResourceMonitor { // implements Runnable {
 				 */
 				if (false && ResourceMonitor.enableBackendPerformanceMeter) {
 
-					BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(
-							backend);
+					BackendPerformanceMeter backendPerformanceMeter = new BackendPerformanceMeter(backend);
 
 					Volume pingVolume = null;
 
@@ -136,8 +132,7 @@ public class ResourceMonitor { // implements Runnable {
 
 							Volume volume = backend.getVolumeList().get(j);
 
-							VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(
-									volume, backend);
+							VolumePerformanceMeter volumePerformanceMeter = new VolumePerformanceMeter(volume, backend);
 
 							volumePerformanceMeter.save();
 

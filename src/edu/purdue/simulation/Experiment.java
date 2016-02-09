@@ -33,8 +33,7 @@ public class Experiment extends PersistentObject {
 		this.setID(ID);
 	}
 
-	public Experiment(Workload workload, String comment,
-			String schedulerAlgorithm) {
+	public Experiment(Workload workload, String comment, String schedulerAlgorithm) {
 		super();
 
 		this.setComment(comment);
@@ -80,10 +79,8 @@ public class Experiment extends PersistentObject {
 				+ " \nScheduler.feedBackLearning = " //
 				+ Scheduler.feedBackLearning//
 				+ " \n~~~~:" //
-				+ BlockStorageSimulator.assessmentPolicyRules
-						.get(Scheduler.assessmentPolicy) //
-				+ " \nResourceMonitor.clockGap = "
-				+ ResourceMonitor.clockGapProbability //
+				+ BlockStorageSimulator.assessmentPolicyRules.get(Scheduler.assessmentPolicy) //
+				+ " \nResourceMonitor.clockGap = " + ResourceMonitor.clockGapProbability //
 				+ " \nScheduler.feedBackLearningInterval = " //
 				+ Scheduler.feedbackLearningInterval//
 				+ " \nStochasticEventGenerator.clockGap = " //
@@ -92,8 +89,7 @@ public class Experiment extends PersistentObject {
 				+ this.workload.getID()//
 				+ " \nScheduler.trainingExperimentID = " //
 				+ Scheduler.trainingExperimentID//
-				+ " \nScheduler.maxClock = "
-				+ Scheduler.maxRequest //
+				+ " \nScheduler.maxClock = " + Scheduler.maxRequest //
 				+ " \nScheduler.minRequests = " //
 				+ Scheduler.minRequests//
 				+ " \nScheduler.modClockBy =;" //
@@ -131,19 +127,17 @@ public class Experiment extends PersistentObject {
 
 	public ArrayList<Backend> generateBackEnd() throws SQLException, Exception {
 
-		if (this.getID() == null
-				|| !(this.getID().compareTo(BigDecimal.ZERO) > 0))
+		if (this.getID() == null || !(this.getID().compareTo(BigDecimal.ZERO) > 0))
 
 			this.save();
 
 		backendList = new ArrayList<Backend>();
 
-		BackEndSpecifications specification = new BackEndSpecifications(1200,
-				2000, 800, 500, 800, 200, 0, true, 10000, null, null);
+		BackEndSpecifications specification = new BackEndSpecifications(1200, 2000, 800, 500, 800, 200, 0, true, 10000,
+				null, null);
 
-		BackEndSpecifications[] specifications = { specification,
-				specification, specification, specification, specification,
-				specification, specification, };
+		BackEndSpecifications[] specifications = { specification, specification, specification, specification,
+				specification, specification, specification, };
 
 		for (int i = 0; i < specifications.length; i++) {
 			Backend backEnd = new LVM(this, "NO DESCRIPTION", specifications[i]);
@@ -157,20 +151,18 @@ public class Experiment extends PersistentObject {
 
 	}
 
-	public static Experiment resumeExperiment(BigDecimal experimentID)
-			throws SQLException, Exception {
+	public static Experiment resumeExperiment_NOTUSED(BigDecimal experimentID) throws SQLException, Exception {
 
-		ResultSet experimentResultSet = Database.executeQuery(
-				"Select	*	From	experiment	Where	ID	= ?", experimentID);
+		ResultSet experimentResultSet = Database.executeQuery("Select	*	From	experiment	Where	ID	= ?",
+				experimentID);
 
 		Experiment experiment = null;
 
 		if (experimentResultSet.next()) {
 
-			ResultSet workloadResultSet = Database
-					.executeQuery(
-							"Select	ID, Generate_Method, Comment	From	Workload	Where	ID	= ?",
-							experimentResultSet.getBigDecimal(2));
+			ResultSet workloadResultSet = Database.executeQuery(
+					"Select	ID, Generate_Method, Comment	From	Workload	Where	ID	= ?",
+					experimentResultSet.getBigDecimal(2));
 
 			Workload workload = null;
 
@@ -184,45 +176,40 @@ public class Experiment extends PersistentObject {
 			}
 
 			experiment = new Experiment(//
-					workload,// workload
-					experimentResultSet.getString(2),//
+					workload, // workload
+					experimentResultSet.getString(2), //
 					experimentResultSet.getString(3));
 
 			experiment.setID(experimentResultSet.getBigDecimal(1));
 
-			ResultSet lastestVolumeRequestDataSet = Database
-					.executeQuery(
-							"Select	SR.volume_request_ID	From	schedule_response	SR	Where	SR.experiment_id	=	?	Order	By	SR.ID	Desc	Limit	1",
-							experimentID);
+			ResultSet lastestVolumeRequestDataSet = Database.executeQuery(
+					"Select	SR.volume_request_ID	From	schedule_response	SR	Where	SR.experiment_id	=	?	Order	By	SR.ID	Desc	Limit	1",
+					experimentID);
 
 			if (lastestVolumeRequestDataSet.next()) {
-				workload.RetrieveVolumeRequests(lastestVolumeRequestDataSet
-						.getBigDecimal(1));
+				workload.RetrieveVolumeRequests(lastestVolumeRequestDataSet.getBigDecimal(1));
 			}
 		}
 
-		ResultSet rs = Database
-				.executeQuery(
-						"Select	*	From	Backend	Where	MaxCapacity Is Not Null and	experiment_id	= ?",
-						experimentID);
+		ResultSet rs = Database.executeQuery(
+				"Select	*	From	Backend	Where	MaxCapacity Is Not Null and	experiment_id	= ?", experimentID);
 
 		while (rs.next()) {
 
-			BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-					rs.getInt(5),// Capacity
-					rs.getInt(6),// MaxCapacity
-					rs.getInt(7),// Min Capacity
-					rs.getInt(8),// IOPS
-					rs.getInt(9),// MaxIOPS
-					rs.getInt(10),// MinIOPS
+			BackEndSpecifications backendSpecifications = new BackEndSpecifications(rs.getInt(5), // Capacity
+					rs.getInt(6), // MaxCapacity
+					rs.getInt(7), // Min Capacity
+					rs.getInt(8), // IOPS
+					rs.getInt(9), // MaxIOPS
+					rs.getInt(10), // MinIOPS
 					0, // latency
-					rs.getBoolean(11),// isOnline
-					rs.getDouble(13),//
+					rs.getBoolean(11), // isOnline
+					rs.getDouble(13), //
 					null, null);
 
 			Backend backend = new LVM(//
-					experiment,//
-					rs.getString(12),// Description
+					experiment, //
+					rs.getString(12), // Description
 					backendSpecifications);
 
 			backend.setID(rs.getBigDecimal(1));
@@ -234,15 +221,13 @@ public class Experiment extends PersistentObject {
 
 			Backend backend = Experiment.backendList.get(i);
 
-			ResultSet volumesResultSet = Database
-					.executeQuery(
-							"Select	*	From	volume	where	is_deleted = 0 and	backend_ID	= ?	order by	ID	Desc",
-							backend.getID());
+			ResultSet volumesResultSet = Database.executeQuery(
+					"Select	*	From	volume	where	is_deleted = 0 and	backend_ID	= ?	order by	ID	Desc",
+					backend.getID());
 
 			while (volumesResultSet.next()) {
 
-				VolumeSpecifications volumeSpecifications = new VolumeSpecifications(
-						volumesResultSet.getInt(4), // capacity
+				VolumeSpecifications volumeSpecifications = new VolumeSpecifications(volumesResultSet.getInt(4), // capacity
 						volumesResultSet.getInt(5), // IOPS
 						0, // latency
 						volumesResultSet.getBoolean(6), // isDeleted
@@ -258,10 +243,9 @@ public class Experiment extends PersistentObject {
 			}
 		}
 
-		ResultSet clockResultSet = Database
-				.executeQuery(
-						"select	Clock	From	volume_performance_meter	Where	experiment_id		= ?	Order	By	ID	Desc	Limit	1",
-						experimentID);
+		ResultSet clockResultSet = Database.executeQuery(
+				"select	Clock	From	volume_performance_meter	Where	experiment_id		= ?	Order	By	ID	Desc	Limit	1",
+				experimentID);
 
 		if (clockResultSet.next()) {
 			Experiment.clock = clockResultSet.getBigDecimal(1);
@@ -271,8 +255,7 @@ public class Experiment extends PersistentObject {
 
 	}
 
-	public Backend addBackEnd(String description,
-			BackEndSpecifications backEndSpecifications,
+	public Backend addBackEnd(String description, BackEndSpecifications backEndSpecifications,
 			VolumeRequestCategories groupSize) throws Exception {
 
 		Backend backEnd = this.addBackEnd(description, backEndSpecifications);
@@ -284,21 +267,17 @@ public class Experiment extends PersistentObject {
 		return backEnd;
 	}
 
-	public Backend addBackEnd(String description,
-			BackEndSpecifications backEndSpecifications) throws Exception {
-		
+	public Backend addBackEnd(String description, BackEndSpecifications backEndSpecifications) throws Exception {
+
 		Backend backEnd = new LVM(this, description, backEndSpecifications);
 
 		if (Scheduler.isTraining == false
 		// && backEndSpecifications.getMachineLearningAlgorithm() ==
 		// MachineLearningAlgorithm.RepTree
 		) {
-			
-			BufferedReader reader = new BufferedReader(new FileReader(
-					backEndSpecifications.getTrainingDataSetPath()));
-				
-			
-				
+
+			BufferedReader reader = new BufferedReader(new FileReader(backEndSpecifications.getTrainingDataSetPath()));
+
 			Instances data = new Instances(reader);
 
 			int j = -1;
@@ -317,8 +296,7 @@ public class Experiment extends PersistentObject {
 
 			if (j == -1)
 
-				throw new Exception(
-						"Cannot find attribute vio in the training dataset");
+				throw new Exception("Cannot find attribute vio in the training dataset");
 
 			reader.close();
 			data = null; // dispose it
@@ -327,8 +305,7 @@ public class Experiment extends PersistentObject {
 
 			case RepTree:
 
-				backEnd.createRepTree(String.format(
-						"-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
+				backEnd.createRepTree(String.format("-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
 						backEndSpecifications.getTrainingDataSetPath(), //
 						j + 1));
 
@@ -336,13 +313,15 @@ public class Experiment extends PersistentObject {
 
 			case J48:
 
-				backEnd.createJ48Tree(String.format(
-				// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
-						"-t %s -c %d -C 0.25 -M 2", //
+				backEnd.createJ48Tree(
+						String.format(
+								// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d",
+								// //
+								"-t %s -c %d -C 0.25 -M 2", //
+								backEndSpecifications.getTrainingDataSetPath(), //
+								j + 1), //
 						backEndSpecifications.getTrainingDataSetPath(), //
-						j + 1), //
-						backEndSpecifications.getTrainingDataSetPath(),//
-						j,//
+						j, //
 						null // no feedback learning/update model
 				);
 
@@ -350,21 +329,22 @@ public class Experiment extends PersistentObject {
 
 			case BayesianNetwork:
 
-				backEnd.createBayesianNetwork(String.format(
-				// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d", //
-						"-t %s -c %d -C 0.25 -M 2", //
+				backEnd.createBayesianNetwork(
+						String.format(
+								// "-t %s -M 2 -V 0.001 -N 3 -S 1 -L -1 -c %d",
+								// //
+								"-t %s -c %d -C 0.25 -M 2", //
+								backEndSpecifications.getTrainingDataSetPath(), //
+								j + 1), //
 						backEndSpecifications.getTrainingDataSetPath(), //
-						j + 1), //
-						backEndSpecifications.getTrainingDataSetPath(),//
-						j,//
+						j, //
 						null // no feedback learning/update model
 				);
 
 				break;
 			default:
 
-				throw new Exception(
-						"specifies machine learning algorithm is not implemented");
+				throw new Exception("specifies machine learning algorithm is not implemented");
 			}
 		}
 
@@ -378,20 +358,20 @@ public class Experiment extends PersistentObject {
 	public void update() throws SQLException, Exception {
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"Update	experiment	Set	scheduler_algorithm	=?, comment= ?, workload_ID = ?	Where	ID	= ?",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement(
+				"Update	experiment	Set	scheduler_algorithm	=?, comment= ?, workload_ID = ?	Where	ID	= ?",
+				Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setString(1, this.getSchedulerAlgorithm());
+			statement.setString(1, this.getSchedulerAlgorithm());
 
-		statement.setString(2, this.getComment());
+			statement.setString(2, this.getComment());
 
-		statement.setBigDecimal(3, this.getWorkload().getID());
+			statement.setBigDecimal(3, this.getWorkload().getID());
 
-		statement.setBigDecimal(4, this.getID());
+			statement.setBigDecimal(4, this.getID());
 
-		statement.executeUpdate();
+			statement.executeUpdate();
+		}
 	}
 
 	@Override
@@ -399,27 +379,27 @@ public class Experiment extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection.prepareStatement(
-				"insert into experiment "
-						+ "	(comment, scheduler_algorithm, workload_ID)"
-						+ "		Values" + "	(?, ?, ?)",
-				Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement("insert into experiment "
+				+ "	(comment, scheduler_algorithm, workload_ID)" + "		Values" + "	(?, ?, ?)",
+				Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setString(1, this.getComment());
+			statement.setString(1, this.getComment());
 
-		statement.setString(2, this.getSchedulerAlgorithm());
+			statement.setString(2, this.getSchedulerAlgorithm());
 
-		statement.setBigDecimal(3, this.getWorkload().getID());
+			statement.setBigDecimal(3, this.getWorkload().getID());
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		ResultSet rs = statement.getGeneratedKeys();
+			try (ResultSet rs = statement.getGeneratedKeys()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			this.setID(rs.getBigDecimal(1));
+					this.setID(rs.getBigDecimal(1));
 
-			return this.getID();
+					return this.getID();
+				}
+			}
 		}
 
 		return BigDecimal.valueOf(-1);
@@ -427,10 +407,8 @@ public class Experiment extends PersistentObject {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"Experiment ID: %s - SchedulerAlgorithm: %s - comment: %s",
-				this.getID().toString(), this.getSchedulerAlgorithm()
-						.toString(), this.getComment());
+		return String.format("Experiment ID: %s - SchedulerAlgorithm: %s - comment: %s", this.getID().toString(),
+				this.getSchedulerAlgorithm().toString(), this.getComment());
 	}
 
 	/**
@@ -439,8 +417,7 @@ public class Experiment extends PersistentObject {
 	 *            violations number 2: include SLA violation number and remove
 	 *            violation label
 	 */
-	public FastVector<Attribute> getDatasetAttributes(
-			int includeViolationsNumber) {
+	public FastVector<Attribute> getDatasetAttributes(int includeViolationsNumber) {
 		FastVector<Attribute> attributesVector = new FastVector<Attribute>(4);
 
 		Attribute clockAttribute = new Attribute("clock");
@@ -562,25 +539,20 @@ public class Experiment extends PersistentObject {
 	 * @throws Exception
 	 */
 	@SuppressWarnings({})
-	private void saveBackend(ResultSet rs, Backend backend, String path,
-			int includeViolationsNumber, boolean updateLearningModel)
-			throws Exception {
+	private void saveBackend(ResultSet rs, Backend backend, String path, int includeViolationsNumber,
+			boolean updateLearningModel) throws Exception {
 
-		Instances trainingInstances = Experiment
-				.createWekaDataset(includeViolationsNumber);
+		Instances trainingInstances = Experiment.createWekaDataset(includeViolationsNumber);
 
 		while (rs.next()) {
 
-			Instance trainingInstance = new DenseInstance(
-					trainingInstances.numAttributes());
+			Instance trainingInstance = new DenseInstance(trainingInstances.numAttributes());
 
 			double clock = rs.getBigDecimal(1).doubleValue();
 
-			trainingInstance.setValue(trainingInstances.attribute("clock"),
-					clock);
+			trainingInstance.setValue(trainingInstances.attribute("clock"), clock);
 
-			trainingInstance.setValue(trainingInstances.attribute("num"),
-					rs.getInt(2));
+			trainingInstance.setValue(trainingInstances.attribute("num"), rs.getInt(2));
 			// rs.getInt(1);
 			int numberOfViolations = rs.getInt(3);
 			// rs.last() rs.getRow()
@@ -598,22 +570,16 @@ public class Experiment extends PersistentObject {
 					group = "v4";
 				}
 
-				trainingInstance.setValue(trainingInstances.attribute("vio"),
-						group);
+				trainingInstance.setValue(trainingInstances.attribute("vio"), group);
 			}
 
-			trainingInstance.setValue(trainingInstances.attribute("tot"),
-					rs.getInt(4));
+			trainingInstance.setValue(trainingInstances.attribute("tot"), rs.getInt(4));
 
 			if (trainingInstances.attribute("vioNum") != null) {
 
-				trainingInstance.setValue(
-						trainingInstances.attribute("vioNum"),
-						numberOfViolations);
+				trainingInstance.setValue(trainingInstances.attribute("vioNum"), numberOfViolations);
 
-				trainingInstance.setValue(
-						trainingInstances.attribute("clockMod"), clock
-								% Scheduler.modClockBy);
+				trainingInstance.setValue(trainingInstances.attribute("clockMod"), clock % Scheduler.modClockBy);
 			}
 
 			// add the instance
@@ -626,11 +592,9 @@ public class Experiment extends PersistentObject {
 
 			if (trainingSize < Scheduler.updateLearning_MinNumberOfRecords) {
 
-				System.out
-						.println("[small traning dataset for feedback] trainingInstances.size() < Scheduler.updateLearningModelByLastNumberOfRecords: "
-								+ trainingInstances.size()
-								+ " < "
-								+ Scheduler.updateLearning_MinNumberOfRecords);
+				System.out.println(
+						"[small traning dataset for feedback] trainingInstances.size() < Scheduler.updateLearningModelByLastNumberOfRecords: "
+								+ trainingInstances.size() + " < " + Scheduler.updateLearning_MinNumberOfRecords);
 
 				return;
 			}
@@ -639,8 +603,7 @@ public class Experiment extends PersistentObject {
 
 			double accuracy = backend.updateModel(trainingInstances);
 
-			Object[][] backendAccuracy = BlockStorageSimulator.feedbackAccuracy
-					.get(Experiment.clock.intValue());
+			Object[][] backendAccuracy = BlockStorageSimulator.feedbackAccuracy.get(Experiment.clock.intValue());
 
 			int backendIndex = Experiment.backendList.indexOf(backend);
 
@@ -658,11 +621,10 @@ public class Experiment extends PersistentObject {
 
 				path = Experiment.saveResultPath;
 
-			saveToPath = path
-					+ //
+			saveToPath = path + //
 					(Scheduler.isTraining == true ? "TRN_" : "EXP_") //
-					+ backend.getExperiment().getID() + "_" + backend.getID()
-					+ "_" + backend.getDescription() + ".arff";
+					+ backend.getExperiment().getID() + "_" + backend.getID() + "_" + backend.getDescription()
+					+ ".arff";
 
 			saver.setFile(new File(saveToPath));
 
@@ -689,13 +651,9 @@ public class Experiment extends PersistentObject {
 	 *            violation label
 	 * @throws Exception
 	 */
-	public void createUpdateWorkload(
-			int numberOfRecords,
-			Experiment experiment,//
-			String path,//
-			int includeViolationsNumber,
-			int updateLearningModelByLastNumberOfRecords)
-			throws java.lang.Exception {
+	public void createUpdateWorkload(int numberOfRecords, Experiment experiment, //
+			String path, //
+			int includeViolationsNumber, int updateLearningModelByLastNumberOfRecords) throws java.lang.Exception {
 
 		if (updateLearningModelByLastNumberOfRecords > 0)
 
@@ -704,87 +662,86 @@ public class Experiment extends PersistentObject {
 		Connection connection = Database.getConnection();
 
 		// ex_ID, lim, modBy, lastNumOfRecords
-		CallableStatement cStmt = connection
-				.prepareCall("{call data_for_ML2(?, ?, ?, ?)}");
+		try (CallableStatement cStmt = connection.prepareCall("{call data_for_ML2(?, ?, ?, ?)}")) {
 
-		cStmt.setBigDecimal(1, experiment.getID()); //exp_ID
+			cStmt.setBigDecimal(1, experiment.getID()); // exp_ID
 
-		cStmt.setInt(2, numberOfRecords); // lim
+			cStmt.setInt(2, numberOfRecords); // lim
 
-		if (includeViolationsNumber == 0)
+			if (includeViolationsNumber == 0)
 
-			cStmt.setInt(3, Scheduler.modClockBy); // modby
+				cStmt.setInt(3, Scheduler.modClockBy); // modby
 
-		else
+			else
 
-			cStmt.setInt(3, 0); // modby
+				cStmt.setInt(3, 0); // modby
 
-		if (Scheduler.feedBackLearning == true)
+			if (Scheduler.feedBackLearning == true)
 
-			cStmt.setInt(4, Scheduler.updateLearning_MaxNumberOfRecords); //lastNumOfRecords
+				cStmt.setInt(4, Scheduler.updateLearning_MaxNumberOfRecords); // lastNumOfRecords
 
-		else
+			else
 
-			cStmt.setInt(4, 0); // lastNumOfRecords
+				cStmt.setInt(4, 0); // lastNumOfRecords
 
-		cStmt.execute();
+			cStmt.execute();
 
-		ResultSet rs = null;
+			// ResultSet rs = null;
 
-		boolean hasResultSet = true;
+			boolean hasResultSet = true;
 
-		boolean reportResulSet = true;
+			boolean reportResulSet = true;
 
-		BigDecimal currentBackendID;
+			BigDecimal currentBackendID;
 
-		Backend currentBackend = null;
+			Backend currentBackend = null;
 
-		while (hasResultSet) {
+			while (hasResultSet) {
 
-			rs = cStmt.getResultSet();
+				try (ResultSet rs = cStmt.getResultSet()) {
 
-			if (rs == null)
-
-				break;
-
-			if (reportResulSet) {
-				// rs.last() rs.getRow()
-				rs.next();
-
-				currentBackendID = rs.getBigDecimal(1);
-
-				for (int i = 0; i < Experiment.backendList.size(); i++) {
-
-					currentBackend = Experiment.backendList.get(i);
-
-					if (currentBackend.getID().compareTo(currentBackendID) == 0)
+					if (rs == null)
 
 						break;
 
-					currentBackend = null;
+					if (reportResulSet) {
+						// rs.last() rs.getRow()
+						rs.next();
+
+						currentBackendID = rs.getBigDecimal(1);
+
+						for (int i = 0; i < Experiment.backendList.size(); i++) {
+
+							currentBackend = Experiment.backendList.get(i);
+
+							if (currentBackend.getID().compareTo(currentBackendID) == 0)
+
+								break;
+
+							currentBackend = null;
+						}
+
+						if (currentBackend == null)
+
+							throw new Exception("could not find the backend in SQL resultset.");
+
+						reportResulSet = false;
+
+					} else {
+						// rs.last() rs.getRow()
+						this.saveBackend(rs, currentBackend, path, includeViolationsNumber,
+								updateLearningModelByLastNumberOfRecords > 0);
+
+						reportResulSet = true;
+
+					}
+
 				}
 
-				if (currentBackend == null)
-
-					throw new Exception(
-							"could not find the backend in SQL resultset.");
-
-				reportResulSet = false;
-
-			} else {
-				// rs.last() rs.getRow()
-				this.saveBackend(rs, currentBackend, path,
-						includeViolationsNumber,
-						updateLearningModelByLastNumberOfRecords > 0);
-
-				reportResulSet = true;
-
+				hasResultSet = !((cStmt.getMoreResults() == false) && //
+						(cStmt.getUpdateCount() == -1));
 			}
 
-			rs.close();
-
-			hasResultSet = !((cStmt.getMoreResults() == false) && //
-			(cStmt.getUpdateCount() == -1));
 		}
 	}
 }

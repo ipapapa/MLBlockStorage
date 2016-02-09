@@ -13,8 +13,8 @@ import edu.purdue.simulation.blockstorage.backend.BackEndSpecifications;
  * modeling the behaviour of backends
  */
 public class StatisticalGroupping extends Scheduler {
-	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment,
-			edu.purdue.simulation.Workload workload) throws Exception {
+	public StatisticalGroupping(edu.purdue.simulation.Experiment experiment, edu.purdue.simulation.Workload workload)
+			throws Exception {
 		super(experiment, workload);
 	}
 
@@ -24,39 +24,45 @@ public class StatisticalGroupping extends Scheduler {
 
 	private double predicatedAVG = 41; // 41.4823;
 
-	BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-			1200, 2000, 800, 500, 800, 200, 0, true, 50, null, null);
+	BackEndSpecifications backendSpecifications = new BackEndSpecifications(1200, 2000, 800, 500, 800, 200, 0, true, 50,
+			null, null);
 
 	private void RankRequest(VolumeRequest request) {
 
-		double STDDistanceFromMean = (request.getCapacity() - this.predicatedAVG)
-				/ this.PredictedSTD;
+		double STDDistanceFromMean = (request.getCapacity() - this.predicatedAVG) / this.PredictedSTD;
 
-		STDDistanceFromMean = Math.round(STDDistanceFromMean * 10)
-				/ (double) 10;
+		STDDistanceFromMean = Math.round(STDDistanceFromMean * 10) / (double) 10;
 
 		VolumeRequestCategories size;
 
-		if ((STDDistanceFromMean >= VolumeRequestCategories.Small.lowerBound1 && STDDistanceFromMean <= VolumeRequestCategories.Small.upperBound1)
-				|| (STDDistanceFromMean >= VolumeRequestCategories.Small.lowerBound2 && STDDistanceFromMean <= VolumeRequestCategories.Small.upperBound2)) {
+		if ((STDDistanceFromMean >= VolumeRequestCategories.Small.lowerBound1
+				&& STDDistanceFromMean <= VolumeRequestCategories.Small.upperBound1)
+				|| (STDDistanceFromMean >= VolumeRequestCategories.Small.lowerBound2
+						&& STDDistanceFromMean <= VolumeRequestCategories.Small.upperBound2)) {
 			// group small
 
 			size = VolumeRequestCategories.Small;
 
-		} else if ((STDDistanceFromMean >= VolumeRequestCategories.Medium.lowerBound1 && STDDistanceFromMean < VolumeRequestCategories.Medium.upperBound1)
-				|| (STDDistanceFromMean > VolumeRequestCategories.Medium.lowerBound2 && STDDistanceFromMean <= VolumeRequestCategories.Medium.upperBound2)) {
+		} else if ((STDDistanceFromMean >= VolumeRequestCategories.Medium.lowerBound1
+				&& STDDistanceFromMean < VolumeRequestCategories.Medium.upperBound1)
+				|| (STDDistanceFromMean > VolumeRequestCategories.Medium.lowerBound2
+						&& STDDistanceFromMean <= VolumeRequestCategories.Medium.upperBound2)) {
 			// group medium
 
 			size = VolumeRequestCategories.Medium;
 
-		} else if ((STDDistanceFromMean >= VolumeRequestCategories.Large.lowerBound1 && STDDistanceFromMean < VolumeRequestCategories.Large.upperBound1)
-				|| (STDDistanceFromMean > VolumeRequestCategories.Large.lowerBound2 && STDDistanceFromMean <= VolumeRequestCategories.Large.upperBound2)) {
+		} else if ((STDDistanceFromMean >= VolumeRequestCategories.Large.lowerBound1
+				&& STDDistanceFromMean < VolumeRequestCategories.Large.upperBound1)
+				|| (STDDistanceFromMean > VolumeRequestCategories.Large.lowerBound2
+						&& STDDistanceFromMean <= VolumeRequestCategories.Large.upperBound2)) {
 			// Group large
 
 			size = VolumeRequestCategories.Large;
 
-		} else if ((STDDistanceFromMean >= VolumeRequestCategories.XLarge.lowerBound1 && STDDistanceFromMean < VolumeRequestCategories.XLarge.upperBound1)
-				|| (STDDistanceFromMean > VolumeRequestCategories.XLarge.lowerBound2 && STDDistanceFromMean <= VolumeRequestCategories.XLarge.upperBound2)) {
+		} else if ((STDDistanceFromMean >= VolumeRequestCategories.XLarge.lowerBound1
+				&& STDDistanceFromMean < VolumeRequestCategories.XLarge.upperBound1)
+				|| (STDDistanceFromMean > VolumeRequestCategories.XLarge.lowerBound2
+						&& STDDistanceFromMean <= VolumeRequestCategories.XLarge.upperBound2)) {
 			// Group X-large
 
 			size = VolumeRequestCategories.XLarge;
@@ -76,38 +82,28 @@ public class StatisticalGroupping extends Scheduler {
 
 		String description = "StatisticalGroupping NO DESCC";
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Small);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Small);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Small);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Small);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Medium);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Medium);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Medium);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Medium);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Large);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Large);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.Large);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.Large);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.XLarge);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.XLarge);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.XXLarge);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.XXLarge);
 
-		super.getExperiment().addBackEnd(description, backendSpecifications,
-				VolumeRequestCategories.XXXLarge);
+		super.getExperiment().addBackEnd(description, backendSpecifications, VolumeRequestCategories.XXXLarge);
 	}
 
 	private static int start;
 
-	private Backend GetBestBackEndForRequest(VolumeRequest request)
-			throws Exception {
+	private Backend GetBestBackEndForRequest(VolumeRequest request) throws Exception {
 		int MaxGroupSize = 6;
 
 		start = request.getGroupSize().order;
@@ -115,8 +111,7 @@ public class StatisticalGroupping extends Scheduler {
 		for (int i = 1; i <= MaxGroupSize; i++) {
 
 			this.getExperiment();
-			List<Object> candidateList = edu.purdue.simulation.Experiment.backendList
-					.stream()
+			List<Object> candidateList = edu.purdue.simulation.Experiment.backendList.stream()
 					// I CANT UNDERSTAND WHY getGroupSize is needed
 					// .filter(b -> (b.getGroupSize().order == start)
 					// && (b.getState().getAvailableCapacity() > request
@@ -152,11 +147,10 @@ public class StatisticalGroupping extends Scheduler {
 
 		Backend bestFit = this.GetBestBackEndForRequest(request);
 
-		Volume volume = bestFit.createVolumeThenAdd(
-				request.ToVolumeSpecifications(), schedulerResponse);
+		Volume volume = bestFit.createVolumeThenAdd(request.ToVolumeSpecifications(), schedulerResponse);
 
-		BackEndSpecifications backendSpecifications = new BackEndSpecifications(
-				1200, 2000, 800, 500, 800, 200, 0, true, 50, null, null);
+		BackEndSpecifications backendSpecifications = new BackEndSpecifications(1200, 2000, 800, 500, 800, 200, 0, true,
+				50, null, null);
 
 		// here volume will never be null
 		if (volume == null) {
@@ -165,9 +159,8 @@ public class StatisticalGroupping extends Scheduler {
 
 			schedulerResponse.backEndScheduled = null;
 
-			schedulerResponse.backEndCreated = super.getExperiment()
-					.addBackEnd("StatisticalGroupping NO DES",
-							backendSpecifications); // no backend created
+			schedulerResponse.backEndCreated = super.getExperiment().addBackEnd("StatisticalGroupping NO DES",
+					backendSpecifications); // no backend created
 
 			// no backend turned on
 			schedulerResponse.backEndTurnedOn = null;
@@ -179,8 +172,7 @@ public class StatisticalGroupping extends Scheduler {
 
 			schedulerResponse.backEndScheduled = bestFit;
 
-			System.out
-					.println("Successfully scheduled ->" + request.toString());
+			edu.purdue.simulation.BlockStorageSimulator.log("Successfully scheduled ->" + request.toString());
 
 			super.getRequestQueue().remove();
 		}

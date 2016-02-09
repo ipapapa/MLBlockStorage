@@ -16,22 +16,25 @@ public class Database {
 
 	private static Connection CurrentConnection;
 
-	public static ResultSet executeQuery(String query, Object... args)
-			throws SQLException, Exception {
+	public static ResultSet executeQuery(String query, Object... args) throws SQLException, Exception {
 		Connection connection = getConnection();
 
-		PreparedStatement statement = connection.prepareStatement(query,
-				Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
-		for (int i = 0; i < args.length; i++) {
-			statement.setObject(i + 1, args[i]);
+			for (int i = 0; i < args.length; i++) {
+				statement.setObject(i + 1, args[i]);
+			}
+
+			return statement.executeQuery();
 		}
-
-		return statement.executeQuery();
 	}
 
 	public static String getQuery(Statement statement) {
 		String q = statement.toString();
+
+		if (q.endsWith(";") == false)
+
+			q = q + ";";
 
 		q = q.substring(q.indexOf(':') + 2, q.length() - 1);
 
@@ -40,16 +43,14 @@ public class Database {
 
 	private static int compareSize = 1000;
 
-	public static void executeBatchQuery(ArrayList<String> queries,
-			boolean forceSave) throws SQLException, Exception {
+	public static void executeBatchQuery(ArrayList<String> queries, boolean forceSave) throws SQLException, Exception {
 
 		int queriesSize = queries.size();
 
 		boolean save = false;
 
 		if (Scheduler.feedBackLearning) {
-			if (Experiment.clock.intValue()
-					% Scheduler.feedbackLearningInterval == 0)
+			if (Experiment.clock.intValue() % Scheduler.feedbackLearningInterval == 0)
 
 				save = true;
 
@@ -65,36 +66,36 @@ public class Database {
 
 		Connection connection = Database.getConnection();
 
-		Statement statement = connection.createStatement();
+		try (Statement statement = connection.createStatement()) {
 
-		String allQueris = "";
+			String allQueris = "";
 
-		boolean isFirst = true;
+			boolean isFirst = true;
 
-		for (int i = 0; i < queriesSize; i++) {
-			// statement.addBatch(queries.get(i));
+			for (int i = 0; i < queriesSize; i++) {
+				// statement.addBatch(queries.get(i));
 
-			String q = queries.get(i);
+				String q = queries.get(i);
 
-			if (isFirst == true) {
-				allQueris += q + "\n";
+				if (isFirst == true) {
+					allQueris += q + "\n";
 
-				isFirst = false;
-			} else {
-				allQueris += ","
-						+ q.substring(q.indexOf("values") + 7, q.length());
+					isFirst = false;
+				} else {
+					allQueris += "," + q.substring(q.indexOf("values") + 7, q.length());
+				}
 			}
+
+			// if (allQueris.endsWith(",")) {
+			// allQueris = allQueris.substring(0, allQueris.length() - 1);
+			// }
+
+			// statement.executeBatch();
+
+			statement.executeUpdate(allQueris);
+
+			queries.clear();
 		}
-
-		// if (allQueris.endsWith(",")) {
-		// allQueris = allQueris.substring(0, allQueris.length() - 1);
-		// }
-
-		// statement.executeBatch();
-
-		statement.executeUpdate(allQueris);
-
-		queries.clear();
 	}
 
 	public static Connection getConnection() throws SQLException, Exception {
@@ -105,10 +106,9 @@ public class Database {
 
 		Class.forName("com.mysql.jdbc.Driver");
 
-		CurrentConnection = DriverManager
-				.getConnection(
-						"jdbc:mysql://10.0.0.150/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true",
-						"root", "1234");
+		CurrentConnection = DriverManager.getConnection(
+				"jdbc:mysql://10.0.0.150/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true&allowMultiQueries=true",
+				"root", "1234");
 
 		return CurrentConnection;
 	}

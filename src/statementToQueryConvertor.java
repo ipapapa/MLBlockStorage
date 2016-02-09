@@ -14,26 +14,25 @@ public class statementToQueryConvertor {
 		try {
 			Connection connection = Database.getConnection();
 
-			PreparedStatement statement = connection
-					.prepareStatement(
-							"Insert Into BlockStorageSimulator.volume_performance_meter"
-									+ "	(experiment_ID, volume_ID, clock, available_IOPS, SLA_violation, backend_ID)"
-									+ "		values" + "	(?, ?, ?, ?, ?, ?);",
-							Statement.RETURN_GENERATED_KEYS);
+			try (PreparedStatement statement = connection
+					.prepareStatement("Insert Into BlockStorageSimulator.volume_performance_meter"
+							+ "	(experiment_ID, volume_ID, clock, available_IOPS, SLA_violation, backend_ID)"
+							+ "		values" + "	(?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) {
 
-			statement.setBigDecimal(1, BigDecimal.valueOf(1));
+				statement.setBigDecimal(1, BigDecimal.valueOf(1));
 
-			statement.setNull(2, Types.NUMERIC);
+				statement.setNull(2, Types.NUMERIC);
 
-			statement.setBigDecimal(3, Experiment.clock);
+				statement.setBigDecimal(3, Experiment.clock);
 
-			statement.setInt(4, 20);
+				statement.setInt(4, 20);
 
-			statement.setBoolean(5, true);
+				statement.setBoolean(5, true);
 
-			statement.setBigDecimal(6, BigDecimal.valueOf(1));
+				statement.setBigDecimal(6, BigDecimal.valueOf(1));
 
-			statement.addBatch();
+				statement.addBatch();
+			}
 
 		} catch (SQLException e) {
 			e.printStackTrace();

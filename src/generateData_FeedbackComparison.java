@@ -14,30 +14,30 @@ import edu.purdue.simulation.blockstorage.Scheduler;
 
 public class generateData_FeedbackComparison {
 
-	public static void IOPS_Allocation_Report(long experiment_ID,
-			int is_feedback, int clockMinus) throws Exception {
+	public static void IOPS_Allocation_Report(long experiment_ID, int is_feedback, int clockMinus) throws Exception {
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareCall("{call IOPS_Allocation_Report(?, ?, ?)}");
+		try (PreparedStatement statement = connection.prepareCall("{call IOPS_Allocation_Report(?, ?, ?)}")) {
 
-		statement.setLong(1, experiment_ID); // experiment_ID
+			statement.setLong(1, experiment_ID); // experiment_ID
 
-		statement.setInt(2, is_feedback); // is_feedback
+			statement.setInt(2, is_feedback); // is_feedback
 
-		statement.setInt(3, clockMinus); // clockMinus
+			statement.setInt(3, clockMinus); // clockMinus
 
-		ResultSet rs = statement.executeQuery();
+			try (ResultSet rs = statement.executeQuery()) {
 
-		while (rs.next()) {
+				while (rs.next()) {
 
-			String temp = String.format("%d	%d	%f", //
-					rs.getInt(1), // feedback
-					rs.getLong(2), // clock
-					rs.getFloat(3) // alloc percent rs.getDouble(3)
+					String temp = String.format("%d	%d	%f", //
+							rs.getInt(1), // feedback
+							rs.getLong(2), // clock
+							rs.getFloat(3) // alloc percent rs.getDouble(3)
 					);
 
-			feedbackCompare.println(temp);
+					feedbackCompare.println(temp);
+				}
+			}
 		}
 	}
 
@@ -53,18 +53,18 @@ public class generateData_FeedbackComparison {
 
 		try {
 			generateData_FeedbackComparison.feedbackCompare = new PrintWriter(
-					"D:\\Dropbox\\Research\\MLScheduler\\SAS\\Data\\"
-							+ experiment_ID + "_" + feedback_experiment_ID
-							+ "_" + name + ".txt", "UTF-8");
+					"D:\\Dropbox\\Research\\MLScheduler\\SAS\\Data\\" + experiment_ID + "_" + feedback_experiment_ID
+							+ "_" + name + ".txt",
+					"UTF-8");
 
 			feedbackCompare.println("feedback	clock	alloc_percent");
 
-			IOPS_Allocation_Report(feedback_experiment_ID,//
+			IOPS_Allocation_Report(feedback_experiment_ID, //
 					0, // is feedback
 					188// ClockMinte
 			);
 
-			IOPS_Allocation_Report(experiment_ID,//
+			IOPS_Allocation_Report(experiment_ID, //
 					1, // is feedback
 					196// ClockMinte
 			);

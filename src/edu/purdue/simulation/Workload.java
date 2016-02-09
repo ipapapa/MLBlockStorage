@@ -75,8 +75,7 @@ public class Workload extends PersistentObject {
 	}
 
 	@SuppressWarnings("deprecation")
-	public static long getDateDiff(DateTime date1, DateTime date2,
-			TimeUnit timeUnit) {
+	public static long getDateDiff(DateTime date1, DateTime date2, TimeUnit timeUnit) {
 
 		if (timeUnit == TimeUnit.SECONDS) {
 			date1 = date1.millisOfSecond().setCopy(0);
@@ -95,15 +94,13 @@ public class Workload extends PersistentObject {
 		// return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
 	}
 
-	public void GenerateWorkloadFromMSRCambridgeTraces(int numberOfRequests,
-			String csvPath, int deleteFractorPoissionMean,
-			int[] potentialVolumeCapacity, int[] potentialIOPS, int startFrom)
-			throws Exception {
+	public void GenerateWorkloadFromMSRCambridgeTraces(int numberOfRequests, String csvPath,
+			int deleteFractorPoissionMean, int[] potentialVolumeCapacity, int[] potentialIOPS, int startFrom)
+					throws Exception {
 
 		numberOfRequests += startFrom;
 
-		if (super.getID() == null
-				|| !(super.getID().compareTo(BigDecimal.ZERO) > 0))
+		if (super.getID() == null || !(super.getID().compareTo(BigDecimal.ZERO) > 0))
 
 			this.Save();
 
@@ -123,8 +120,7 @@ public class Workload extends PersistentObject {
 
 		Charset utf8charset = Charset.forName("UTF-8");
 
-		CSVParser parser = CSVParser.parse(csvData, utf8charset,
-				CSVFormat.RFC4180);
+		CSVParser parser = CSVParser.parse(csvData, utf8charset, CSVFormat.RFC4180);
 
 		DateTime previousRecordDate = null;
 
@@ -146,8 +142,7 @@ public class Workload extends PersistentObject {
 
 				previousRecordDate = recordDate;
 
-				edu.purdue.simulation.BlockStorageSimulator
-						.log("Very first record Time :" + recordDate.toString());
+				edu.purdue.simulation.BlockStorageSimulator.log("Very first record Time :" + recordDate.toString());
 
 			} else {
 				i++;
@@ -163,8 +158,7 @@ public class Workload extends PersistentObject {
 
 					break;
 
-				long diffInMillies = getDateDiff(previousRecordDate,
-						recordDate, TimeUnit.SECONDS);
+				long diffInMillies = getDateDiff(previousRecordDate, recordDate, TimeUnit.SECONDS);
 
 				if (diffInMillies < 0)
 
@@ -172,9 +166,8 @@ public class Workload extends PersistentObject {
 
 				arrivalTime += diffInMillies;// Scheduler.getPoissonRandom(20);
 
-				edu.purdue.simulation.BlockStorageSimulator.log("Time :"
-						+ recordDate.toString() + "| dif(seconds)="
-						+ diffInMillies + " | arr=" + arrivalTime);
+				edu.purdue.simulation.BlockStorageSimulator.log(
+						"Time :" + recordDate.toString() + "| dif(seconds)=" + diffInMillies + " | arr=" + arrivalTime);
 
 				// edu.purdue.simulation.BlockStorageSimulator.log("Time :" +
 				// formatter.format(recordDate)
@@ -182,21 +175,23 @@ public class Workload extends PersistentObject {
 				// + getDateDiff(date1, recordDate, TimeUnit.SECONDS));
 
 				// if (diffInMillies == 0) {
-				// edu.purdue.simulation.BlockStorageSimulator.log("diffInMillies == 0 --> arrivalTime =  "
+				// edu.purdue.simulation.BlockStorageSimulator.log("diffInMillies
+				// == 0 --> arrivalTime = "
 				// + arrivalTime);
 				// }
 				// new DateTime(date1).getMillisOfSecond();
 				// new DateTime(recordDate).getMillisOfSecond();
 				// if (date1.getTime() == recordDate.getTime()) {
 				// edu.purdue.simulation.BlockStorageSimulator.log(i
-				// + " - date1.getTime() == recordDate.getTime()  ->"
+				// + " - date1.getTime() == recordDate.getTime() ->"
 				// + recordDate.toString());
 				// }
 
 				previousRecordDate = recordDate;
 
 				// if (time == previousTime) {
-				// edu.purdue.simulation.BlockStorageSimulator.log("time == previousTime  --> "
+				// edu.purdue.simulation.BlockStorageSimulator.log("time ==
+				// previousTime --> "
 				// + previousTime);
 				//
 				// Date d1 = convertWindowsTime(time);
@@ -207,7 +202,8 @@ public class Workload extends PersistentObject {
 				// d2);
 				//
 				// if (d1.getTime() == d2.getTime()) {
-				// edu.purdue.simulation.BlockStorageSimulator.log("d1.getTime() == d2.getTime()  ->");
+				// edu.purdue.simulation.BlockStorageSimulator.log("d1.getTime()
+				// == d2.getTime() ->");
 				// }
 				//
 				// System.out
@@ -215,18 +211,17 @@ public class Workload extends PersistentObject {
 				// }
 				previousTime = time;
 				// if (arrivalTime == previousArrivalTime) {
-				// edu.purdue.simulation.BlockStorageSimulator.log("arrivalTime == previousArrivalTime  ->"
+				// edu.purdue.simulation.BlockStorageSimulator.log("arrivalTime
+				// == previousArrivalTime ->"
 				// + arrivalTime);
 				// }
 				previousArrivalTime = arrivalTime;
 
-				VolumeRequest request = new VolumeRequest(
-						this, //
+				VolumeRequest request = new VolumeRequest(this, //
 						1, // type
-						potentialVolumeCapacity[volumeRandom
-								.nextInt(potentialVolumeCapacity.length)], // Capacity
+						potentialVolumeCapacity[volumeRandom.nextInt(potentialVolumeCapacity.length)], // Capacity
 
-						potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)],// IOPS
+						potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)], // IOPS
 						Scheduler.getPoissonRandom(deleteFractorPoissionMean), // Delete
 																				// Factor
 						arrivalTime // Arrival time
@@ -240,7 +235,8 @@ public class Workload extends PersistentObject {
 
 				}
 
-				// edu.purdue.simulation.BlockStorageSimulator.log("current index: "
+				// edu.purdue.simulation.BlockStorageSimulator.log("current
+				// index: "
 				// + i);
 
 				this.VolumeRequestList.add(request);
@@ -251,8 +247,7 @@ public class Workload extends PersistentObject {
 
 		statement.close();
 
-		edu.purdue.simulation.BlockStorageSimulator.log("workload ID: "
-				+ this.getID());
+		edu.purdue.simulation.BlockStorageSimulator.log("workload ID: " + this.getID());
 	}
 
 	public static DateTime convertWindowsTime(String time) {
@@ -289,17 +284,16 @@ public class Workload extends PersistentObject {
 		//
 		// String newDateString = formatter.format(theDate);
 		//
-		// edu.purdue.simulation.BlockStorageSimulator.log("Date changed format :"
+		// edu.purdue.simulation.BlockStorageSimulator.log("Date changed format
+		// :"
 		// + newDateString);
 
 		return theDate;
 	}
 
-	public void GenerateWorkload2(int numberOfRequests) throws SQLException,
-			Exception {
+	public void GenerateWorkload2(int numberOfRequests) throws SQLException, Exception {
 
-		if (super.getID() == null
-				|| !(super.getID().compareTo(BigDecimal.ZERO) > 0))
+		if (super.getID() == null || !(super.getID().compareTo(BigDecimal.ZERO) > 0))
 
 			this.Save();
 
@@ -328,10 +322,9 @@ public class Workload extends PersistentObject {
 
 			VolumeRequest request = new VolumeRequest(this, //
 					1, // type
-					potentialVolumeCapacity[volumeRandom
-							.nextInt(potentialVolumeCapacity.length)], // Capacity
+					potentialVolumeCapacity[volumeRandom.nextInt(potentialVolumeCapacity.length)], // Capacity
 
-					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)],// IOPS
+					potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)], // IOPS
 					Scheduler.getPoissonRandom(600), // Delete Factor
 					arrivalTime // Arrival time
 			);
@@ -344,8 +337,7 @@ public class Workload extends PersistentObject {
 				// statement.close();
 			}
 
-			edu.purdue.simulation.BlockStorageSimulator.log("current index: "
-					+ i);
+			edu.purdue.simulation.BlockStorageSimulator.log("current index: " + i);
 
 			this.VolumeRequestList.add(request);
 		}
@@ -361,24 +353,25 @@ public class Workload extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection.prepareStatement(
-				"insert into workload" + "	(comment, generate_method)"
-						+ "		Values" + "	(?, ?);",
-				Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement(
+				"insert into workload" + "	(comment, generate_method)" + "		Values" + "	(?, ?);",
+				Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setString(1, this.Comment);
+			statement.setString(1, this.Comment);
 
-		statement.setInt(2, this.GenerateMethod);
+			statement.setInt(2, this.GenerateMethod);
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		ResultSet rs = statement.getGeneratedKeys();
+			try (ResultSet rs = statement.getGeneratedKeys()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			super.setID(rs.getBigDecimal(1));
+					super.setID(rs.getBigDecimal(1));
 
-			return super.getID();
+					return super.getID();
+				}
+			}
 		}
 
 		return BigDecimal.valueOf(-1);
@@ -389,21 +382,22 @@ public class Workload extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement("Select	ID, comment, generate_method, create_time"
-						+ " From	workload	Where	ID	= ?;");
+		try (PreparedStatement statement = connection.prepareStatement(
+				"Select	ID, comment, generate_method, create_time" + " From	workload	Where	ID	= ?;")) {
 
-		statement.setBigDecimal(1, ID);
+			statement.setBigDecimal(1, ID);
 
-		ResultSet rs = statement.executeQuery();
+			try (ResultSet rs = statement.executeQuery()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			this.setGenerateMethod(rs.getInt(3));
+					this.setGenerateMethod(rs.getInt(3));
 
-			this.setComment(rs.getString(2));
+					this.setComment(rs.getString(2));
 
-			super.retrievePersistentProperties(rs, 4);
+					super.retrievePersistentProperties(rs, 4);
+				}
+			}
 		}
 
 		return true;
@@ -414,13 +408,11 @@ public class Workload extends PersistentObject {
 		return this.RetrieveVolumeRequests(BigDecimal.valueOf(0));
 	}
 
-	public boolean RetrieveVolumeRequests(BigDecimal IDBiggerThan)
-			throws SQLException, Exception {
+	public boolean RetrieveVolumeRequests(BigDecimal IDBiggerThan) throws SQLException, Exception {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareCall("{call retrieve_workload(?, ?, ?, ?, ?)}");
+		PreparedStatement statement = connection.prepareCall("{call retrieve_workload(?, ?, ?, ?, ?)}");
 
 		statement.setBigDecimal(1, this.getID()); // workload_ID
 
@@ -439,23 +431,24 @@ public class Workload extends PersistentObject {
 
 		statement.setInt(5, Scheduler.modClockBy); // mod_arrival_time
 
-		ResultSet rs = statement.executeQuery();
+		try (ResultSet rs = statement.executeQuery()) {
 
-		while (rs.next()) {
+			while (rs.next()) {
 
-			VolumeRequest request = new VolumeRequest(this);
+				VolumeRequest request = new VolumeRequest(this);
 
-			request.retrieveProperties(rs);
+				request.retrieveProperties(rs);
 
-			this.VolumeRequestList.add(request);
+				this.VolumeRequestList.add(request);
+			}
 		}
-
+		
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("ID: %d - comment: %d - GenerateMethod: %d", super
-				.getID().intValue(), this.Comment, this.GenerateMethod);
+		return String.format("ID: %d - comment: %d - GenerateMethod: %d", super.getID().intValue(), this.Comment,
+				this.GenerateMethod);
 	}
 }

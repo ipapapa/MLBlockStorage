@@ -341,11 +341,13 @@ public class MaxCapacityFirstScheduler extends Scheduler {
 		/*
 		 * first save the schedule response then the volume
 		 */
-		schedulerResponse.save();
-
-		if (volume != null)
-
-			volume.save();
+		
+		if(volume == null){
+			schedulerResponse.save();
+		}
+		else{
+			schedulerResponse.saveWithVolume(volume);
+		}
 	}
 
 	/**

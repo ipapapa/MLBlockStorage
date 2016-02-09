@@ -29,13 +29,12 @@ public abstract class StochasticEvent {
 	public abstract void fire(Backend backend) throws SQLException, Exception;
 
 	public String toString(boolean isApplied) {
-		return "[StochasticEvent]"
-				+ (isApplied ? "[APPLIED]" : "[NOT APPLIED]") + " --> type = "
-				+ this.getEventType() + " clock = " + Experiment.clock;
+		return "[StochasticEvent]" + (isApplied ? "[APPLIED]" : "[NOT APPLIED]") + " --> type = " + this.getEventType()
+				+ " clock = " + Experiment.clock;
 	}
 
-	protected static void apply(StochasticEvent event, Backend backend,
-			boolean applyToCapacity) throws SQLException, Exception {
+	protected static void apply(StochasticEvent event, Backend backend, boolean applyToCapacity)
+			throws SQLException, Exception {
 
 		applyToCapacity = false;// no stochastic event for capacity
 
@@ -54,8 +53,7 @@ public abstract class StochasticEvent {
 
 		State backEndState = backend.getState();
 
-		double possessionMean = backend.getSpecifications()
-				.getStabilityPossessionMean();
+		double possessionMean = backend.getSpecifications().getStabilityPossessionMean();
 
 		// TODO organize this part
 		int possessionGeneratedNumber = (int) possessionMean;
@@ -73,10 +71,8 @@ public abstract class StochasticEvent {
 			int newCapacity = backend.getSpecifications().getCapacity() + sumBy;
 
 			if (newCapacity < backEndState.getUsedCapacity()
-					|| newCapacity < backend.getSpecifications()
-							.getMinCapacity()
-					|| newCapacity > backend.getSpecifications()
-							.getMaxCapacity()) {
+					|| newCapacity < backend.getSpecifications().getMinCapacity()
+					|| newCapacity > backend.getSpecifications().getMaxCapacity()) {
 				// can not change the capacity
 			} else {
 				backend.getSpecifications().setCapacity(newCapacity);
@@ -120,20 +116,13 @@ public abstract class StochasticEvent {
 			}
 		}
 
-		edu.purdue.simulation.BlockStorageSimulator.log(event
-				.toString(isEventApplied)
-				+ " intVal1 = "
-				+ sumBy
-				+ " StringVal1 = NULL "
-				+ " GeneratedNumber = "
-				+ possessionGeneratedNumber
-				+ " possessionMean = "
-				+ possessionMean);
+		edu.purdue.simulation.BlockStorageSimulator
+				.log(event.toString(isEventApplied) + " intVal1 = " + sumBy + " StringVal1 = NULL "
+						+ " GeneratedNumber = " + possessionGeneratedNumber + " possessionMean = " + possessionMean);
 	}
 
-	protected BigDecimal save(BigDecimal backendID, Integer intVal1,
-			String stringVal1, boolean isApplied) throws SQLException,
-			Exception {
+	protected BigDecimal save(BigDecimal backendID, Integer intVal1, String stringVal1, boolean isApplied)
+			throws SQLException, Exception {
 
 		if (StochasticEvent.saveStochasticEvents == false)
 
@@ -141,37 +130,35 @@ public abstract class StochasticEvent {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"insert into stochastic_event "
-								+ "	(stochastic_event_type_ID, backend_ID, clock, int_val1, string_val1, is_applied)"
-								+ "		Values" + "	(?, ?, ? , ?, ?, ?)",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement("insert into stochastic_event "
+				+ "	(stochastic_event_type_ID, backend_ID, clock, int_val1, string_val1, is_applied)" + "		Values"
+				+ "	(?, ?, ? , ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setInt(1, this.getEventType());
+			statement.setInt(1, this.getEventType());
 
-		statement.setBigDecimal(2, backendID);
+			statement.setBigDecimal(2, backendID);
 
-		statement.setBigDecimal(3, Experiment.clock);
+			statement.setBigDecimal(3, Experiment.clock);
 
-		statement.setInt(4, intVal1);
+			statement.setInt(4, intVal1);
 
-		statement.setString(5, stringVal1);
+			statement.setString(5, stringVal1);
 
-		statement.setBoolean(6, isApplied);
+			statement.setBoolean(6, isApplied);
 
-		StochasticEvent.queries.add(Database.getQuery(statement));
+			StochasticEvent.queries.add(Database.getQuery(statement));
 
-		// statement.executeUpdate();
-		//
-		// ResultSet rs = statement.getGeneratedKeys();
-		//
-		// if (rs.next()) {
-		//
-		// return rs.getBigDecimal(1);
-		//
-		// }
-
+			// statement.executeUpdate();
+			//
+			// ResultSet rs = statement.getGeneratedKeys();
+			//
+			// if (rs.next()) {
+			//
+			// return rs.getBigDecimal(1);
+			//
+			// }
+		}
+		
 		return BigDecimal.valueOf(-1);
 	}
 }

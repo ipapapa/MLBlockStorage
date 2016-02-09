@@ -14,8 +14,7 @@ import edu.purdue.simulation.blockstorage.backend.*;
 
 public class Volume extends PersistentObject {
 
-	public Volume(Backend backend, ScheduleResponse scheduleResponse,
-			VolumeSpecifications specifications) {
+	public Volume(Backend backend, ScheduleResponse scheduleResponse, VolumeSpecifications specifications) {
 
 		this.backend = backend;
 
@@ -50,8 +49,7 @@ public class Volume extends PersistentObject {
 
 		int numberOfVolumes = this.backend.getVolumeList().size();
 
-		int backendCurrentAvailableIOPS = this.backend.getSpecifications()
-				.getIOPS();
+		int backendCurrentAvailableIOPS = this.backend.getSpecifications().getIOPS();
 
 		if (true) {
 
@@ -83,19 +81,16 @@ public class Volume extends PersistentObject {
 
 				Volume volume = this.backend.getVolumeList().get(i);
 
-				backEndVolumesTotalRequestedIOPS += volume.specifications
-						.getIOPS();
+				backEndVolumesTotalRequestedIOPS += volume.specifications.getIOPS();
 			}
 
 			if (backEndVolumesTotalRequestedIOPS >= backendCurrentAvailableIOPS) {
 
-				return Math
-						.round(backendCurrentAvailableIOPS / numberOfVolumes);
+				return Math.round(backendCurrentAvailableIOPS / numberOfVolumes);
 
 			} else {
 				// volume SLA IOPS + (available IOPS of the backend)
-				return this.specifications.getIOPS()
-						+ (backendCurrentAvailableIOPS - backEndVolumesTotalRequestedIOPS);
+				return this.specifications.getIOPS() + (backendCurrentAvailableIOPS - backEndVolumesTotalRequestedIOPS);
 			}
 		}
 	}
@@ -104,35 +99,33 @@ public class Volume extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"Insert Into BlockStorageSimulator.volume"
-								+ "	(backend_ID, schedule_response_ID, capacity, IOPS, is_deleted, Delete_Probability)"
-								+ "		values" + "	(?, ?, ?, ?, ?, ?);",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement("Insert Into BlockStorageSimulator.volume"
+				+ "	(backend_ID, schedule_response_ID, capacity, IOPS, is_deleted, Delete_Probability)" + "		values"
+				+ "	(?, ?, ?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, this.backend.getID());
+			statement.setBigDecimal(1, this.backend.getID());
 
-		statement.setBigDecimal(2, this.ScheduleResponse == null ? null
-				: this.ScheduleResponse.ID);
+			statement.setBigDecimal(2, this.ScheduleResponse == null ? null : this.ScheduleResponse.ID);
 
-		statement.setInt(3, this.specifications.getCapacity());
+			statement.setInt(3, this.specifications.getCapacity());
 
-		statement.setInt(4, this.specifications.getIOPS());
+			statement.setInt(4, this.specifications.getIOPS());
 
-		statement.setBoolean(5, this.specifications.IsDeleted);
+			statement.setBoolean(5, this.specifications.IsDeleted);
 
-		statement.setDouble(6, this.specifications.deleteFactor);
+			statement.setDouble(6, this.specifications.deleteFactor);
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		ResultSet rs = statement.getGeneratedKeys();
+			try (ResultSet rs = statement.getGeneratedKeys()) {
 
-		if (rs.next()) {
+				if (rs.next()) {
 
-			this.setID(rs.getBigDecimal(1));
+					this.setID(rs.getBigDecimal(1));
 
-			return this.getID();
+					return this.getID();
+				}
+			}
 		}
 
 		return BigDecimal.valueOf(-1);
@@ -143,17 +136,17 @@ public class Volume extends PersistentObject {
 
 		Connection connection = Database.getConnection();
 
-		PreparedStatement statement = connection
-				.prepareStatement(
-						"Update	volume	set	is_deleted	= 1, delete_clock = ?	Where	ID	= ?",
-						Statement.RETURN_GENERATED_KEYS);
+		try (PreparedStatement statement = connection.prepareStatement(
+				"Update	volume	set	is_deleted	= 1, delete_clock = ?	Where	ID	= ?",
+				Statement.RETURN_GENERATED_KEYS)) {
 
-		statement.setBigDecimal(1, Experiment.clock);
-		statement.setBigDecimal(2, this.getID());
+			statement.setBigDecimal(1, Experiment.clock);
+			statement.setBigDecimal(2, this.getID());
 
-		statement.executeUpdate();
+			statement.executeUpdate();
 
-		this.backend.getVolumeList().remove(this);
+			this.backend.getVolumeList().remove(this);
+		}
 	}
 
 	public String toString() {
@@ -162,8 +155,7 @@ public class Volume extends PersistentObject {
 
 	public String toString(double deleteFactor) {
 
-		String result = "[VOLUME] ID: " + this.getID() + " deleteProbability: "
-				+ deleteFactor;
+		String result = "[VOLUME] ID: " + this.getID() + " deleteProbability: " + deleteFactor;
 
 		if (this.ScheduleResponse != null)
 
