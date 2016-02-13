@@ -486,8 +486,6 @@ public abstract class Scheduler {
 
 			clockIntValue = edu.purdue.simulation.Experiment.clock.intValue();
 
-			System.out.println("while (true) - clockIntValue: " + clockIntValue);
-
 			if (this.getRequestQueue().size() == 0)
 
 				break;

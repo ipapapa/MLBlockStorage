@@ -77,12 +77,14 @@ public class Database {
 
 				String q = queries.get(i);
 
+				q = q.toLowerCase();
+				
 				if (isFirst == true) {
 					allQueris += q + "\n";
 
 					isFirst = false;
 				} else {
-					allQueris += "," + q.substring(q.indexOf("values") + 7, q.length());
+					allQueris += "," + q.substring(q.indexOf("values") + 6, q.length());
 				}
 			}
 

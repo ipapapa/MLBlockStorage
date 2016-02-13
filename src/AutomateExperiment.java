@@ -14,7 +14,7 @@ public class AutomateExperiment {
 
 	public static String buildPath = // -Xms512M -Xmx1024M -d64 -Xms1024M
 										// -Xmx1024M
-	" java -d64 -Xmx1024M -Xms1024M -cp \"D:\\Dropbox\\WorkSpaceMars\\MLBlockStorage\\target\\classes" + ";"
+	" java -d64 -Xmx1024M -Xms1024M -cp \"D:\\Dropbox\\WorkSpaceMars_L\\MLBlockStorage\\target\\classes" + ";"
 			+ "D:\\Dropbox\\Research\\MLScheduler\\jar\\libs\\*\" " + "edu.purdue.simulation.BlockStorageSimulator ";
 
 	private static class experimentDesign {
@@ -61,7 +61,7 @@ public class AutomateExperiment {
 
 				int currentNumberOfJavaProc = getNumberOfCurrentJavaProcesses();
 
-				while (currentNumberOfJavaProc > 10) {
+				while (currentNumberOfJavaProc > 8) {
 
 					TimeUnit.SECONDS.sleep(5);
 					
@@ -185,7 +185,7 @@ public class AutomateExperiment {
 		//
 		// }
 
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 100; i++) {
 
 			runForAllAssessmentPolicies(MachineLearningAlgorithm.J48, false);
 

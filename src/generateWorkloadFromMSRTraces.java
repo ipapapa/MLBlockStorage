@@ -14,20 +14,18 @@ import edu.purdue.simulation.Workload;
 public class generateWorkloadFromMSRTraces {
 	public static void main(String[] args) throws IOException {
 
-		Workload workload = new Workload(
-				1 // generate method
+		Workload workload = new Workload(1 // generate method
 				,
 				"MSR Cambridge Traces | CAMRESWMSA03-lvm0.csv| 100000 requests | IOPS = { 200, 350, 450 } | potentialVolumeCapacity = { 100, 500, 1000 } | DeleteTime Poisson 600");
 
 		try {
 
-			workload.GenerateWorkloadFromMSRCambridgeTraces(
-					100000, // numberOfRequests
-					"D:\\Dropbox\\Research\\MLScheduler\\Workload\\MSR Cambridge Traces\\CAMRESWMSA03-lvm0.csv",
-					50,// deleteFractorPoissionMean
+			workload.GenerateWorkloadFromMSRCambridgeTraces(100000, // numberOfRequests
+					"D:\\Dropbox\\Research\\MLScheduler\\Workload\\MSR Cambridge Traces\\CAMRESWMSA03-lvm0.csv", 50, // deleteFractorPoissionMean
 					new int[] { 450, 1000, 2000 }, // potentialVolumeCapacity
 					new int[] { 200, 350, 450 }, // potentialIOPS
-					100000 //start from
+					100000, // start from
+					false // usePoissonRandom
 			);
 
 			// test();
@@ -44,8 +42,7 @@ public class generateWorkloadFromMSRTraces {
 
 		Charset utf8charset = Charset.forName("UTF-8");
 
-		CSVParser parser = CSVParser.parse(csvData, utf8charset,
-				CSVFormat.RFC4180);
+		CSVParser parser = CSVParser.parse(csvData, utf8charset, CSVFormat.RFC4180);
 
 		Date date1 = null;
 		Date date2 = null;
@@ -68,8 +65,8 @@ public class generateWorkloadFromMSRTraces {
 				date2 = printTime(csvRecord.get(0));
 
 				/*
-				 * edu.purdue.simulation.BlockStorageSimulator.log(newDate.getMillis() -
-				 * previousDate.getMillis());
+				 * edu.purdue.simulation.BlockStorageSimulator.log(newDate.
+				 * getMillis() - previousDate.getMillis());
 				 */
 
 				long diff = getDateDiff(date1, date2, TimeUnit.MILLISECONDS);
@@ -101,7 +98,8 @@ public class generateWorkloadFromMSRTraces {
 	public static Date printTime(String time) {
 		long pwdLastSet = Long.parseLong(time);
 
-		// edu.purdue.simulation.BlockStorageSimulator.log("long value : " + pwdLastSet);
+		// edu.purdue.simulation.BlockStorageSimulator.log("long value : " +
+		// pwdLastSet);
 
 		// Filetime Epoch is JAN 01 1601
 		// java date Epoch is January 1, 1970
@@ -117,10 +115,10 @@ public class generateWorkloadFromMSRTraces {
 		// time known as "the epoch", namely January 1, 1970, 00:00:00 GMT.
 		Date theDate = new Date(javaTime);
 
-		// edu.purdue.simulation.BlockStorageSimulator.log("java DATE value : " + theDate);
+		// edu.purdue.simulation.BlockStorageSimulator.log("java DATE value : "
+		// + theDate);
 
-		SimpleDateFormat formatter = new SimpleDateFormat(
-				"MM/dd/yyyy HH:mm:ss.SSS aa zZ");
+		SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS aa zZ");
 
 		// change to GMT time:
 		formatter.setTimeZone(TimeZone.getTimeZone("GMT"));

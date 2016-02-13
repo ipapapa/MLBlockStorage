@@ -55,7 +55,10 @@ public abstract class StochasticEvent {
 
 		double possessionMean = backend.getSpecifications().getStabilityPossessionMean();
 
-		// TODO organize this part
+		/*
+		 * I decided to not use a random element here to reduce the density of
+		 * traning data
+		 */
 		int possessionGeneratedNumber = (int) possessionMean;
 		// Scheduler.getPoissonRandom(possessionMean);
 
@@ -158,7 +161,7 @@ public abstract class StochasticEvent {
 			//
 			// }
 		}
-		
+
 		return BigDecimal.valueOf(-1);
 	}
 }

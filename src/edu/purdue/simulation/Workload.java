@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -95,8 +96,8 @@ public class Workload extends PersistentObject {
 	}
 
 	public void GenerateWorkloadFromMSRCambridgeTraces(int numberOfRequests, String csvPath,
-			int deleteFractorPoissionMean, int[] potentialVolumeCapacity, int[] potentialIOPS, int startFrom)
-					throws Exception {
+			int deleteFractorPoissionMean, int[] potentialVolumeCapacity, int[] potentialIOPS, int startFrom,
+			boolean usePoissonRandom) throws Exception {
 
 		numberOfRequests += startFrom;
 
@@ -106,9 +107,8 @@ public class Workload extends PersistentObject {
 
 		this.VolumeRequestList = new ArrayList<VolumeRequest>();
 
-		Random volumeRandom = new Random();
-
-		Random IOPSRandom = new Random();
+		Random rand = new Random();
+		rand = new Random(rand.nextLong());
 
 		int arrivalTime = 0;
 
@@ -128,6 +128,8 @@ public class Workload extends PersistentObject {
 		long previousTime = 0;
 		int previousArrivalTime = 0;
 
+		ArrayList<String> queries = new ArrayList<>();
+
 		for (CSVRecord csvRecord : parser) {
 
 			if (csvRecord.get(3).compareTo("Write") != 0)
@@ -142,7 +144,7 @@ public class Workload extends PersistentObject {
 
 				previousRecordDate = recordDate;
 
-				edu.purdue.simulation.BlockStorageSimulator.log("Very first record Time :" + recordDate.toString());
+				System.out.println("Very first record Time :" + recordDate.toString());
 
 			} else {
 				i++;
@@ -166,7 +168,7 @@ public class Workload extends PersistentObject {
 
 				arrivalTime += diffInMillies;// Scheduler.getPoissonRandom(20);
 
-				edu.purdue.simulation.BlockStorageSimulator.log(
+				System.out.println(
 						"Time :" + recordDate.toString() + "| dif(seconds)=" + diffInMillies + " | arr=" + arrivalTime);
 
 				// edu.purdue.simulation.BlockStorageSimulator.log("Time :" +
@@ -217,21 +219,33 @@ public class Workload extends PersistentObject {
 				// }
 				previousArrivalTime = arrivalTime;
 
+				int delTime = 0;
+
+				if (usePoissonRandom)
+
+					delTime = Scheduler.getPoissonRandom(deleteFractorPoissionMean);
+
+				else
+
+					delTime = rand.nextInt(deleteFractorPoissionMean);
+
 				VolumeRequest request = new VolumeRequest(this, //
 						1, // type
-						potentialVolumeCapacity[volumeRandom.nextInt(potentialVolumeCapacity.length)], // Capacity
+						potentialVolumeCapacity[rand.nextInt(potentialVolumeCapacity.length)], // Capacity
 
-						potentialIOPS[IOPSRandom.nextInt(potentialIOPS.length)], // IOPS
-						Scheduler.getPoissonRandom(deleteFractorPoissionMean), // Delete
-																				// Factor
+						potentialIOPS[rand.nextInt(potentialIOPS.length)], // IOPS
+						delTime, // Delete
+									// Factor
 						arrivalTime // Arrival time
 				);
 
-				statement.addBatch(request.getSaveQuery());
+				queries.add(request.getSaveQuery());
+				// statement.addBatch(request.getSaveQuery());
 
 				if (true && i % 5000 == 0) {
 
-					statement.executeBatch();
+					// statement.executeBatch();
+					Database.executeBatchQuery(queries, true);
 
 				}
 
@@ -247,7 +261,7 @@ public class Workload extends PersistentObject {
 
 		statement.close();
 
-		edu.purdue.simulation.BlockStorageSimulator.log("workload ID: " + this.getID());
+		System.out.println("workload ID: " + this.getID()); 
 	}
 
 	public static DateTime convertWindowsTime(String time) {
@@ -442,7 +456,7 @@ public class Workload extends PersistentObject {
 				this.VolumeRequestList.add(request);
 			}
 		}
-		
+
 		return true;
 	}
 

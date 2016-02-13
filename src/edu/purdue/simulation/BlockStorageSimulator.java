@@ -58,9 +58,12 @@ public class BlockStorageSimulator {
 
 		Date startTime = new Date();
 
-		Scheduler.isTraining = false;
+		Scheduler.isTraining = true;
 
-		Scheduler.trainingExperimentID = 400;
+		/*
+		 * 172 all normal rand
+		 */
+		Scheduler.trainingExperimentID = 172; 
 		Scheduler.assessmentPolicy = AssessmentPolicy.StrictQoS;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
