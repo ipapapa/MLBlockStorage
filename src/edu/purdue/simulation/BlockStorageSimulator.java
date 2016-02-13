@@ -63,7 +63,7 @@ public class BlockStorageSimulator {
 		/*
 		 * 172 all normal rand
 		 */
-		Scheduler.trainingExperimentID = 172; 
+		Scheduler.trainingExperimentID = 2730; 
 		Scheduler.assessmentPolicy = AssessmentPolicy.StrictQoS;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
@@ -82,7 +82,7 @@ public class BlockStorageSimulator {
 			StochasticEventGenerator.clockGapProbability = -1; // no stochastic
 																// event
 
-		Experiment.workloadID = 161; // training workload
+		Experiment.workloadID = 172; // 161 poisson 172 normal dist training workload
 		Workload.devideDeleteFactorBy = 2.5;
 		Scheduler.maxRequest = 10000;// 110000;
 		Scheduler.startTestDatasetFromRecordRank = 10000;

@@ -111,12 +111,11 @@ public class AutomateExperiment {
 
 	public static int mainCounter = 0;
 
-	public static String baseCommand = //
-	"-isTraining false -trainingExperimentID 400 -assessmentPolicy xx "
+	public static String baseCommand = // 2730 
+	"-isTraining false -trainingExperimentID 2730  -workloadID 172 -assessmentPolicy xx "
 			+ "-machineLearningAlgorithm xx -feedBackLearning xx "
 			// + "-feedbackLearningInterval 180 -modClockBy 300 "
-			// + "-StochasticEventGenerator.clockGapProbability 140 -workloadID
-			// 161 "
+			// + "-StochasticEventGenerator.clockGapProbability 140
 			// +
 			// "-devideDeleteFactorBy 2.5 -maxRequest 10000
 			// -startTestDatasetFromRecordRank 10000"
