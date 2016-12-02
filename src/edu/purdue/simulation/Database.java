@@ -105,12 +105,17 @@ public class Database {
 		if (CurrentConnection != null && !CurrentConnection.isClosed())
 
 			return CurrentConnection;
-
+		
 		Class.forName("com.mysql.jdbc.Driver");
-
+		Class.forName("com.mysql.jdbc.Driver");
+		
 		CurrentConnection = DriverManager.getConnection(
-				"jdbc:mysql://10.0.0.150/BlockStorageSimulator?useServerPrepStmts=false&rewriteBatchedStatements=true&allowMultiQueries=true",
-				"root", "1234");
+				"jdbc:mysql://localhost:3306/blockstoragesimulator?user=root&useServerPrepStmts=false&rewriteBatchedStatements=true&allowMultiQueries=true",
+				"root", "123");
+		
+//		CurrentConnection = DriverManager.getConnection(
+//				"jdbc:jdbc:mysql://localhost:3306/blockstoragesimulator?user=root&useServerPrepStmts=false&rewriteBatchedStatements=true&allowMultiQueries=true",
+//				"root", "234");
 
 		return CurrentConnection;
 	}

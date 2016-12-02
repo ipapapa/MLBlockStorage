@@ -58,12 +58,12 @@ public class BlockStorageSimulator {
 
 		Date startTime = new Date();
 
-		Scheduler.isTraining = true;
+		Scheduler.isTraining = false;
 
 		/*
 		 * 172 all normal rand
 		 */
-		Scheduler.trainingExperimentID = 2730; 
+		Scheduler.trainingExperimentID = 2732; 
 		Scheduler.assessmentPolicy = AssessmentPolicy.StrictQoS;
 		Scheduler.machineLearningAlgorithm = MachineLearningAlgorithm.BayesianNetwork;
 
@@ -71,7 +71,7 @@ public class BlockStorageSimulator {
 		ResourceMonitor.clockGapProbability = 0.25; /**/
 
 		StochasticEventGenerator.clockGapProbability = Scheduler.modClockBy * 15; /* 1500 */
-		Scheduler.feedBackLearning = true;
+		Scheduler.feedBackLearning = false;
 		Scheduler.feedbackLearningInterval = (int) (Scheduler.modClockBy * 2.5); /* 300 */
 		Scheduler.updateLearning_MinNumberOfRecords = Scheduler.modClockBy * 6; // 700
 		Scheduler.updateLearning_MaxNumberOfRecords = Scheduler.modClockBy * 16;// 1500;
